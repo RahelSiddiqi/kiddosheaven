@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans:
+        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+    /* Custom Color Palette */
+    --color-primary-dark: #005461;
+    --color-primary: #018790;
+    --color-accent: #00b7b5;
+    --color-light: #f4f4f4;
+    --color-danger: #dc2626;
+    --color-danger-light: #fee2e2;
+    --color-danger-dark: #b91c1c;
+}
+
+/* Example usage of the color palette */
+:root {
+    --color-primary-dark: #005461;
+    --color-primary: #018790;
+    --color-accent: #00b7b5;
+    --color-light: #f4f4f4;
+    --color-danger: #dc2626;
+    --color-danger-light: #fee2e2;
+    --color-danger-dark: #b91c1c;
+}
+
+body {
+    background-color: var(--color-light);
+    color: var(--color-primary-dark);
+    font-family: var(--font-sans);
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-primary:hover {
+    background-color: var(--color-primary-dark);
+}
+
+.accent {
+    color: var(--color-accent);
+}
