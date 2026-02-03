@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Catalog — KiddosHeaven')
+@section('title', 'Catalog — Kiddo\'s Heaven')
 
 @section('content')
 	<div class="flex justify-between items-baseline mb-5 gap-4 flex-wrap">
@@ -9,17 +9,16 @@
 			<div class="text-gray-500 text-sm">Browse all of our toys and pick your child&apos;s next favorite.</div>
 		</div>
 		@if ($categories->isNotEmpty())
-			<div class="inline-flex p-1 bg-white rounded-full shadow gap-1">
+			<div class="flex gap-6 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 px-2 -mx-4 w-full">
 				<a href="{{ route('catalog') }}">
 					<button
-						class="px-3 py-1 text-xs rounded-full font-medium transition {{ !$activeCategory ? 'bg-gradient-to-br from-[--color-primary] to-[--color-accent] text-white' : 'hover:bg-gray-100' }}">All
-						toys</button>
+						class="pb-1 text-base transition relative {{ !$activeCategory ? 'font-bold text-primary after:absolute after:left-0 after:bottom-0 after:w-6 after:h-1.5 after:rounded-full after:bg-primary after:opacity-90' : 'font-medium hover:text-primary' }}">All</button>
 				</a>
 				@foreach ($categories as $category)
-					<a href="{{ route('catalog', ['category' => $category]) }}">
+					<a href="{{ route('catalog', ['catalog_id' => $category->id]) }}">
 						<button
-							class="px-3 py-1 text-xs rounded-full font-medium transition {{ $activeCategory === $category ? 'bg-gradient-to-br from-[--color-primary] to-[--color-accent] text-white' : 'hover:bg-gray-100' }}">
-							{{ $category }}
+							class="pb-1 text-base transition relative {{ $activeCategory == $category->id ? 'font-bold text-primary after:absolute after:left-0 after:bottom-0 after:w-6 after:h-1.5 after:rounded-full after:bg-primary after:opacity-90' : 'font-medium hover:text-primary' }}">
+							{{ $category->name }}
 						</button>
 					</a>
 				@endforeach
@@ -27,12 +26,27 @@
 		@endif
 	</div>
 
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			var catRow = document.querySelector('.overflow-x-auto.whitespace-nowrap');
+			if (catRow) {
+				var activeBtn = catRow.querySelector('.font-bold');
+				if (activeBtn) {
+					activeBtn.scrollIntoView({
+						behavior: 'smooth',
+						inline: 'center',
+						block: 'nearest'
+					});
+				}
+			}
+		});
+	</script>
 	<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
 		@forelse ($products as $product)
 			<article class="bg-white rounded-2xl shadow flex flex-col gap-2 h-full p-0">
 				<a href="{{ route('products.show', $product->slug) }}">
 					<div
-						class="relative w-full aspect-[4/3] bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] flex items-center justify-center rounded-t-2xl overflow-hidden">
+						class="relative w-full aspect-4/3 bg-linear-to-br from-accent to-primary flex items-center justify-center rounded-t-2xl overflow-hidden">
 						@php
 							$img = $product->primary_image ?? ($product->images[0] ?? null);
 						@endphp
@@ -42,24 +56,24 @@
 						@endif
 						@if ($product->is_featured)
 							<div
-								class="absolute top-3 left-3 bg-[var(--color-accent)] text-white text-xs px-3 py-1 rounded-full shadow font-bold tracking-wide">
+								class="absolute top-3 left-3 bg-accent text-white text-xs px-3 py-1 rounded-full shadow font-bold tracking-wide">
 								★ Featured</div>
 						@endif
 					</div>
 				</a>
 				<div class="flex flex-col gap-1 text-sm p-4">
 					<div
-						class="inline-block text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-[var(--color-light)] text-[var(--color-primary)] mb-1">
-						{{ $product->category }}</div>
+						class="inline-block text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-light text-primary mb-1">
+						{{ $product->catalog->name ?? '' }}</div>
 					<a href="{{ route('products.show', $product->slug) }}"
-						class="font-semibold text-[var(--color-primary-dark)] hover:underline">{{ $product->name }}</a>
+						class="font-semibold text-primary-dark hover:underline">{{ $product->name }}</a>
 					<div class="flex items-center justify-between mt-2">
-						<div class="font-bold text-[var(--color-primary-dark)]">${{ number_format($product->price / 100, 2) }} <span
+						<div class="font-bold text-primary-dark">${{ number_format($product->price / 100, 2) }} <span
 								class="text-xs font-normal text-gray-400">USD</span></div>
 						<form action="{{ route('cart.add', $product->slug) }}" method="post">
 							@csrf
 							<button type="submit"
-								class="w-8 h-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center font-bold text-lg hover:bg-[var(--color-primary-dark)] transition cursor-pointer"
+								class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg hover:bg-primary-dark transition cursor-pointer"
 								title="Add to cart">
 								<!-- Cart icon (Heroicons outline) -->
 								<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"

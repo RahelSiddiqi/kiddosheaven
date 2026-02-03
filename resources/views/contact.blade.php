@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Contact Us — KiddosHeaven')
+@section('title', 'Contact Us — Kiddo\'s Heaven')
 
 @section('content')
 	<div class="max-w-6xl mx-auto bg-white rounded-xl shadow p-8 mt-8">

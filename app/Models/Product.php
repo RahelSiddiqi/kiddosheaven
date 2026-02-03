@@ -9,7 +9,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'slug',
-        'category',
+        'catalog_id',
         'price',
         'short_description',
         'description',
@@ -21,4 +21,9 @@ class Product extends Model
     protected $casts = [
         'images' => 'array',
     ];
+
+    public function catalog()
+    {
+        return $this->belongsTo(Catalog::class);
+    }
 }

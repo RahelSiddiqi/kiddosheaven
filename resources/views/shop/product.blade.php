@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $product->name . ' — KiddosHeaven')
+@section('title', $product->name . ' — Kiddo\'s Heaven')
 
 @section('content')
 	<div class="flex flex-col lg:flex-row gap-8">

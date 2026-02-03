@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -17,20 +18,23 @@ class ProductController extends Controller
 
     public function create()
     {
-        return view('admin.products.create');
+        $catalogs = \App\Models\Catalog::all();
+        return view('admin.products.create', compact('catalogs'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'string', 'max:255'],
+            'catalog_id' => ['required', 'exists:catalogs,id'],
             'price' => ['required', 'integer', 'min:1'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:2048'],
             'is_featured' => ['boolean'],
+        ], [
+            'images.*.max' => 'Each image must not be greater than 2MB.',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
@@ -66,14 +70,15 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        return view('admin.products.edit', compact('product'));
+        $catalogs = \App\Models\Catalog::all();
+        return view('admin.products.edit', compact('product', 'catalogs'));
     }
 
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'string', 'max:255'],
+            'catalog_id' => ['required', 'exists:catalogs,id'],
             'price' => ['required', 'integer', 'min:1'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string'],
@@ -81,6 +86,8 @@ class ProductController extends Controller
             'images.*' => ['image', 'max:2048'],
             'is_featured' => ['boolean'],
             'primary_image' => ['nullable', 'string'],
+        ], [
+            'images.*.max' => 'Each image must not be greater than 2MB.',
         ]);
 
         // Update slug if name changed
@@ -104,7 +111,7 @@ class ProductController extends Controller
             $deleteImg = $request->input('delete_image');
             $imagePaths = array_values(array_filter($imagePaths, fn($img) => $img !== $deleteImg));
             // Optionally delete file from storage
-            \Storage::disk('public')->delete($deleteImg);
+            Storage::disk('public')->delete($deleteImg);
         }
         // Handle new uploads
         if ($request->hasFile('images')) {

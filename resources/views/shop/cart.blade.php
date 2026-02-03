@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Cart — KiddosHeaven')
+@section('title', 'Cart — Kiddo\'s Heaven')
 
 @section('content')
 	<div class="flex flex-col lg:flex-row gap-8">

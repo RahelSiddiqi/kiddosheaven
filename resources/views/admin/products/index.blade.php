@@ -4,10 +4,10 @@
 
 @section('content')
 	<div class="bg-white rounded-xl shadow p-6 mb-8">
-		<div class="flex items-center justify-between border-b pb-4 mb-4">
+		<div class="flex items-center justify-between pb-4 mb-4">
 			<h2 class="text-xl font-bold text-[--admin-primary-dark]">Products</h2>
 			<a href="{{ route('admin.products.create') }}"
-				class="inline-flex items-center gap-2 px-4 py-2 rounded bg-gradient-to-br from-[--color-primary] to-[--color-accent] text-white font-bold shadow hover:from-[--color-primary-dark] hover:to-[--color-primary] transition">
+				class="inline-flex items-center px-4 py-2 rounded bg-[color:var(--color-primary)] text-white border border-[color:var(--color-primary-dark)] hover:bg-[color:var(--color-primary-dark)] hover:text-white transition font-semibold">
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 				</svg>
@@ -22,7 +22,7 @@
 			<div class="overflow-x-auto">
 				<table class="min-w-full text-sm">
 					<thead>
-						<tr class="bg-[--admin-bg] text-[--admin-primary-dark]">
+						<tr class="bg-[--admin-bg] text-[--admin-primary-dark] border-b border-gray-200">
 							<th class="py-2 px-3 font-semibold">Image</th>
 							<th class="py-2 px-3 font-semibold">Name</th>
 							<th class="py-2 px-3 font-semibold">Category</th>
@@ -33,7 +33,7 @@
 					</thead>
 					<tbody>
 						@foreach ($products as $product)
-							<tr class="border-b last:border-0">
+							<tr class="border-b border-gray-200 last:border-0">
 								<td class="py-2 px-3">
 									@php
 										$img = $product->primary_image ?? ($product->images[0] ?? null);
@@ -51,7 +51,7 @@
 									@endif
 								</td>
 								<td class="py-2 px-3">{{ $product->name }}</td>
-								<td class="py-2 px-3">{{ $product->category }}</td>
+								<td class="py-2 px-3">{{ $product->catalog->name ?? '-' }}</td>
 								<td class="py-2 px-3">${{ number_format($product->price / 100, 2) }}</td>
 								<td class="py-2 px-3">
 									@if ($product->is_featured)

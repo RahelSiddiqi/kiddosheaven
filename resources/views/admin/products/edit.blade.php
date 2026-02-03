@@ -11,6 +11,16 @@
 				to Products</a>
 		</div>
 
+		@if ($errors->any())
+			<div class="mb-4 p-4 rounded bg-red-50 border border-red-200 text-red-700">
+				<ul class="list-disc pl-5">
+					@foreach ($errors->all() as $error)
+						<li>{{ $error }}</li>
+					@endforeach
+				</ul>
+			</div>
+		@endif
+
 		<form action="{{ route('admin.products.update', $product) }}" method="post" enctype="multipart/form-data">
 			@csrf
 			@method('PUT')
@@ -20,21 +30,24 @@
 					<label for="name" class="font-semibold">Product Name *</label>
 					<input type="text" id="name" name="name" value="{{ old('name', $product->name) }}" required
 						class="block w-full rounded-md border border-gray-300 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] shadow-sm py-2 px-3 text-sm">
+					@error('name')
+						<div class="text-red-600 text-xs mt-1">{{ $message }}</div>
+					@enderror
 				</div>
 
 				<div class="flex flex-col gap-1">
-					<label for="category" class="font-semibold">Category *</label>
-					<select id="category" name="category" required
+					<label for="catalog_id" class="font-semibold">Category *</label>
+					<select id="catalog_id" name="catalog_id" required
 						class="block w-full rounded-md border border-gray-300 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] shadow-sm py-2 px-3 text-sm">
+						@error('catalog_id')
+							<div class="text-red-600 text-xs mt-1">{{ $message }}</div>
+						@enderror
 						<option value="">Select category</option>
-						<option value="Stuffed Animals" {{ old('category', $product->category) === 'Stuffed Animals' ? 'selected' : '' }}>
-							Stuffed Animals</option>
-						<option value="Wooden Toys" {{ old('category', $product->category) === 'Wooden Toys' ? 'selected' : '' }}>Wooden
-							Toys</option>
-						<option value="Educational Toys"
-							{{ old('category', $product->category) === 'Educational Toys' ? 'selected' : '' }}>Educational Toys</option>
-						<option value="Action Figures" {{ old('category', $product->category) === 'Action Figures' ? 'selected' : '' }}>
-							Action Figures</option>
+						@foreach ($catalogs as $catalog)
+							<option value="{{ $catalog->id }}"
+								{{ old('catalog_id', $product->catalog_id) == $catalog->id ? 'selected' : '' }}>
+								{{ $catalog->name }}</option>
+						@endforeach
 					</select>
 				</div>
 
@@ -43,6 +56,9 @@
 					<input type="number" id="price" name="price" value="{{ old('price', $product->price) }}" min="1"
 						required
 						class="block w-full rounded-md border border-gray-300 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] shadow-sm py-2 px-3 text-sm">
+					@error('price')
+						<div class="text-red-600 text-xs mt-1">{{ $message }}</div>
+					@enderror
 					<small class="text-gray-500 text-xs">e.g., 3000 = $30.00</small>
 				</div>
 
@@ -50,6 +66,12 @@
 					<label for="images" class="font-semibold">Product Images</label>
 					<input type="file" id="images" name="images[]" multiple accept="image/*"
 						class="block w-full rounded-md border border-gray-300 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] shadow-sm py-2 px-3 text-sm">
+					@error('images')
+						<div class="text-red-600 text-xs mt-1">{{ $message }}</div>
+					@enderror
+					@error('images.0')
+						<div class="text-red-600 text-xs mt-1">{{ $message }}</div>
+					@enderror
 					<div id="image-preview" class="flex flex-wrap gap-2 mt-2"></div>
 					@if ($product->images && is_array($product->images))
 						<div class="mt-2 flex flex-wrap gap-4">
@@ -85,12 +107,18 @@
 					<input type="text" id="short_description" name="short_description"
 						value="{{ old('short_description', $product->short_description) }}" maxlength="500"
 						class="block w-full rounded-md border border-gray-300 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] shadow-sm py-2 px-3 text-sm">
+					@error('short_description')
+						<div class="text-red-600 text-xs mt-1">{{ $message }}</div>
+					@enderror
 				</div>
 
 				<div class="md:col-span-2 flex flex-col gap-1">
 					<label for="description" class="font-semibold">Description</label>
 					<textarea id="description" name="description" rows="4"
 					 class="block w-full rounded-md border border-gray-300 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)] shadow-sm py-2 px-3 text-sm">{{ old('description', $product->description) }}</textarea>
+					@error('description')
+						<div class="text-red-600 text-xs mt-1">{{ $message }}</div>
+					@enderror
 				</div>
 
 				<div class="flex items-center gap-2">
