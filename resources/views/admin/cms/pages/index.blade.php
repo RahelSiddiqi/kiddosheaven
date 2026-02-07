@@ -1,0 +1,250 @@
+@extends('admin.layouts.app')
+
+@section('title', 'CMS Pages — Kiddo\'s Heaven')
+
+@section('content')
+	<div class="grid grid-cols-12 gap-4 md:gap-6">
+		<div class="col-span-12">
+			<div x-data="cmsPageManager({
+    initialSearch: '{{ request('search', '') }}',
+    baseUrl: '/admin/cms/pages',
+    csrf: '{{ csrf_token() }}'
+})">
+				<!-- Toast Notification -->
+				<div x-show="toastShow" x-transition.opacity.duration.300ms
+					class="fixed top-4 right-4 z-99999 px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 min-w-70"
+					:class="toastType === 'success' ? 'bg-green-500' : 'bg-red-500'" style="display: none;">
+					<svg x-show="toastType === 'success'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor"
+						viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+					</svg>
+					<svg x-show="toastType === 'error'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor"
+						viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+					<span x-text="toastMessage" class="text-sm font-medium"></span>
+				</div>
+
+				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
+					<!-- Header -->
+					<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+						<div>
+							<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">CMS Pages</h3>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your website's static content pages.</p>
+						</div>
+						<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+							<form @submit.prevent="searchPages()">
+								<div class="relative">
+									<button type="button" @click="searchPages()" class="absolute -translate-y-1/2 left-4 top-1/2">
+										<svg class="fill-gray-500 dark:fill-gray-400" width="20" height="20" viewBox="0 0 20 20" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<path fill-rule="evenodd" clip-rule="evenodd"
+												d="M3.04199 9.37381C3.04199 5.87712 5.87735 3.04218 9.37533 3.04218C12.8733 3.04218 15.7087 5.87712 15.7087 9.37381C15.7087 12.8705 12.8733 15.7055 9.37533 15.7055C5.87735 15.7055 3.04199 12.8705 3.04199 9.37381ZM9.37533 1.54218C5.04926 1.54218 1.54199 5.04835 1.54199 9.37381C1.54199 13.6993 5.04926 17.2055 9.37533 17.2055C11.2676 17.2055 13.0032 16.5346 14.3572 15.4178L17.1773 18.2381C17.4702 18.531 17.945 18.5311 18.2379 18.2382C18.5308 17.9453 18.5309 17.4704 18.238 17.1775L15.4182 14.3575C16.5367 13.0035 17.2087 11.2671 17.2087 9.37381C17.2087 5.04835 13.7014 1.54218 9.37533 1.54218Z"
+												fill="" />
+										</svg>
+									</button>
+									<input type="text" x-model="searchTerm" @keydown="handleKeydown($event)" placeholder="Search pages..."
+										class="h-10.5 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-10.5 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800 xl:w-64" />
+								</div>
+							</form>
+							<a href="{{ route('admin.cms.pages.create') }}"
+								class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3">
+								<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none"
+									xmlns="http://www.w3.org/2000/svg">
+									<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round" />
+								</svg>
+								Create Page
+							</a>
+						</div>
+					</div>
+
+					@if ($pages->isEmpty())
+						<div class="px-5 pb-8">
+							<div class="flex flex-col items-center justify-center py-12 text-center">
+								<svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+								</svg>
+								<p class="text-sm font-medium text-gray-900 dark:text-white">No pages yet</p>
+								<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Get started by creating your first page.</p>
+							</div>
+						</div>
+					@else
+						<!-- Table -->
+						<div class="overflow-hidden">
+							<div class="max-w-full px-5 overflow-x-auto">
+								<table class="min-w-full">
+									<thead>
+										<tr class="border-gray-200 border-y dark:border-gray-700">
+											<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+												Title</th>
+											<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+												Slug</th>
+											<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+												Template</th>
+											<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+												Status</th>
+											<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+												Created</th>
+											<th scope="col" class="relative px-4 py-3 capitalize"><span class="sr-only">Actions</span></th>
+										</tr>
+									</thead>
+									<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+										@foreach ($pages as $page)
+											<tr>
+												<td class="py-4 whitespace-nowrap">
+													<a href="{{ route('admin.cms.pages.edit', $page) }}"
+														class="font-medium text-sm text-gray-900 hover:underline dark:text-white">
+														{{ $page->title }}
+													</a>
+												</td>
+												<td class="py-4 whitespace-nowrap">
+													<div class="text-sm text-gray-900 dark:text-white">/{{ $page->slug }}</div>
+												</td>
+												<td class="py-4 whitespace-nowrap">
+													<div class="text-sm text-gray-900 dark:text-white">{{ $page->template }}</div>
+												</td>
+												<td class="py-4 whitespace-nowrap">
+													<span
+														class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ $page->is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' }}">
+														{{ $page->is_active ? 'Active' : 'Inactive' }}
+													</span>
+												</td>
+												<td class="py-4 whitespace-nowrap">
+													<div class="text-sm text-gray-900 dark:text-white">{{ $page->created_at->format('M d, Y') }}</div>
+												</td>
+												<td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
+													<div class="flex items-center gap-2 justify-end">
+														<a href="{{ route('page.show', $page->slug) }}" target="_blank"
+															class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="View Page">
+															<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+																	d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+															</svg>
+														</a>
+														<a href="{{ route('admin.cms.pages.edit', $page) }}"
+															class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+															<x-icons.edit />
+														</a>
+														<form action="{{ route('admin.cms.pages.destroy', $page) }}" method="POST" class="inline">
+															@csrf
+															@method('DELETE')
+															<button type="submit" @click="deletePage({{ $page->id }})"
+																class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+																onclick="return confirm('Are you sure you want to delete this page?')">
+																<x-icons.delete />
+															</button>
+														</form>
+													</div>
+												</td>
+											</tr>
+										@endforeach
+									</tbody>
+								</table>
+							</div>
+						</div>
+					@endif
+
+					<!-- Pagination -->
+					@if ($pages->hasPages())
+						<div class="px-6 py-4 border-t border-gray-200 dark:border-white/5">
+							<div class="flex items-center justify-between">
+								<button @click="window.location.href='{{ $pages->appends(request()->query())->previousPageUrl() }}'"
+									{{ !$pages->appends(request()->query())->previousPageUrl() ? 'disabled' : '' }}
+									class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200 sm:px-3.5 {{ !$pages->appends(request()->query())->previousPageUrl() ? 'opacity-50 cursor-not-allowed' : '' }}">
+									<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path fill-rule="evenodd" clip-rule="evenodd"
+											d="M2.58301 9.99868C2.58272 10.1909 2.65588 10.3833 2.80249 10.53L7.79915 15.5301C8.09194 15.8231 8.56682 15.8233 8.85981 15.5305C9.15281 15.2377 9.15297 14.7629 8.86018 14.4699L5.14009 10.7472L16.6675 10.7472C17.0817 10.7472 17.4175 10.4114 17.4175 9.99715C17.4175 9.58294 17.0817 9.24715 16.6675 9.24715L5.14554 9.24715L8.86017 5.53016C9.15297 5.23717 9.15282 4.7623 8.85983 4.4695C8.56684 4.1767 8.09197 4.17685 7.79917 4.46984L2.84167 9.43049C2.68321 9.568 2.58301 9.77087 2.58301 9.99715C2.58301 9.99766 2.58301 9.99817 2.58301 9.99868Z"
+											fill="currentColor" />
+									</svg>
+									<span class="hidden sm:inline">Previous</span>
+								</button>
+
+								<span class="block text-sm font-medium text-gray-700 dark:text-gray-400 sm:hidden">Page
+									{{ $pages->currentPage() }} of {{ $pages->lastPage() }}</span>
+
+								<ul class="hidden items-center gap-0.5 sm:flex">
+									@foreach ($pages->appends(request()->query())->links()->elements[0] as $page => $url)
+										<li>
+											<button @click="window.location.href='{{ $url }}'"
+												class="flex h-10 w-10 items-center justify-center rounded-lg text-theme-sm font-medium {{ $page == $pages->currentPage() ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-blue-500/8 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-500' }}">
+												{{ $page }}
+											</button>
+										</li>
+									@endforeach
+								</ul>
+
+								<button @click="window.location.href='{{ $pages->appends(request()->query())->nextPageUrl() }}'"
+									{{ !$pages->appends(request()->query())->nextPageUrl() ? 'disabled' : '' }}
+									class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200 sm:px-3.5 {{ !$pages->appends(request()->query())->nextPageUrl() ? 'opacity-50 cursor-not-allowed' : '' }}">
+									<span class="hidden sm:inline">Next</span>
+									<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path fill-rule="evenodd" clip-rule="evenodd"
+											d="M17.4175 9.9986C17.4178 10.1909 17.3446 10.3832 17.198 10.53L12.2013 15.5301C11.9085 15.8231 11.4337 15.8233 11.1407 15.5305C10.8477 15.2377 10.8475 14.7629 11.1403 14.4699L14.8604 10.7472L3.33301 10.7472C2.91879 10.7472 2.58301 10.4114 2.58301 9.99715C2.58301 9.58294 2.91879 9.24715 3.33301 9.24715L14.8549 9.24715L11.1403 5.53016C10.8475 5.23717 10.8477 4.7623 11.1407 4.4695C11.4336 4.1767 11.9085 4.17685 12.2013 4.46984L17.1588 9.43049C17.3173 9.568 17.4175 9.77087 17.4175 9.99715C17.4175 9.99763 17.4175 9.99812 17.4175 9.9986Z"
+											fill="currentColor" />
+									</svg>
+								</button>
+							</div>
+						</div>
+					@endif
+				</div>
+			</div>
+		</div>
+	</div>
+@endsection
+
+@push('scripts')
+	<script>
+		document.addEventListener('alpine:init', () => {
+			Alpine.data('cmsPageManager', (config) => ({
+				searchTerm: config.initialSearch,
+				toastMessage: '',
+				toastType: 'success',
+				toastShow: false,
+
+				showToast(message, type = 'success') {
+					this.toastMessage = message;
+					this.toastType = type;
+					this.toastShow = true;
+					setTimeout(() => {
+						this.toastShow = false;
+					}, 3000);
+				},
+
+				searchPages() {
+					const url = new URL(window.location);
+					url.searchParams.set('search', this.searchTerm);
+					url.searchParams.set('page', 1);
+					window.location.href = url.toString();
+				},
+
+				handleKeydown(e) {
+					if (e.key === 'Enter') this.searchPages();
+				},
+
+				async deletePage(id) {
+					if (!confirm('Are you sure you want to delete this page?')) return;
+					try {
+						const response = await fetch(`${config.baseUrl}/${id}`, {
+							method: 'DELETE',
+							headers: {
+								'Content-Type': 'application/json',
+								'X-CSRF-TOKEN': config.csrf,
+							},
+						});
+						const data = await response.json();
+						if (data.success) {
+							this.showToast(data.message || 'Page deleted successfully!');
+							setTimeout(() => {
+								window.location.reload();
+							}, 1500);
+						}
+					} catch (error) {
+						this.showToast('Error deleting page', 'error');
+					}
+				},
+			}))
+		})
+	</script>
+@endpush

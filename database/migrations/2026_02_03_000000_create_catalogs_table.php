@@ -10,6 +10,8 @@ return new class extends Migration {
         Schema::create('catalogs', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->text('description')->nullable();
+            $table->boolean('show_on_home')->default(false);
             $table->timestamps();
         });
     }

@@ -1,0 +1,145 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Investment Report — Kiddo\'s Heaven')
+
+@section('content')
+	<div class="grid grid-cols-12 gap-4 md:gap-6">
+		<div class="col-span-12">
+			<!-- Stats Cards -->
+			<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
+					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Invested</p>
+					<p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">৳{{ number_format($totalInvested, 2) }}</p>
+				</div>
+				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
+					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Expected Return</p>
+					<p class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">৳{{ number_format($totalExpectedReturn, 2) }}</p>
+				</div>
+				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
+					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Actual Return</p>
+					<p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">৳{{ number_format($totalActualReturn, 2) }}
+					</p>
+				</div>
+				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
+					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">ROI</p>
+					<p class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{{ number_format($roi, 2) }}%</p>
+				</div>
+			</div>
+
+			<!-- Filter Form -->
+			<form method="GET"
+				class="rounded-2xl border border-gray-200 bg-white p-4 mb-6 dark:border-gray-800 dark:bg-white/3">
+				<div class="flex flex-wrap items-end gap-4">
+					<div class="w-40">
+						<label for="type" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Type</label>
+						<select name="type" id="type"
+							class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
+							<option value="">All Types</option>
+							<option value="short_term" {{ request('type') == 'short_term' ? 'selected' : '' }}>Short Term</option>
+							<option value="long_term" {{ request('type') == 'long_term' ? 'selected' : '' }}>Long Term</option>
+							<option value="mutual_fund" {{ request('type') == 'mutual_fund' ? 'selected' : '' }}>Mutual Fund</option>
+							<option value="stock" {{ request('type') == 'stock' ? 'selected' : 'stock' }}>Stock</option>
+						</select>
+					</div>
+					<div class="w-40">
+						<label for="status" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Status</label>
+						<select name="status" id="status"
+							class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
+							<option value="">All Status</option>
+							<option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+							<option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+							<option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+						</select>
+					</div>
+					<button type="submit"
+						class="h-11 inline-flex items-center justify-center rounded-lg border border-blue-500 bg-blue-500 px-6 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-blue-600">
+						Filter
+					</button>
+					<a href="{{ route('admin.reports.investments') }}"
+						class="h-11 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3">
+						Reset
+					</a>
+				</div>
+			</form>
+
+			@if ($investments->isEmpty())
+				<div class="rounded-2xl border border-gray-200 bg-white p-12 text-center dark:border-gray-800 dark:bg-white/3">
+					<svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+							d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					<p class="text-sm font-medium text-gray-900 dark:text-white">No investments found</p>
+					<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">No investments found for the selected filters.</p>
+				</div>
+			@else
+				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
+					<!-- Header -->
+					<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+						<div>
+							<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Investment Report</h3>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Investment breakdown by type</p>
+						</div>
+					</div>
+
+					<!-- Table -->
+					<div class="overflow-hidden">
+						<div class="max-w-full px-5 overflow-x-auto">
+							<table class="min-w-full">
+								<thead>
+									<tr class="border-gray-200 border-y dark:border-gray-700">
+										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+											Date</th>
+										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+											Type</th>
+										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+											Amount</th>
+										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+											Expected Return</th>
+										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+											Actual Return</th>
+										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+											Status</th>
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+									@foreach ($investments as $investment)
+										<tr>
+											<td class="py-4 whitespace-nowrap">
+												<span
+													class="text-sm text-gray-900 dark:text-white">{{ $investment->investment_date->format('M d, Y') }}</span>
+											</td>
+											<td class="py-4 whitespace-nowrap">
+												<span
+													class="text-sm font-medium text-gray-900 dark:text-white">{{ ucfirst(str_replace('_', ' ', $investment->type)) }}</span>
+											</td>
+											<td class="py-4 whitespace-nowrap">
+												<span
+													class="text-sm font-semibold text-gray-900 dark:text-white">৳{{ number_format($investment->amount, 2) }}</span>
+											</td>
+											<td class="py-4 whitespace-nowrap">
+												<span
+													class="text-sm text-blue-600 dark:text-blue-400">৳{{ number_format($investment->expected_return, 2) }}</span>
+											</td>
+											<td class="py-4 whitespace-nowrap">
+												<span class="text-sm font-medium text-green-600 dark:text-green-400">
+													৳{{ number_format($investment->actual_return, 2) }}
+												</span>
+											</td>
+											<td class="py-4 whitespace-nowrap">
+												@php $statusColors = ['pending' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400', 'active' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', 'completed' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400']; @endphp
+												<span
+													class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$investment->status] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' }}">
+													{{ ucfirst($investment->status) }}
+												</span>
+											</td>
+										</tr>
+									@endforeach
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			@endif
+		</div>
+	</div>
+@endsection
