@@ -25,6 +25,16 @@ class ProductAttribute extends Model
     ];
 
     /**
+     * Get the catalogs that use this attribute
+     */
+    public function catalogs()
+    {
+        return $this->belongsToMany(Catalog::class, 'catalog_attributes')
+            ->withPivot(['is_required', 'sort_order'])
+            ->orderBy('catalog_attributes.sort_order');
+    }
+
+    /**
      * Get the values for this attribute
      */
     public function values()

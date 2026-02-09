@@ -9,6 +9,14 @@ class ProductAttributeValue extends Model
 {
     use HasFactory;
 
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        return 'id';
+    }
+
     protected $fillable = [
         'product_id',
         'product_attribute_id',

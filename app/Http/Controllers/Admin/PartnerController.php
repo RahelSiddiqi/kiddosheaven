@@ -5,28 +5,32 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class PartnerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Partner::with(['payments']);
+        $query = Partner::withCount('products');
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('contact_info', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
         }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $partners = $query->orderBy('name')->paginate(10);
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $partners = $query->latest()->paginate(10);
 
         return view('admin.partners.index', compact('partners'));
     }
@@ -38,60 +42,27 @@ class PartnerController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|string|in:supplier,affiliate,franchise,employee,service_provider,reseller',
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string',
+            'email' => 'required|email|max:255|unique:partners,email',
+            'phone' => 'required|string|max:20',
+            'type' => 'required|in:supplier,manufacturer,distributor',
             'address' => 'nullable|string',
-            'bank_name' => 'nullable|string',
-            'account_number' => 'nullable|string',
-            'account_name' => 'nullable|string',
-            'routing_number' => 'nullable|string',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'tax_number' => 'nullable|string|max:50',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:50',
+            'bank_routing_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
+            'status' => 'required|in:active,inactive,blocked',
         ]);
 
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first()
-                ], 422);
-            }
-            return back()->withErrors($validator)->withInput();
-        }
+        $validated['slug'] = Str::slug($validated['name']);
 
-        $data = $validator->validated();
-
-        // Build contact_info as array
-        $data['contact_info'] = json_encode([
-            'email' => $data['email'] ?? '',
-            'phone' => $data['phone'] ?? '',
-            'address' => $data['address'] ?? '',
-        ]);
-        unset($data['email'], $data['phone'], $data['address']);
-
-        // Build bank_details as array
-        $data['bank_details'] = json_encode([
-            'bank_name' => $data['bank_name'] ?? '',
-            'account_number' => $data['account_number'] ?? '',
-            'account_name' => $data['account_name'] ?? '',
-            'routing_number' => $data['routing_number'] ?? '',
-        ]);
-        unset($data['bank_name'], $data['account_number'], $data['account_name'], $data['routing_number']);
-
-        // Use default commission_rate of 0 if not provided
-        $data['commission_rate'] = $data['commission_rate'] ?? 0;
-
-        Partner::create($data);
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Partner created successfully.'
-            ]);
-        }
+        Partner::create($validated);
 
         return redirect()->route('admin.partners.index')
             ->with('success', 'Partner created successfully.');
@@ -99,7 +70,7 @@ class PartnerController extends Controller
 
     public function show(Partner $partner)
     {
-        $partner->load(['payments']);
+        $partner->load(['products', 'purchaseOrders', 'expenses']);
 
         return view('admin.partners.show', compact('partner'));
     }
@@ -111,58 +82,27 @@ class PartnerController extends Controller
 
     public function update(Request $request, Partner $partner)
     {
-        $validator = Validator::make($request->all(), [
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|string|in:supplier,affiliate,franchise,employee,service_provider,reseller',
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string',
+            'email' => 'required|email|max:255|unique:partners,email,' . $partner->id,
+            'phone' => 'required|string|max:20',
+            'type' => 'required|in:supplier,manufacturer,distributor',
             'address' => 'nullable|string',
-            'bank_name' => 'nullable|string',
-            'account_number' => 'nullable|string',
-            'account_name' => 'nullable|string',
-            'routing_number' => 'nullable|string',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'tax_number' => 'nullable|string|max:50',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:50',
+            'bank_routing_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
-            'status' => 'nullable|string|in:active,inactive,suspended',
+            'status' => 'required|in:active,inactive,blocked',
         ]);
 
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first()
-                ], 422);
-            }
-            return back()->withErrors($validator)->withInput();
-        }
+        $validated['slug'] = Str::slug($validated['name']);
 
-        $data = $validator->validated();
-
-        // Build contact_info as array
-        $data['contact_info'] = json_encode([
-            'email' => $data['email'] ?? '',
-            'phone' => $data['phone'] ?? '',
-            'address' => $data['address'] ?? '',
-        ]);
-        unset($data['email'], $data['phone'], $data['address']);
-
-        // Build bank_details as array
-        $data['bank_details'] = json_encode([
-            'bank_name' => $data['bank_name'] ?? '',
-            'account_number' => $data['account_number'] ?? '',
-            'account_name' => $data['account_name'] ?? '',
-            'routing_number' => $data['routing_number'] ?? '',
-        ]);
-        unset($data['bank_name'], $data['account_number'], $data['account_name'], $data['routing_number']);
-
-        $partner->update($data);
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Partner updated successfully.'
-            ]);
-        }
+        $partner->update($validated);
 
         return redirect()->route('admin.partners.index')
             ->with('success', 'Partner updated successfully.');
@@ -176,96 +116,29 @@ class PartnerController extends Controller
             ->with('success', 'Partner deleted successfully.');
     }
 
-    public function updateStatus(Request $request, Partner $partner)
+    public function getSuppliers(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|string|in:active,inactive,suspended',
+        $suppliers = Partner::where('type', 'supplier')
+            ->where('status', 'active')
+            ->select('id', 'name', 'email', 'phone')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $suppliers
         ]);
-
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first()
-                ], 422);
-            }
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $partner->update(['status' => $request->status]);
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Status updated successfully.'
-            ]);
-        }
-
-        return back()->with('success', 'Status updated successfully.');
     }
 
-    /**
-     * Store a new payment for a partner.
-     */
-    public function storePayment(Request $request, Partner $partner)
+    public function getDistributors(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:0',
-            'payment_date' => 'required|date',
-            'description' => 'nullable|string|max:1000',
-            'status' => 'nullable|string|in:completed,pending,cancelled',
+        $distributors = Partner::where('type', 'distributor')
+            ->where('status', 'active')
+            ->select('id', 'name', 'email', 'phone')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $distributors
         ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $partner->payments()->create([
-            'amount' => $validator->validated()['amount'],
-            'payment_date' => $validator->validated()['payment_date'],
-            'description' => $validator->validated()['description'] ?? null,
-            'status' => $validator->validated()['status'] ?? 'completed',
-        ]);
-
-        return back()->with('success', 'Payment added successfully.');
-    }
-
-    /**
-     * Update a payment for a partner.
-     */
-    public function updatePayment(Request $request, Partner $partner, $payment)
-    {
-        $payment = $partner->payments()->findOrFail($payment);
-
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:0',
-            'payment_date' => 'required|date',
-            'description' => 'nullable|string|max:1000',
-            'status' => 'nullable|string|in:completed,pending,cancelled',
-        ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $payment->update([
-            'amount' => $validator->validated()['amount'],
-            'payment_date' => $validator->validated()['payment_date'],
-            'description' => $validator->validated()['description'] ?? null,
-            'status' => $validator->validated()['status'] ?? 'completed',
-        ]);
-
-        return back()->with('success', 'Payment updated successfully.');
-    }
-
-    /**
-     * Destroy a payment for a partner.
-     */
-    public function destroyPayment(Request $request, Partner $partner, $payment)
-    {
-        $payment = $partner->payments()->findOrFail($payment);
-        $payment->delete();
-
-        return back()->with('success', 'Payment deleted successfully.');
     }
 }

@@ -5,7 +5,7 @@
 @section('content')
 	<div class="grid grid-cols-12 gap-4 md:gap-6">
 		<div class="col-span-12">
-			<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
+			<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
 				<!-- Header -->
 				<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 					<div>

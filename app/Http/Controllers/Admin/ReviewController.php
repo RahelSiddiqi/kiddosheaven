@@ -10,53 +10,40 @@ class ReviewController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Review::with('product', 'user')->latest();
+        $query = Review::with(['user', 'product']);
 
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'pending') {
-                $query->pending();
-            } elseif ($request->status === 'approved') {
-                $query->approved();
-            }
-        }
-
-        // Filter by rating
-        if ($request->filled('rating')) {
-            $query->where('rating', $request->rating);
-        }
-
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('content', 'like', "%{$search}%")
-                  ->orWhere('title', 'like', "%{$search}%")
-                  ->orWhereHas('product', function($p) use ($search) {
-                      $p->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('comment', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
                   })
-                  ->orWhereHas('user', function($u) use ($search) {
-                      $u->where('name', 'like', "%{$search}%");
+                  ->orWhereHas('product', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
                   });
             });
         }
 
-        // Get stats
-        $stats = [
-            'total' => Review::count(),
-            'pending' => Review::pending()->count(),
-            'approved' => Review::approved()->count(),
-            'avg_rating' => Review::approved()->avg('rating') ?? 0,
-        ];
+        if ($request->filled('rating')) {
+            $query->where('rating', $request->rating);
+        }
 
-        $reviews = $query->paginate(20)->appends($request->all());
+        if ($request->filled('status')) {
+            $query->where('is_approved', $request->status === 'approved');
+        }
 
-        return view('admin.reviews.index', compact('reviews', 'stats'));
+        $reviews = $query->latest()->paginate(15);
+
+        return view('admin.reviews.index', compact('reviews'));
     }
 
     public function show(Review $review)
     {
-        $review->load('product', 'user', 'order');
+        $review->load(['user', 'product']);
+
         return view('admin.reviews.show', compact('review'));
     }
 
@@ -64,16 +51,14 @@ class ReviewController extends Controller
     {
         $review->update(['is_approved' => true]);
 
-        return redirect()->route('admin.reviews.index')
-            ->with('success', 'Review approved successfully.');
+        return back()->with('success', 'Review approved.');
     }
 
     public function reject(Review $review)
     {
         $review->update(['is_approved' => false]);
 
-        return redirect()->route('admin.reviews.index')
-            ->with('success', 'Review rejected successfully.');
+        return back()->with('success', 'Review rejected.');
     }
 
     public function destroy(Review $review)
@@ -87,26 +72,39 @@ class ReviewController extends Controller
     public function bulkApprove(Request $request)
     {
         $validated = $request->validate([
-            'review_ids' => ['required', 'array'],
-            'review_ids.*' => ['exists:reviews,id'],
+            'reviews' => 'required|array',
+            'reviews.*' => 'exists:reviews,id',
         ]);
 
-        $count = Review::whereIn('id', $validated['review_ids'])->update(['is_approved' => true]);
+        Review::whereIn('id', $validated['reviews'])->update(['is_approved' => true]);
 
-        return redirect()->route('admin.reviews.index')
-            ->with('success', "{$count} reviews approved successfully.");
+        return back()->with('success', 'Selected reviews approved.');
     }
 
-    public function bulkDestroy(Request $request)
+    public function bulkDelete(Request $request)
     {
         $validated = $request->validate([
-            'review_ids' => ['required', 'array'],
-            'review_ids.*' => ['exists:reviews,id'],
+            'reviews' => 'required|array',
+            'reviews.*' => 'exists:reviews,id',
         ]);
 
-        $count = Review::whereIn('id', $validated['review_ids'])->delete();
+        Review::whereIn('id', $validated['reviews'])->delete();
 
-        return redirect()->route('admin.reviews.index')
-            ->with('success', "{$count} reviews deleted successfully.");
+        return back()->with('success', 'Selected reviews deleted.');
+    }
+
+    public function productReviews(Request $request, $productId)
+    {
+        $query = Review::where('product_id', $productId)
+            ->with(['user'])
+            ->where('is_approved', true);
+
+        if ($request->filled('rating')) {
+            $query->where('rating', $request->rating);
+        }
+
+        $reviews = $query->latest()->paginate(15);
+
+        return view('admin.reviews.product-reviews', compact('reviews', 'productId'));
     }
 }

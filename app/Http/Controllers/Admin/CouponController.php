@@ -4,161 +4,164 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
-use App\Models\User;
+use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class CouponController extends Controller
 {
-    /**
-     * Display a listing of coupons.
-     */
     public function index(Request $request)
     {
-        $search = $request->search ?? '';
-        $status = $request->status ?? '';
+        $query = Coupon::query();
 
-        $query = Coupon::with('user')
-            ->when($search, function ($q) use ($search) {
-                $q->where('code', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            })
-            ->when($status, function ($q) use ($status) {
-                $q->where('status', $status);
-            })
-            ->orderBy('created_at', 'desc');
+        if ($request->filled('search')) {
+            $query->where('code', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
+        }
 
-        $coupons = $query->paginate(10);
+        if ($request->filled('type')) {
+            $query->where('discount_type', $request->type);
+        }
 
-        return view('admin.coupons.index', compact('coupons', 'search', 'status'));
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        $coupons = $query->latest()->paginate(10);
+
+        return view('admin.coupons.index', compact('coupons'));
     }
 
-    /**
-     * Store a newly created coupon.
-     */
+    public function create()
+    {
+        $products = Product::where('is_active', true)->get();
+        $categories = Category::where('is_active', true)->get();
+
+        return view('admin.coupons.create', compact('products', 'categories'));
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:coupons,code',
             'description' => 'nullable|string',
-            'type' => 'required|in:percentage,fixed,shipping',
-            'value' => 'required|numeric|min:0',
-            'min_order_amount' => 'nullable|numeric|min:0',
-            'max_discount' => 'nullable|numeric|min:0',
-            'usage_limit' => 'nullable|integer|min:1',
-            'valid_from' => 'nullable|date',
-            'valid_until' => 'nullable|date|after_or_equal:valid_from',
-            'status' => 'required|in:active,inactive',
-            'is_general' => 'nullable|boolean',
-            'user_id' => 'nullable|exists:users,id',
+            'discount_type' => 'required|in:percentage,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'minimum_order_amount' => 'nullable|numeric|min:0',
+            'maximum_discount_amount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:0',
+            'usage_limit_per_user' => 'nullable|integer|min:0',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'is_active' => 'boolean',
+            'is_user_specific' => 'boolean',
+            'products' => 'nullable|array',
+            'products.*' => 'exists:products,id',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
         ]);
 
-        $isGeneral = $request->has('is_general') && $request->is_general;
-
-        Coupon::create([
+        $coupon = Coupon::create([
             'code' => strtoupper($validated['code']),
             'description' => $validated['description'] ?? null,
-            'type' => $validated['type'],
-            'value' => $validated['value'],
-            'min_order_amount' => $validated['min_order_amount'] ?? null,
-            'max_discount' => $validated['max_discount'] ?? null,
+            'discount_type' => $validated['discount_type'],
+            'discount_value' => $validated['discount_value'],
+            'minimum_order_amount' => $validated['minimum_order_amount'] ?? 0,
+            'maximum_discount_amount' => $validated['maximum_discount_amount'] ?? null,
             'usage_limit' => $validated['usage_limit'] ?? null,
-            'valid_from' => $validated['valid_from'] ?? null,
-            'valid_until' => $validated['valid_until'] ?? null,
-            'status' => $validated['status'],
-            'is_general' => $isGeneral,
-            'user_id' => $isGeneral ? null : ($validated['user_id'] ?? null),
+            'usage_limit_per_user' => $validated['usage_limit_per_user'] ?? null,
+            'start_date' => $validated['start_date'] ?? null,
+            'end_date' => $validated['end_date'] ?? null,
+            'is_active' => $validated['is_active'] ?? true,
+            'is_user_specific' => $validated['is_user_specific'] ?? false,
         ]);
 
-        $message = 'Coupon created successfully.';
-        if ($request->expectsJson() || $request->is('api/*')) {
-            return response()->json(['success' => true, 'message' => $message]);
+        if (isset($validated['products'])) {
+            $coupon->products()->attach($validated['products']);
         }
-        return redirect()->back()->with('success', $message);
+
+        if (isset($validated['categories'])) {
+            $coupon->categories()->attach($validated['categories']);
+        }
+
+        return redirect()->route('admin.coupons.index')
+            ->with('success', 'Coupon created successfully.');
     }
 
-    /**
-     * Update the specified coupon.
-     */
+    public function show(Coupon $coupon)
+    {
+        $coupon->load(['products', 'categories', 'users']);
+
+        return view('admin.coupons.show', compact('coupon'));
+    }
+
+    public function edit(Coupon $coupon)
+    {
+        $products = Product::where('is_active', true)->get();
+        $categories = Category::where('is_active', true)->get();
+        $coupon->load(['products', 'categories']);
+
+        return view('admin.coupons.edit', compact('coupon', 'products', 'categories'));
+    }
+
     public function update(Request $request, Coupon $coupon)
     {
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:coupons,code,' . $coupon->id,
             'description' => 'nullable|string',
-            'type' => 'required|in:percentage,fixed,shipping',
-            'value' => 'required|numeric|min:0',
-            'min_order_amount' => 'nullable|numeric|min:0',
-            'max_discount' => 'nullable|numeric|min:0',
-            'usage_limit' => 'nullable|integer|min:1',
-            'valid_from' => 'nullable|date',
-            'valid_until' => 'nullable|date|after_or_equal:valid_from',
-            'status' => 'required|in:active,inactive',
-            'is_general' => 'nullable|boolean',
-            'user_id' => 'nullable|exists:users,id',
+            'discount_type' => 'required|in:percentage,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'minimum_order_amount' => 'nullable|numeric|min:0',
+            'maximum_discount_amount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:0',
+            'usage_limit_per_user' => 'nullable|integer|min:0',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'is_active' => 'boolean',
+            'is_user_specific' => 'boolean',
+            'products' => 'nullable|array',
+            'products.*' => 'exists:products,id',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
         ]);
-
-        $isGeneral = $request->has('is_general') && $request->is_general;
 
         $coupon->update([
             'code' => strtoupper($validated['code']),
             'description' => $validated['description'] ?? null,
-            'type' => $validated['type'],
-            'value' => $validated['value'],
-            'min_order_amount' => $validated['min_order_amount'] ?? null,
-            'max_discount' => $validated['max_discount'] ?? null,
+            'discount_type' => $validated['discount_type'],
+            'discount_value' => $validated['discount_value'],
+            'minimum_order_amount' => $validated['minimum_order_amount'] ?? 0,
+            'maximum_discount_amount' => $validated['maximum_discount_amount'] ?? null,
             'usage_limit' => $validated['usage_limit'] ?? null,
-            'valid_from' => $validated['valid_from'] ?? null,
-            'valid_until' => $validated['valid_until'] ?? null,
-            'status' => $validated['status'],
-            'is_general' => $isGeneral,
-            'user_id' => $isGeneral ? null : ($validated['user_id'] ?? null),
+            'usage_limit_per_user' => $validated['usage_limit_per_user'] ?? null,
+            'start_date' => $validated['start_date'] ?? null,
+            'end_date' => $validated['end_date'] ?? null,
+            'is_active' => $validated['is_active'] ?? true,
+            'is_user_specific' => $validated['is_user_specific'] ?? false,
         ]);
 
-        $message = 'Coupon updated successfully.';
-        if ($request->expectsJson() || $request->is('api/*')) {
-            return response()->json(['success' => true, 'message' => $message]);
-        }
-        return redirect()->back()->with('success', $message);
+        $coupon->products()->sync($validated['products'] ?? []);
+        $coupon->categories()->sync($validated['categories'] ?? []);
+
+        return redirect()->route('admin.coupons.index')
+            ->with('success', 'Coupon updated successfully.');
     }
 
-    /**
-     * Remove the specified coupon.
-     */
     public function destroy(Coupon $coupon)
     {
+        $coupon->products()->detach();
+        $coupon->categories()->detach();
         $coupon->delete();
-        $message = 'Coupon deleted successfully.';
-        if (request()->expectsJson()) {
-            return response()->json(['success' => true, 'message' => $message]);
-        }
-        return redirect()->back()->with('success', $message);
+
+        return redirect()->route('admin.coupons.index')
+            ->with('success', 'Coupon deleted successfully.');
     }
 
-    /**
-     * Toggle coupon active status.
-     */
     public function toggleStatus(Coupon $coupon)
     {
-        $coupon->update([
-            'status' => $coupon->status === 'active' ? 'inactive' : 'active',
-        ]);
+        $coupon->update(['is_active' => !$coupon->is_active]);
 
-        return redirect()->back()->with('success', 'Coupon status updated successfully.');
-    }
-
-    /**
-     * Get users for dropdown (AJAX).
-     */
-    public function getUsers(Request $request)
-    {
-        $search = $request->search ?? '';
-        $users = User::when($search, function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
-        })
-            ->limit(10)
-            ->get(['id', 'name', 'email']);
-
-        return response()->json($users);
+        return back()->with('success', 'Coupon status updated.');
     }
 }

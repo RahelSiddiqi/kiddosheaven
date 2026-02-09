@@ -13,6 +13,13 @@ window.ApexCharts = ApexCharts;
 window.flatpickr = flatpickr;
 window.FullCalendar = Calendar;
 
+// Helper function to reload page after a delay
+window.sleepReload = function (ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms)).then(() =>
+        window.location.reload(),
+    );
+};
+
 Alpine.start();
 
 // Initialize components on DOM ready

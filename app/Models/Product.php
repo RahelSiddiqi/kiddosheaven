@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -58,6 +60,7 @@ class Product extends Model
         'organic_certified' => 'boolean',
         'low_stock_alert' => 'integer',
     ];
+
     public function brand()
     {
         return $this->belongsTo(Brand::class);
@@ -134,5 +137,80 @@ class Product extends Model
     public function calculateProfit(int $quantity = 1): float
     {
         return $this->profit_per_unit * $quantity;
+    }
+
+    /**
+     * Get purchase batches for this product.
+     */
+    public function purchaseBatches(): HasMany
+    {
+        return $this->hasMany(PurchaseBatch::class);
+    }
+
+    /**
+     * Get active batches (with remaining stock).
+     */
+    public function activeBatches()
+    {
+        return $this->purchaseBatches()->where('quantity_remaining', '>', 0)
+            ->where('status', '!=', 'expired')
+            ->where('status', '!=', 'damaged');
+    }
+
+    /**
+     * Get total remaining stock from all batches.
+     */
+    public function getTotalStockAttribute(): int
+    {
+        return $this->purchaseBatches()->sum('quantity_remaining');
+    }
+
+    /**
+     * Get stock valuation based on batches.
+     */
+    public function getStockValuationAttribute(): float
+    {
+        return $this->purchaseBatches()
+            ->where('quantity_remaining', '>', 0)
+            ->get()
+            ->sum(fn($batch) => $batch->quantity_remaining * $batch->unit_cost);
+    }
+
+    /**
+     * Get average cost from batches.
+     */
+    public function getAverageCostAttribute(): float
+    {
+        $batches = $this->activeBatches()->get();
+        if ($batches->isEmpty()) {
+            return $this->cost_price ?? 0;
+        }
+        $totalCost = $batches->sum(fn($b) => $b->quantity_remaining * $b->unit_cost);
+        $totalQty = $batches->sum('quantity_remaining');
+        return $totalQty > 0 ? $totalCost / $totalQty : 0;
+    }
+
+    /**
+     * Check if product has stock.
+     */
+    public function hasStock(): bool
+    {
+        return $this->total_stock > 0;
+    }
+
+    /**
+     * Get inventory movements for this product.
+     */
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
+
+    /**
+     * Get order items for this product.
+     */
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
     }
 }

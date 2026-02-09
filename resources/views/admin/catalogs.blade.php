@@ -24,7 +24,7 @@
 					<span x-text="toastMessage" class="text-sm font-medium"></span>
 				</div>
 
-				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
+				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
 					<!-- Header -->
 					<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 						<div>
@@ -82,7 +82,8 @@
 											<td class="py-4 whitespace-nowrap">
 												<div class="flex items-center">
 													<div class="ml-4">
-														<div class="text-sm font-medium text-gray-900 dark:text-white">{{ $catalog->name }}</div>
+														<a href="{{ route('admin.catalogs.show', $catalog->id) }}"
+															class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{{ $catalog->name }}</a>
 													</div>
 												</div>
 											</td>
@@ -90,18 +91,19 @@
 												<div class="text-sm text-gray-500 dark:text-gray-400">
 													@php
 														$typeOptions = [
-															'general' => 'General',
-															'grocery' => 'Grocery',
-															'clothing' => 'Clothing & Apparel',
-															'toys' => 'Toys & Games',
-															'food' => 'Food & Beverages',
-															'electronics' => 'Electronics',
-															'home' => 'Home & Garden',
-															'beauty' => 'Beauty & Personal Care',
-															'sports' => 'Sports & Outdoors',
-															'books' => 'Books & Media',
-															'baby' => 'Baby Products',
-															'health' => 'Health & Wellness',
+														    'general' => 'General',
+														    'grocery' => 'Grocery',
+														    'clothing' => 'Clothing & Apparel',
+														    'toys' => 'Toys & Games',
+														    'puzzles' => 'Puzzles & Brain Teasers',
+														    'food' => 'Food & Beverages',
+														    'electronics' => 'Electronics',
+														    'home' => 'Home & Garden',
+														    'beauty' => 'Beauty & Personal Care',
+														    'sports' => 'Sports & Outdoors',
+														    'books' => 'Books & Media',
+														    'baby' => 'Baby Products',
+														    'health' => 'Health & Wellness',
 														];
 													@endphp
 													{{ $typeOptions[$catalog->type] ?? 'General' }}
@@ -128,7 +130,14 @@
 											</td>
 											<td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
 												<div class="flex items-center gap-2 justify-end">
-													<button @click="openEditModal({{ json_encode($catalog) }})"
+													<a href="{{ route('admin.catalogs.show', $catalog->id) }}"
+																class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="View Details">
+																<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+																</svg>
+														</a>
+														<button @click="openEditModal({ id: {{ $catalog->id }}, name: '{{ addslashes($catalog->name) }}', type: '{{ $catalog->type }}', show_on_home: {{ $catalog->show_on_home ? 'true' : 'false' }} })"
 														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
 														<x-icons.edit />
 													</button>
@@ -196,8 +205,7 @@
 				<!-- Create/Edit Modal -->
 				<div x-show="showModal" x-cloak class="fixed inset-0 z-10000 overflow-y-auto">
 					<div class="flex min-h-screen items-center justify-center p-4">
-						<div x-show="showModal" @click="closeModal()" class="fixed inset-0 bg-black/50 transition-opacity z-10000">
-						</div>
+						<div x-show="showModal" @click="closeModal()" class="fixed inset-0 bg-black/50 transition-opacity z-10000 cursor-pointer"></div>
 						<div class="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 shadow-xl z-10001"
 							x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95"
 							x-transition:enter-end="opacity-100 scale-100">
@@ -227,6 +235,7 @@
 											<option value="grocery">Grocery</option>
 											<option value="clothing">Clothing & Apparel</option>
 											<option value="toys">Toys & Games</option>
+											<option value="puzzles">Puzzles & Brain Teasers</option>
 											<option value="food">Food & Beverages</option>
 											<option value="electronics">Electronics</option>
 											<option value="home">Home & Garden</option>

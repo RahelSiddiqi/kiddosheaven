@@ -3,494 +3,311 @@
 @section('title', 'Product Attributes — Kiddo\'s Heaven')
 
 @section('content')
-	<div class="grid grid-cols-12 gap-4 md:gap-6">
-		<div class="col-span-12">
-			<div x-data="attributeManager({
-    initialSearch: '{{ request('search', '') }}',
-    storeRoute: '{{ route('admin.attributes.store') }}',
-    baseUrl: '/admin/attributes',
-    csrf: '{{ csrf_token() }}'
-})">
-				<!-- Toast Notification -->
-				<div x-show="toastShow" x-transition.opacity.duration.300ms
-					class="fixed top-4 right-4 z-99999 px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 min-w-70"
-					:class="toastType === 'success' ? 'bg-green-500' : 'bg-red-500'" style="display: none;">
-					<svg x-show="toastType === 'success'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor"
-						viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+	<!-- Toast Notification -->
+	@if (session('success'))
+		<div x-data="{ show: true }" x-show="show" x-transition
+			class="fixed top-4 right-4 z-99999 px-4 py-3 rounded-lg shadow-lg bg-green-500 text-white flex items-center gap-2 min-w-70"
+			style="animation: slideIn 0.3s ease-out;">
+			<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+			</svg>
+			<span class="text-sm font-medium">{{ session('success') }}</span>
+		</div>
+	@endif
+
+	<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+		<div>
+			<h1 class="text-xl font-semibold text-gray-800 dark:text-white/90">Product Attributes</h1>
+			<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage attributes for different product categories</p>
+		</div>
+		<div class="flex items-center gap-3">
+			<a href="{{ route('admin.catalogs.index') }}"
+				class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3">
+				<svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+				</svg>
+				Manage Catalog Attributes
+			</a>
+			<button type="button" onclick="openCreateModal()"
+				class="h-10.5 inline-flex items-center justify-center rounded-lg border border-blue-500 bg-blue-500 px-6 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-blue-600 dark:hover:bg-blue-500/80">
+				<svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+				</svg>
+				Add Attribute
+			</button>
+		</div>
+	</div>
+
+	<!-- Quick Stats -->
+	<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+		<div class="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3 p-4">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+					<svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
 					</svg>
-					<svg x-show="toastType === 'error'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor"
-						viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				</div>
+				<div>
+					<p class="text-sm text-gray-500 dark:text-gray-400">Total Attributes</p>
+					<p class="text-xl font-semibold text-gray-800 dark:text-white/90">{{ $attributes->count() }}</p>
+				</div>
+			</div>
+		</div>
+		<div class="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3 p-4">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+					<svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 					</svg>
-					<span x-text="toastMessage" class="text-sm font-medium"></span>
 				</div>
-
-				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
-					<!-- Header -->
-					<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-						<div>
-							<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Product Attributes</h3>
-							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Define attributes like size, color, material for your
-								products.</p>
-						</div>
-						<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-							<form @submit.prevent="searchAttributes()">
-								<div class="relative">
-									<button type="button" @click="searchAttributes()" class="absolute -translate-y-1/2 left-4 top-1/2">
-										<svg class="fill-gray-500 dark:fill-gray-400" width="20" height="20" viewBox="0 0 20 20" fill="none"
-											xmlns="http://www.w3.org/2000/svg">
-											<path fill-rule="evenodd" clip-rule="evenodd"
-												d="M3.04199 9.37381C3.04199 5.87712 5.87735 3.04218 9.37533 3.04218C12.8733 3.04218 15.7087 5.87712 15.7087 9.37381C15.7087 12.8705 12.8733 15.7055 9.37533 15.7055C5.87735 15.7055 3.04199 12.8705 3.04199 9.37381ZM9.37533 1.54218C5.04926 1.54218 1.54199 5.04835 1.54199 9.37381C1.54199 13.6993 5.04926 17.2055 9.37533 17.2055C11.2676 17.2055 13.0032 16.5346 14.3572 15.4178L17.1773 18.2381C17.4702 18.531 17.945 18.5311 18.2379 18.2382C18.5308 17.9453 18.5309 17.4704 18.238 17.1775L15.4182 14.3575C16.5367 13.0035 17.2087 11.2671 17.2087 9.37381C17.2087 5.04835 13.7014 1.54218 9.37533 1.54218Z"
-												fill="" />
-										</svg>
-									</button>
-									<input type="text" x-model="searchTerm" @keydown="handleKeydown($event)" placeholder="Search attributes..."
-										class="h-10.5 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-10.5 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800 xl:w-64" />
-								</div>
-							</form>
-							<button @click="openCreateModal()"
-								class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3">
-								<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none"
-									xmlns="http://www.w3.org/2000/svg">
-									<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-										stroke-linejoin="round" />
-								</svg>
-								Add Attribute
-							</button>
-						</div>
-					</div>
-
-					<!-- Table -->
-					<div class="overflow-hidden">
-						<div class="max-w-full px-5 overflow-x-auto">
-							<table class="min-w-full">
-								<thead>
-									<tr class="border-gray-200 border-y dark:border-gray-700">
-										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Name
-										</th>
-										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Type
-										</th>
-										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
-											Description</th>
-										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
-											Status</th>
-										<th scope="col" class="relative px-4 py-3 capitalize"><span class="sr-only">Actions</span></th>
-									</tr>
-								</thead>
-								<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-									@forelse ($attributes as $attribute)
-										<tr>
-											<td class="py-4 whitespace-nowrap">
-												<div class="text-sm font-medium text-gray-900 dark:text-white">{{ $attribute->name }}</div>
-											</td>
-											<td class="px-4 py-4 whitespace-nowrap">
-												<div class="text-sm text-gray-500 dark:text-gray-400 capitalize">{{ $attribute->type }}</div>
-											</td>
-											<td class="py-4 whitespace-nowrap">
-												<div class="text-sm font-medium text-gray-900 dark:text-white">{{ $attribute->description }}</div>
-											</td>
-											<td class="px-4 py-4 whitespace-nowrap">
-												<div class="flex items-center gap-1">
-													@if ($attribute->is_required)
-														<span
-															class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-500">
-															Required
-														</span>
-													@endif
-													@if ($attribute->is_filterable)
-														<span
-															class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-500">
-															Filterable
-														</span>
-													@endif
-												</div>
-											</td>
-
-											<td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
-												<div class="flex items-center gap-2 justify-end">
-													<button @click="openEditModal({{ json_encode($attribute) }})"
-														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-														<x-icons.edit />
-													</button>
-													<button @click="openDeleteConfirm({{ $attribute->id }}, '{{ addslashes($attribute->name) }}')"
-														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-														<x-icons.delete />
-													</button>
-												</div>
-											</td>
-										</tr>
-									@empty
-										<tr>
-											<td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">No attributes found</td>
-										</tr>
-									@endforelse
-								</tbody>
-							</table>
-						</div>
-					</div>
-
-					<!-- Pagination -->
-					@if ($attributes->hasPages())
-						<div class="px-6 py-4 border-t border-gray-200 dark:border-white/5">
-							<div class="flex items-center justify-between">
-								<button @click="window.location.href='{{ $attributes->appends(request()->query())->previousPageUrl() }}'"
-									{{ !$attributes->appends(request()->query())->previousPageUrl() ? 'disabled' : '' }}
-									class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200 sm:px-3.5 {{ !$attributes->appends(request()->query())->previousPageUrl() ? 'opacity-50 cursor-not-allowed' : '' }}">
-									<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path fill-rule="evenodd" clip-rule="evenodd"
-											d="M2.58301 9.99868C2.58272 10.1909 2.65588 10.3833 2.80249 10.53L7.79915 15.5301C8.09194 15.8231 8.56682 15.8233 8.85981 15.5305C9.15281 15.2377 9.15297 14.7629 8.86018 14.4699L5.14009 10.7472L16.6675 10.7472C17.0817 10.7472 17.4175 10.4114 17.4175 9.99715C17.4175 9.58294 17.0817 9.24715 16.6675 9.24715L5.14554 9.24715L8.86017 5.53016C9.15297 5.23717 9.15282 4.7623 8.85983 4.4695C8.56684 4.1767 8.09197 4.17685 7.79917 4.46984L2.84167 9.43049C2.68321 9.568 2.58301 9.77087 2.58301 9.99715C2.58301 9.99766 2.58301 9.99817 2.58301 9.99868Z"
-											fill="currentColor" />
-									</svg>
-									<span class="hidden sm:inline">Previous</span>
-								</button>
-
-								<span class="block text-sm font-medium text-gray-700 dark:text-gray-400 sm:hidden">Page
-									{{ $attributes->currentPage() }} of {{ $attributes->lastPage() }}</span>
-
-								<ul class="hidden items-center gap-0.5 sm:flex">
-									@foreach ($attributes->appends(request()->query())->links()->elements[0] as $page => $url)
-										<li>
-											<button @click="window.location.href='{{ $url }}'"
-												class="flex h-10 w-10 items-center justify-center rounded-lg text-theme-sm font-medium {{ $page == $attributes->currentPage() ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-blue-500/8 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-500' }}">
-												{{ $page }}
-											</button>
-										</li>
-									@endforeach
-								</ul>
-
-								<button @click="window.location.href='{{ $attributes->appends(request()->query())->nextPageUrl() }}'"
-									{{ !$attributes->appends(request()->query())->nextPageUrl() ? 'disabled' : '' }}
-									class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200 sm:px-3.5 {{ !$attributes->appends(request()->query())->nextPageUrl() ? 'opacity-50 cursor-not-allowed' : '' }}">
-									<span class="hidden sm:inline">Next</span>
-									<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path fill-rule="evenodd" clip-rule="evenodd"
-											d="M17.4175 9.9986C17.4178 10.1909 17.3446 10.3832 17.198 10.53L12.2013 15.5301C11.9085 15.8231 11.4337 15.8233 11.1407 15.5305C10.8477 15.2377 10.8475 14.7629 11.1403 14.4699L14.8604 10.7472L3.33301 10.7472C2.91879 10.7472 2.58301 10.4114 2.58301 9.99715C2.58301 9.58294 2.91879 9.24715 3.33301 9.24715L14.8549 9.24715L11.1403 5.53016C10.8475 5.23717 10.8477 4.7623 11.1407 4.4695C11.4336 4.1767 11.9085 4.17685 12.2013 4.46984L17.1588 9.43049C17.3173 9.568 17.4175 9.77087 17.4175 9.99715C17.4175 9.99763 17.4175 9.99812 17.4175 9.9986Z"
-											fill="currentColor" />
-									</svg>
-								</button>
-							</div>
-						</div>
-					@endif
+				<div>
+					<p class="text-sm text-gray-500 dark:text-gray-400">Required Fields</p>
+					<p class="text-xl font-semibold text-gray-800 dark:text-white/90">
+						{{ $attributes->where('is_required', true)->count() }}</p>
 				</div>
-
-				<!-- Create/Edit Modals -->
-				@include('admin.attributes.partials.add-modal')
-				@include('admin.attributes.partials.edit-modal')
-
-				<!-- Delete Confirmation Modal -->
-				<div x-show="showDeleteModal" x-transition.opacity.duration.300ms
-					class="fixed inset-0 z-99999 flex items-center justify-center bg-black/50" style="display: none;">
-					<div @click.away="showDeleteModal = false" x-transition:enter="transition ease-out duration-300"
-						x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-						x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
-						x-transition:leave-end="opacity-0 scale-95"
-						class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg dark:bg-gray-800">
-						<!-- Icon -->
-						<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-							<svg class="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-							</svg>
-						</div>
-
-						<!-- Content -->
-						<div class="text-center">
-							<h3 class="mb-2 text-lg font-semibold text-gray-800 dark:text-white">Delete Attribute</h3>
-							<p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
-								Are you sure you want to delete <strong x-text="deleteAttributeName"
-									class="text-gray-700 dark:text-gray-200"></strong>?
-								This action cannot be undone.
-							</p>
-
-							<!-- Buttons -->
-							<div class="flex gap-3">
-								<button @click="showDeleteModal = false"
-									class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-									Cancel
-								</button>
-								<button @click="confirmDelete()" :disabled="isDeleting"
-									class="flex-1 rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
-									<span x-show="!isDeleting">Delete</span>
-									<span x-show="isDeleting" class="flex items-center justify-center gap-2">
-										<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-											<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-											</circle>
-											<path class="opacity-75" fill="currentColor"
-												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-											</path>
-										</svg>
-										Deleting...
-									</span>
-								</button>
-							</div>
-						</div>
-					</div>
+			</div>
+		</div>
+		<div class="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3 p-4">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+					<svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+					</svg>
+				</div>
+				<div>
+					<p class="text-sm text-gray-500 dark:text-gray-400">Filterable</p>
+					<p class="text-xl font-semibold text-gray-800 dark:text-white/90">
+						{{ $attributes->where('is_filterable', true)->count() }}</p>
+				</div>
+			</div>
+		</div>
+		<div class="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3 p-4">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+					<svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+					</svg>
+				</div>
+				<div>
+					<p class="text-sm text-gray-500 dark:text-gray-400">With Values</p>
+					@php
+						$withValues = 0;
+						foreach ($attributes as $attr) {
+						    if ($attr->values && $attr->values->count() > 0) {
+						        $withValues++;
+						    }
+						}
+					@endphp
+					<p class="text-xl font-semibold text-gray-800 dark:text-white/90">{{ $withValues }}</p>
 				</div>
 			</div>
 		</div>
 	</div>
-@endsection
 
-@push('scripts')
-	<script>
-		document.addEventListener('alpine:init', () => {
-			Alpine.data('attributeManager', (config) => ({
-				searchTerm: config.initialSearch,
-				showModal: false,
-				showEditModal: false,
-				modalMode: 'create',
-				editingAttribute: null,
-				toastMessage: '',
-				toastType: 'success',
-				toastShow: false,
-				showDeleteModal: false,
-				deleteAttributeId: null,
-				deleteAttributeName: '',
-				isDeleting: false,
-				isSubmitting: false,
-				formData: {
-					name: '',
-					type: '',
-					is_required: false,
-					is_filterable: false,
-					description: ''
-				},
-				formErrors: null,
+	<!-- Attributes Table -->
+	<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+		<div class="overflow-x-auto" id="attributes-table-container">
+			@include('admin.attributes.partials.table', ['attributes' => $attributes])
+		</div>
+	</div>
 
-				showToast(message, type = 'success') {
-					this.toastMessage = message;
-					this.toastType = type;
-					this.toastShow = true;
-					setTimeout(() => {
-						this.toastShow = false;
-					}, 3000);
-				},
+	<!-- Create/Edit Modal -->
+	@include('admin.attributes.partials.modal')
 
-				openCreateModal() {
-					this.modalMode = 'create';
-					this.formData = {
-						name: '',
-						type: '',
-						is_required: false,
-						is_filterable: false,
-						description: ''
-					};
-					this.formErrors = null;
-					this.showModal = true;
-				},
+	<!-- Delete Confirmation Modal -->
+	<x-admin.common.confirm-delete :id="'delete-confirm-modal'" title="Delete Attribute"
+		message="Are you sure you want to delete this attribute? This action cannot be undone." :on-confirm="'confirmDelete'"
+		:on-cancel="'closeDeleteModal'" />
 
-				openEditModal(attribute) {
-					this.modalMode = 'edit';
-					this.editingAttribute = attribute;
-					this.formErrors = null;
-					document.getElementById('edit_attribute_id').value = attribute.id;
-					document.getElementById('edit_attribute_name').value = attribute.name;
-					document.getElementById('edit_attribute_type').value = attribute.type;
-					document.getElementById('edit_attribute_required').checked = attribute.is_required;
-					document.getElementById('edit_attribute_filterable').checked = attribute.is_filterable;
-					document.getElementById('edit_attribute_description').value = attribute.description ||
-						'';
-					document.getElementById('editAttributeForm').action =
-						`/admin/attributes/${attribute.id}`;
-					this.showEditModal = true;
-				},
+	@push('scripts')
+		<script>
+			function openCreateModal() {
+				document.getElementById('attribute-form').reset();
+				document.getElementById('attribute-id').value = '';
+				document.getElementById('modal-title').textContent = 'Add New Attribute';
+				document.getElementById('modal-submit-text').textContent = 'Save Attribute';
+				document.getElementById('initial-values-container').classList.add('hidden');
+				document.getElementById('attribute-modal').classList.remove('hidden');
+			}
 
-				closeModal() {
-					this.showModal = false;
-					this.editingAttribute = null;
-					this.formData = {
-						name: '',
-						type: '',
-						is_required: false,
-						is_filterable: false,
-						description: ''
-					};
-					this.formErrors = null;
-				},
+			function openEditModal(id, name, type, is_required, is_filterable, description, initialValues) {
+				document.getElementById('attribute-form').reset();
+				document.getElementById('attribute-id').value = id;
+				document.getElementById('attr-name').value = name || '';
+				document.getElementById('attr-type').value = type || 'text';
+				document.getElementById('attr-required').checked = is_required == 1;
+				document.getElementById('attr-filterable').checked = is_filterable == 1;
+				document.getElementById('attr-description').value = description || '';
+				document.getElementById('attr-initial-values').value = initialValues ? initialValues.replace(/__NEWLINE__/g,
+					'\n') : '';
+				document.getElementById('modal-title').textContent = 'Edit Attribute';
+				document.getElementById('modal-submit-text').textContent = 'Update Attribute';
 
-				closeEditModal() {
-					this.showEditModal = false;
-					this.editingAttribute = null;
-					this.formErrors = null;
-				},
+				// Show/hide initial values based on type
+				const initialValuesContainer = document.getElementById('initial-values-container');
+				if (type === 'select' || type === 'multiselect') {
+					initialValuesContainer.classList.remove('hidden');
+				} else {
+					initialValuesContainer.classList.add('hidden');
+				}
 
-				async saveAttribute() {
-					this.isSubmitting = true;
-					this.formErrors = null;
+				document.getElementById('attribute-modal').classList.remove('hidden');
+			}
 
-					try {
-						const formData = new FormData();
-						formData.append('name', this.formData.name);
-						formData.append('type', this.formData.type);
-						formData.append('is_required', this.formData.is_required ? 1 : 0);
-						formData.append('is_filterable', this.formData.is_filterable ? 1 : 0);
-						formData.append('description', this.formData.description);
-						formData.append('_token', config.csrf);
+			function closeModal() {
+				document.getElementById('attribute-modal').classList.add('hidden');
+			}
 
-						const response = await fetch(config.storeRoute, {
-							method: 'POST',
-							headers: {
-								'X-Requested-With': 'XMLHttpRequest'
-							},
-							body: formData
-						});
+			// Show/hide initial values based on type selection
+			document.getElementById('attr-type').addEventListener('change', function() {
+				const initialValuesContainer = document.getElementById('initial-values-container');
+				if (this.value === 'select' || this.value === 'multiselect') {
+					initialValuesContainer.classList.remove('hidden');
+				} else {
+					initialValuesContainer.classList.add('hidden');
+				}
+			});
 
-						const text = await response.text();
-						let data;
-						try {
-							data = JSON.parse(text);
-						} catch (e) {
-							console.error('Response:', text.substring(0, 500));
-							throw new Error('Invalid JSON response');
-						}
+			function saveAttribute(event) {
+				event.preventDefault();
+				const form = event.target;
+				const formData = new FormData(form);
+				const id = formData.get('id');
+				const url = id ? "{{ route('admin.attributes.update', ':id') }}".replace(':id', id) :
+					'{{ route('admin.attributes.store') }}';
+				const method = id ? 'PUT' : 'POST';
 
-						if (response.ok && data.success) {
-							this.showToast(data.message || 'Attribute created successfully!');
-							this.showModal = false;
-							setTimeout(() => {
-								window.location.reload();
-							}, 1500);
-						} else if (data.errors) {
-							this.formErrors = data.errors;
-							this.showToast('Please fix the validation errors', 'error');
+				fetch(url, {
+						method: method,
+						headers: {
+							'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+							'Accept': 'application/json',
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify(Object.fromEntries(formData))
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.success) {
+							closeModal();
+							showToast(data.message || 'Attribute saved successfully!', 'success');
+							sleepReload(1500);
 						} else {
-							this.showToast(data.message || 'Error creating attribute', 'error');
+							showToast(data.message || 'Error saving attribute', 'error');
 						}
-					} catch (error) {
+					})
+					.catch(error => {
 						console.error('Error:', error);
-						this.showToast('An unexpected error occurred', 'error');
-					} finally {
-						this.isSubmitting = false;
-					}
-				},
+						showToast('Error saving attribute', 'error');
+					});
+			}
 
-				async updateAttribute() {
-					this.isSubmitting = true;
-					this.formErrors = null;
+			function deleteAttribute(id) {
+				// Open delete confirmation modal
+				const modal = document.getElementById('delete-confirm-modal');
+				if (modal) {
+					modal.dataset.attributeId = id;
+					modal.classList.remove('hidden');
+				}
+			}
 
-					try {
-						const formData = new FormData();
-						formData.append('name', document.getElementById('edit_attribute_name').value);
-						formData.append('type', document.getElementById('edit_attribute_type').value);
-						formData.append('is_required', document.getElementById(
-							'edit_attribute_required').checked ? 1 : 0);
-						formData.append('is_filterable', document.getElementById(
-							'edit_attribute_filterable').checked ? 1 : 0);
-						formData.append('description', document.getElementById(
-							'edit_attribute_description').value);
-						formData.append('_token', config.csrf);
-						formData.append('_method', 'PUT');
-
-						const response = await fetch(`/admin/attributes/${this.editingAttribute.id}`, {
-							method: 'POST',
+			function confirmDelete() {
+				const modal = document.getElementById('delete-confirm-modal');
+				const id = modal.dataset.attributeId;
+				if (id) {
+					fetch("{{ route('admin.attributes.destroy', ':id') }}".replace(':id', id), {
+							method: 'DELETE',
 							headers: {
-								'X-Requested-With': 'XMLHttpRequest'
-							},
-							body: formData
+								'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+								'Accept': 'application/json',
+							}
+						})
+						.then(response => response.json())
+						.then(data => {
+							if (data.success) {
+								showToast(data.message || 'Attribute deleted successfully!', 'success');
+								sleepReload(1500);
+							} else {
+								showToast(data.message || 'Error deleting attribute', 'error');
+							}
+						})
+						.catch(error => {
+							console.error('Error:', error);
+							showToast('Error deleting attribute', 'error');
 						});
+				}
+				modal.classList.add('hidden');
+			}
 
-						const text = await response.text();
-						let data;
-						try {
-							data = JSON.parse(text);
-						} catch (e) {
-							console.error('Response:', text.substring(0, 500));
-							throw new Error('Invalid JSON response');
+			function closeDeleteModal() {
+				document.getElementById('delete-confirm-modal').classList.add('hidden');
+			}
+
+			function showToast(message, type = 'success') {
+				// Create toast element
+				const toast = document.createElement('div');
+				toast.className =
+					`fixed top-4 right-4 z-99999 px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 min-w-70 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+				toast.style.animation = 'slideIn 0.3s ease-out';
+				toast.innerHTML = `
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${type === 'success'
+                            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />'
+                            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />'}
+                    </svg>
+                    <span class="text-sm font-medium">${message}</span>
+                `;
+				document.body.appendChild(toast);
+
+				// Remove after 3 seconds
+				setTimeout(() => {
+					toast.remove();
+				}, 3000);
+			}
+		</script>
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				const tbody = document.getElementById('sortable-attributes');
+				if (tbody && typeof Sortable !== 'undefined') {
+					new Sortable(tbody, {
+						handle: '.drag-handle',
+						animation: 150,
+						ghostClass: 'sortable-ghost',
+						onEnd: function(evt) {
+							const order = [];
+							tbody.querySelectorAll('tr[data-id]').forEach(row => {
+								order.push(row.dataset.id);
+							});
+
+							fetch('{{ route('admin.attributes.reorder') }}', {
+									method: 'POST',
+									headers: {
+										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+											.content,
+										'Content-Type': 'application/json',
+									},
+									body: JSON.stringify({
+										order: order
+									})
+								})
+								.then(response => response.json())
+								.then(data => {
+									if (data.success) {
+										showToast('Order saved successfully', 'success');
+									}
+								})
+								.catch(error => {
+									console.error('Error saving order:', error);
+								});
 						}
-
-						if (response.ok && data.success) {
-							this.showToast(data.message || 'Attribute updated successfully!');
-							this.showEditModal = false;
-							setTimeout(() => {
-								window.location.reload();
-							}, 1500);
-						} else if (data.errors) {
-							this.formErrors = data.errors;
-							this.showToast('Please fix the validation errors', 'error');
-						} else {
-							this.showToast(data.message || 'Error updating attribute', 'error');
-						}
-					} catch (error) {
-						console.error('Error:', error);
-						this.showToast('An unexpected error occurred', 'error');
-					} finally {
-						this.isSubmitting = false;
-					}
-				},
-
-				openDeleteConfirm(id, name) {
-					this.deleteAttributeId = id;
-					this.deleteAttributeName = name;
-					this.showDeleteModal = true;
-				},
-
-				async confirmDelete() {
-					if (!this.deleteAttributeId) return;
-					this.isDeleting = true;
-					try {
-						const formData = new FormData();
-						formData.append('_method', 'DELETE');
-						formData.append('_token', config.csrf);
-
-						const response = await fetch(`${config.baseUrl}/${this.deleteAttributeId}`, {
-							method: 'POST',
-							headers: {
-								'X-Requested-With': 'XMLHttpRequest'
-							},
-							body: formData
-						});
-
-						const text = await response.text();
-						let data;
-						try {
-							data = JSON.parse(text);
-						} catch (e) {
-							this.showToast('Something went wrong. Please try again.', 'error');
-							this.isDeleting = false;
-							this.showDeleteModal = false;
-							return;
-						}
-						if (response.ok && data.success) {
-							this.showToast(data.message || 'Attribute deleted successfully!');
-							this.showDeleteModal = false;
-							this.isDeleting = false;
-							setTimeout(() => {
-								window.location.reload();
-							}, 1500);
-						} else {
-							this.showToast(data.message ||
-								'Unable to delete attribute. Please try again.',
-								'error');
-							this.isDeleting = false;
-						}
-					} catch (error) {
-						console.error('Delete error:', error);
-						this.showToast('Network error. Please check your connection.', 'error');
-						this.isDeleting = false;
-						this.showDeleteModal = false;
-					}
-				},
-
-				searchAttributes() {
-					const url = new URL(window.location);
-					url.searchParams.set('search', this.searchTerm);
-					url.searchParams.set('page', 1);
-					window.location.href = url.toString();
-				},
-
-				handleKeydown(e) {
-					if (e.key === 'Enter') this.searchAttributes();
-				},
-
-				init() {
-					this.$el.addEventListener('close-edit-modal', () => {
-						this.showEditModal = false;
-						this.editingAttribute = null;
-						this.formErrors = null;
 					});
 				}
-			}))
-		})
-	</script>
-@endpush
+			});
+		</script>
+	@endpush
+@endsection

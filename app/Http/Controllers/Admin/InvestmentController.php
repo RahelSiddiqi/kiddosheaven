@@ -4,18 +4,25 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Investment;
+use App\Models\Investor;
+use App\Models\FinancialTransaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class InvestmentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Investment::query();
+        $query = Investment::with('investor');
 
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('transaction_id', 'like', "%{$search}%")
+                  ->orWhereHas('investor', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
         }
 
         if ($request->filled('type')) {
@@ -26,90 +33,96 @@ class InvestmentController extends Controller
             $query->where('status', $request->status);
         }
 
-        $investments = $query->orderBy('investment_date', 'desc')->paginate(10);
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        $investments = $query->latest()->paginate(10);
 
         return view('admin.investments.index', compact('investments'));
     }
 
     public function create()
     {
-        return view('admin.investments.create');
+        $investors = Investor::where('status', 'active')->get();
+
+        return view('admin.investments.create', compact('investors'));
     }
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'type' => 'required|string|in:inventory,equipment,property,marketing,research,expansion,other',
+        $validated = $request->validate([
+            'investor_id' => 'required|exists:investors,id',
+            'type' => 'required|in:equity,debt,convertible',
             'amount' => 'required|numeric|min:0',
+            'currency' => 'required|string|size:3',
+            'ownership_percentage' => 'nullable|numeric|min:0|max:100',
+            'valuation' => 'nullable|numeric|min:0',
             'investment_date' => 'required|date',
-            'description' => 'nullable|string',
+            'terms' => 'nullable|string',
+            'expected_return' => 'nullable|numeric|min:0',
+            'maturity_date' => 'nullable|date|after:investment_date',
+            'status' => 'required|in:pending,active,completed,cancelled',
             'notes' => 'nullable|string',
         ]);
 
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first()
-                ], 422);
-            }
-            return back()->withErrors($validator)->withInput();
-        }
+        $validated['transaction_id'] = 'INV-' . strtoupper(uniqid());
 
-        Investment::create($validator->validated());
+        $investment = Investment::create($validated);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Investment created successfully.'
-            ]);
-        }
+        // Create financial transaction
+        FinancialTransaction::create([
+            'type' => 'investment',
+            'category' => 'investment',
+            'amount' => $validated['amount'],
+            'currency' => $validated['currency'],
+            'status' => 'completed',
+            'reference_type' => Investment::class,
+            'reference_id' => $investment->id,
+            'description' => "Investment #{$validated['transaction_id']}",
+            'processed_by' => auth()->user()?->id,
+        ]);
 
         return redirect()->route('admin.investments.index')
-            ->with('success', 'Investment created successfully.');
+            ->with('success', 'Investment recorded successfully.');
     }
 
     public function show(Investment $investment)
     {
+        $investment->load(['investor', 'returns']);
+
         return view('admin.investments.show', compact('investment'));
     }
 
     public function edit(Investment $investment)
     {
-        return view('admin.investments.edit', compact('investment'));
+        $investors = Investor::where('status', 'active')->get();
+
+        return view('admin.investments.edit', compact('investment', 'investors'));
     }
 
     public function update(Request $request, Investment $investment)
     {
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'type' => 'required|string|in:inventory,equipment,property,marketing,research,expansion,other',
+        $validated = $request->validate([
+            'investor_id' => 'required|exists:investors,id',
+            'type' => 'required|in:equity,debt,convertible',
             'amount' => 'required|numeric|min:0',
+            'currency' => 'required|string|size:3',
+            'ownership_percentage' => 'nullable|numeric|min:0|max:100',
+            'valuation' => 'nullable|numeric|min:0',
             'investment_date' => 'required|date',
-            'description' => 'nullable|string',
+            'terms' => 'nullable|string',
+            'expected_return' => 'nullable|numeric|min:0',
+            'maturity_date' => 'nullable|date|after:investment_date',
+            'status' => 'required|in:pending,active,completed,cancelled',
             'notes' => 'nullable|string',
-            'status' => 'nullable|string|in:active,completed,sold',
         ]);
 
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first()
-                ], 422);
-            }
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $investment->update($validator->validated());
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Investment updated successfully.'
-            ]);
-        }
+        $investment->update($validated);
 
         return redirect()->route('admin.investments.index')
             ->with('success', 'Investment updated successfully.');
@@ -123,31 +136,83 @@ class InvestmentController extends Controller
             ->with('success', 'Investment deleted successfully.');
     }
 
-    public function updateStatus(Request $request, Investment $investment)
+    public function complete(Investment $investment)
     {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|string|in:active,completed,sold',
+        $investment->update(['status' => 'completed']);
+
+        return back()->with('success', 'Investment marked as completed.');
+    }
+
+    public function cancel(Investment $investment)
+    {
+        $investment->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'Investment cancelled.');
+    }
+
+    public function investors(Request $request)
+    {
+        $query = Investor::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $investors = $query->paginate(10);
+
+        return view('admin.investors.index', compact('investors'));
+    }
+
+    public function storeInvestor(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:investors,email',
+            'phone' => 'nullable|string|max:20',
+            'company' => 'nullable|string|max:255',
+            'type' => 'required|in:individual,vc,angel,corporate',
+            'address' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
         ]);
 
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first()
-                ], 422);
-            }
-            return back()->withErrors($validator)->withInput();
+        Investor::create($validated);
+
+        return back()->with('success', 'Investor added successfully.');
+    }
+
+    public function updateInvestor(Request $request, Investor $investor)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:investors,email,' . $investor->id,
+            'phone' => 'nullable|string|max:20',
+            'company' => 'nullable|string|max:255',
+            'type' => 'required|in:individual,vc,angel,corporate',
+            'address' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        $investor->update($validated);
+
+        return back()->with('success', 'Investor updated successfully.');
+    }
+
+    public function destroyInvestor(Investor $investor)
+    {
+        if ($investor->investments()->exists()) {
+            return back()->with('error', 'Cannot delete investor with associated investments.');
         }
 
-        $investment->update(['status' => $request->status]);
+        $investor->delete();
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Status updated successfully.'
-            ]);
-        }
-
-        return back()->with('success', 'Status updated successfully.');
+        return back()->with('success', 'Investor deleted successfully.');
     }
 }

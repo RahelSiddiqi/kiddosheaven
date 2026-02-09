@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,6 +10,9 @@
 
 		<!-- Scripts -->
 		@vite(['resources/css/admin.css', 'resources/js/admin.js'])
+
+		<!-- SortableJS -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
 		<!-- Alpine.js -->
 		{{-- <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script> --}}
@@ -82,9 +86,9 @@
 				const theme = savedTheme || systemTheme;
 				if (theme === 'dark') {
 					document.documentElement.classList.add('dark');
-                    if (document.body){
-                        document.body.classList.add('dark', 'bg-gray-900');
-                    }
+					if (document.body) {
+						document.body.classList.add('dark', 'bg-gray-900');
+					}
 				} else {
 					document.documentElement.classList.remove('dark');
 					document.body.classList.remove('dark', 'bg-gray-900');

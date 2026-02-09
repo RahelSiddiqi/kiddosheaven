@@ -16,10 +16,11 @@ class MenuHelper
                 'icon' => 'box',
                 'name' => 'Catalog',
                 'subItems' => [
-                    ['name' => 'Catalogs', 'path' => '/admin/catalogs'],
                     ['name' => 'Products', 'path' => '/admin/products'],
                     ['name' => 'Brands', 'path' => '/admin/brands'],
-                    ['name' => 'Product Attributes', 'path' => '/admin/product-attributes'],
+                    ['name' => 'Catalogs', 'path' => '/admin/catalogs'],
+                    ['name' => 'Catalog Types', 'path' => '/admin/catalogs/types'],
+                    ['name' => 'Attributes', 'path' => '/admin/attributes'],
                 ],
             ],
             [
@@ -43,7 +44,12 @@ class MenuHelper
             [
                 'icon' => 'inventory',
                 'name' => 'Inventory',
-                'path' => '/admin/inventory',
+                'subItems' => [
+                    ['name' => 'Stock Overview', 'path' => '/admin/inventory'],
+                    ['name' => 'Purchase Batches', 'path' => '/admin/purchase-batches'],
+                    ['name' => 'Stock Movements', 'path' => '/admin/inventory-movements'],
+                    ['name' => 'Low Stock Alerts', 'path' => '/admin/inventory/alerts'],
+                ],
             ],
             [
                 'icon' => 'document',
@@ -58,11 +64,18 @@ class MenuHelper
                 'subItems' => [
                     ['name' => 'Sales Report', 'path' => '/admin/reports/sales'],
                     ['name' => 'Products Report', 'path' => '/admin/reports/products'],
-                    ['name' => 'Inventory Report', 'path' => '/admin/reports/inventory'],
-                    ['name' => 'Expense Report', 'path' => '/admin/reports/expenses'],
+                    ['name' => 'Batch Stock Report', 'path' => '/admin/reports/batch-stock'],
+                    ['name' => 'Expiring Items', 'path' => '/admin/reports/expiring'],
+                    ['name' => 'Product Profit', 'path' => '/admin/reports/product-profit'],
+                    ['name' => 'Category Profit', 'path' => '/admin/reports/category-profit'],
                     ['name' => 'Partner Report', 'path' => '/admin/reports/partners'],
+                    ['name' => 'Partner Contribution', 'path' => '/admin/reports/partner-contribution'],
+                    ['name' => 'Investor ROI', 'path' => '/admin/reports/investor-roi'],
+                    ['name' => 'Expense Report', 'path' => '/admin/reports/expenses'],
                     ['name' => 'Investment Report', 'path' => '/admin/reports/investments'],
                     ['name' => 'Profit & Loss', 'path' => '/admin/reports/profit-loss'],
+                    ['name' => 'Financial Summary', 'path' => '/admin/reports/financial-summary'],
+                    ['name' => 'Cost History', 'path' => '/admin/reports/cost-history'],
                 ],
             ],
             [
@@ -72,6 +85,8 @@ class MenuHelper
                     ['name' => 'Expenses', 'path' => '/admin/expenses'],
                     ['name' => 'Partners', 'path' => '/admin/partners'],
                     ['name' => 'Investments', 'path' => '/admin/investments'],
+                    ['name' => 'Capital Accounts', 'path' => '/admin/capital-accounts'],
+                    ['name' => 'Transactions', 'path' => '/admin/financial-transactions'],
                 ],
             ],
             [

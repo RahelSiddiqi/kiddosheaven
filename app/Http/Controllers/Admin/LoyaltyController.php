@@ -5,83 +5,186 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LoyaltyProgram;
 use App\Models\LoyaltyTransaction;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class LoyaltyController extends Controller
 {
-    public function index(Request $request)
+    public function programs(Request $request)
     {
-        $program = LoyaltyProgram::getActiveProgram();
+        $programs = LoyaltyProgram::query();
 
-        $transactions = LoyaltyTransaction::with('user', 'program', 'order')
-            ->latest()
-            ->when($request->filled('type'), function($q) use ($request) {
-                $q->where('type', $request->type);
-            })
-            ->when($request->filled('search'), function($q) use ($request) {
-                $q->whereHas('user', function($user) use ($request) {
-                    $user->where('name', 'like', "%{$request->search}%")
-                        ->orWhere('email', 'like', "%{$request->search}%");
-                });
-            })
-            ->paginate(20)
-            ->appends($request->all());
+        if ($request->filled('search')) {
+            $programs->where('name', 'like', '%' . $request->search . '%');
+        }
 
-        $stats = [
-            'total_points_issued' => LoyaltyTransaction::earned()->sum('points'),
-            'total_points_redeemed' => LoyaltyTransaction::redeemed()->sum('points'),
-            'active_users' => LoyaltyTransaction::select('user_id')->distinct()->count(),
-            'active_program' => $program,
-        ];
+        if ($request->filled('status')) {
+            $programs->where('is_active', $request->status === 'active');
+        }
 
-        return view('admin.loyalty.index', compact('transactions', 'stats', 'program'));
+        $programs = $programs->paginate(10);
+
+        return view('admin.loyalty.programs', compact('programs'));
+    }
+
+    public function storeProgram(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:loyalty_programs,name',
+            'description' => 'nullable|string',
+            'points_per_dollar' => 'required|numeric|min:0',
+            'points_to_dollar_ratio' => 'required|numeric|min:0',
+            'expiry_months' => 'nullable|integer|min:0',
+            'tier_thresholds' => 'nullable|array',
+            'tier_thresholds.*.name' => 'required|string',
+            'tier_thresholds.*.min_points' => 'required|numeric',
+            'tier_thresholds.*.multiplier' => 'required|numeric|min:1',
+            'is_active' => 'boolean',
+        ]);
+
+        LoyaltyProgram::create([
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'description' => $validated['description'] ?? null,
+            'points_per_dollar' => $validated['points_per_dollar'],
+            'points_to_dollar_ratio' => $validated['points_to_dollar_ratio'],
+            'expiry_months' => $validated['expiry_months'] ?? 12,
+            'tier_thresholds' => $validated['tier_thresholds'] ?? [],
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        return back()->with('success', 'Loyalty program created successfully.');
     }
 
     public function updateProgram(Request $request, LoyaltyProgram $program)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'points_per_currency' => ['required', 'numeric', 'min:0.01'],
-            'minimum_points' => ['required', 'integer', 'min:1'],
-            'discount_percentage' => ['required', 'numeric', 'min:0.01'],
-            'is_active' => ['boolean'],
+            'name' => 'required|string|max:255|unique:loyalty_programs,name,' . $program->id,
+            'description' => 'nullable|string',
+            'points_per_dollar' => 'required|numeric|min:0',
+            'points_to_dollar_ratio' => 'required|numeric|min:0',
+            'expiry_months' => 'nullable|integer|min:0',
+            'tier_thresholds' => 'nullable|array',
+            'tier_thresholds.*.name' => 'required|string',
+            'tier_thresholds.*.min_points' => 'required|numeric',
+            'tier_thresholds.*.multiplier' => 'required|numeric|min:1',
+            'is_active' => 'boolean',
         ]);
 
-        $program->update($validated);
+        $program->update([
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'description' => $validated['description'] ?? null,
+            'points_per_dollar' => $validated['points_per_dollar'],
+            'points_to_dollar_ratio' => $validated['points_to_dollar_ratio'],
+            'expiry_months' => $validated['expiry_months'] ?? 12,
+            'tier_thresholds' => $validated['tier_thresholds'] ?? [],
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
 
-        return redirect()->route('admin.loyalty.index')
-            ->with('success', 'Loyalty program updated successfully.');
+        return back()->with('success', 'Loyalty program updated successfully.');
     }
 
-    public function transactions()
+    public function destroyProgram(LoyaltyProgram $program)
     {
-        $transactions = LoyaltyTransaction::with('user', 'program')
-            ->latest()
-            ->paginate(20);
+        $program->delete();
+
+        return back()->with('success', 'Loyalty program deleted successfully.');
+    }
+
+    public function transactions(Request $request)
+    {
+        $query = LoyaltyTransaction::with('user');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        $transactions = $query->latest()->paginate(15);
 
         return view('admin.loyalty.transactions', compact('transactions'));
     }
 
-    public function addPoints(Request $request)
+    public function customers(Request $request)
+    {
+        $query = User::where('loyalty_points', '>', 0)
+            ->with('loyaltyTransactions');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $customers = $query->paginate(15);
+
+        return view('admin.loyalty.customers', compact('customers'));
+    }
+
+    public function adjustPoints(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => ['required', 'exists:users,id'],
-            'points' => ['required', 'integer', 'min:1'],
-            'description' => ['nullable', 'string'],
+            'user_id' => 'required|exists:users,id',
+            'points' => 'required|integer',
+            'type' => 'required|in:add,deduct',
+            'reason' => 'required|string|max:255',
         ]);
 
-        $program = LoyaltyProgram::getActiveProgram();
+        $user = User::findOrFail($validated['user_id']);
+
+        if ($validated['type'] === 'add') {
+            $user->increment('loyalty_points', $validated['points']);
+        } else {
+            if ($user->loyalty_points < $validated['points']) {
+                return back()->with('error', 'Insufficient loyalty points.');
+            }
+            $user->decrement('loyalty_points', $validated['points']);
+        }
 
         LoyaltyTransaction::create([
-            'user_id' => $validated['user_id'],
-            'loyalty_program_id' => $program?->id,
-            'type' => 'bonus',
-            'points' => $validated['points'],
-            'description' => $validated['description'] ?? 'Manual points addition',
+            'user_id' => $user->id,
+            'type' => 'adjustment',
+            'points' => $validated['type'] === 'add' ? $validated['points'] : -$validated['points'],
+            'balance' => $user->loyalty_points,
+            'description' => $validated['reason'],
+            'order_id' => null,
         ]);
 
-        return redirect()->route('admin.loyalty.index')
-            ->with('success', 'Points added successfully.');
+        return back()->with('success', 'Points adjusted successfully.');
+    }
+
+    public function assignProgram(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'program_id' => 'required|exists:loyalty_programs,id',
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+        $user->update([
+            'loyalty_program_id' => $validated['program_id'],
+        ]);
+
+        return back()->with('success', 'Loyalty program assigned successfully.');
     }
 }

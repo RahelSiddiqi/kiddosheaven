@@ -6,227 +6,153 @@ use App\Http\Controllers\Controller;
 use App\Models\FlashSale;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class FlashSaleController extends Controller
 {
     public function index(Request $request)
     {
-        $status = $request->get('status', 'all');
-        $search = $request->get('search', '');
+        $query = FlashSale::with('products');
 
-        $query = FlashSale::query();
-
-        if ($search) {
-            $query->where('name', 'like', "%{$search}%");
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
-        switch ($status) {
-            case 'active':
-                $query->active();
-                break;
-            case 'scheduled':
-                $query->scheduled();
-                break;
-            case 'ended':
-                $query->ended();
-                break;
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
         }
 
-        $flashSales = $query->orderBy('starts_at', 'desc')->paginate(10);
+        $flashSales = $query->latest()->paginate(10);
 
-        // Stats
-        $stats = [
-            'total' => FlashSale::count(),
-            'active' => FlashSale::active()->count(),
-            'scheduled' => FlashSale::scheduled()->count(),
-            'ended' => FlashSale::ended()->count(),
-        ];
-
-        return view('admin.flash-sales.index', compact('flashSales', 'stats', 'status', 'search'));
+        return view('admin.flash-sales.index', compact('flashSales'));
     }
 
     public function create()
     {
-        $products = Product::select('id', 'name', 'price', 'stock_quantity')->get();
+        $products = Product::where('is_active', true)->get();
+
         return view('admin.flash-sales.create', compact('products'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'discount_percentage' => 'required|numeric|min:1|max:99',
-            'starts_at' => 'required|date',
-            'ends_at' => 'required|date|after:starts_at',
-            'products' => 'nullable|array',
-            'products.*' => 'exists:products,id',
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
+            'background_color' => 'nullable|string|max:20',
+            'text_color' => 'nullable|string|max:20',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'products' => 'required|array|min:1',
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.discount_price' => 'required|numeric|min:0',
+            'products.*.discount_type' => 'required|in:percentage,fixed',
+            'products.*.limit_per_customer' => 'nullable|integer|min:1',
         ]);
 
-        try {
-            DB::beginTransaction();
+        $flashSale = FlashSale::create([
+            'title' => $validated['title'],
+            'slug' => Str::slug($validated['title']),
+            'subtitle' => $validated['subtitle'] ?? null,
+            'background_color' => $validated['background_color'] ?? '#ff6b6b',
+            'text_color' => $validated['text_color'] ?? '#ffffff',
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'status' => 'draft',
+        ]);
 
-            $flashSale = FlashSale::create([
-                'name' => $request->name,
-                'description' => $request->description,
-                'discount_percentage' => $request->discount_percentage,
-                'starts_at' => $request->starts_at,
-                'ends_at' => $request->ends_at,
-                'status' => $request->starts_at <= now() ? 'active' : 'scheduled',
+        foreach ($validated['products'] as $product) {
+            $flashSale->products()->attach($product['id'], [
+                'discount_price' => $product['discount_price'],
+                'discount_type' => $product['discount_type'],
+                'limit_per_customer' => $product['limit_per_customer'] ?? null,
             ]);
-
-            if ($request->has('products')) {
-                $products = Product::whereIn('id', $request->products)->get();
-                foreach ($products as $product) {
-                    $flashSale->products()->attach($product->id, [
-                        'discounted_quantity' => min($product->stock_quantity, $request->discounted_quantity ?? $product->stock_quantity),
-                    ]);
-                }
-            }
-
-            DB::commit();
-
-            return redirect()->route('admin.flash-sales.index')
-                ->with('success', 'Flash sale created successfully!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('FlashSale creation failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to create flash sale. Please try again.');
         }
+
+        return redirect()->route('admin.flash-sales.index')
+            ->with('success', 'Flash sale created successfully.');
     }
 
     public function show(FlashSale $flashSale)
     {
-        $flashSale->load('products');
+        $flashSale->load(['products' => function ($query) {
+            $query->withPivot('discount_price', 'discount_type', 'limit_per_customer', 'sold_count');
+        }]);
+
         return view('admin.flash-sales.show', compact('flashSale'));
     }
 
     public function edit(FlashSale $flashSale)
     {
-        $flashSale->load('products');
-        $products = Product::select('id', 'name', 'price', 'stock_quantity')->get();
+        $flashSale->load(['products' => function ($query) {
+            $query->withPivot('discount_price', 'discount_type', 'limit_per_customer');
+        }]);
+
+        $products = Product::where('is_active', true)->get();
+
         return view('admin.flash-sales.edit', compact('flashSale', 'products'));
     }
 
     public function update(Request $request, FlashSale $flashSale)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'discount_percentage' => 'required|numeric|min:1|max:99',
-            'starts_at' => 'required|date',
-            'ends_at' => 'required|date|after:starts_at',
-            'products' => 'nullable|array',
-            'products.*' => 'exists:products,id',
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
+            'background_color' => 'nullable|string|max:20',
+            'text_color' => 'nullable|string|max:20',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'products' => 'required|array|min:1',
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.discount_price' => 'required|numeric|min:0',
+            'products.*.discount_type' => 'required|in:percentage,fixed',
+            'products.*.limit_per_customer' => 'nullable|integer|min:1',
         ]);
 
-        try {
-            DB::beginTransaction();
+        $flashSale->update([
+            'title' => $validated['title'],
+            'slug' => Str::slug($validated['title']),
+            'subtitle' => $validated['subtitle'] ?? null,
+            'background_color' => $validated['background_color'] ?? '#ff6b6b',
+            'text_color' => $validated['text_color'] ?? '#ffffff',
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+        ]);
 
-            $flashSale->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'discount_percentage' => $request->discount_percentage,
-                'starts_at' => $request->starts_at,
-                'ends_at' => $request->ends_at,
-                'status' => $this->calculateStatus($request->starts_at, $request->ends_at),
+        $flashSale->products()->detach();
+
+        foreach ($validated['products'] as $product) {
+            $flashSale->products()->attach($product['id'], [
+                'discount_price' => $product['discount_price'],
+                'discount_type' => $product['discount_type'],
+                'limit_per_customer' => $product['limit_per_customer'] ?? null,
             ]);
-
-            if ($request->has('products')) {
-                $products = Product::whereIn('id', $request->products)->get();
-                $syncData = [];
-                foreach ($products as $product) {
-                    $syncData[$product->id] = [
-                        'discounted_quantity' => min($product->stock_quantity, $request->discounted_quantity ?? $product->stock_quantity),
-                    ];
-                }
-                $flashSale->products()->sync($syncData);
-            } else {
-                $flashSale->products()->detach();
-            }
-
-            DB::commit();
-
-            return redirect()->route('admin.flash-sales.index')
-                ->with('success', 'Flash sale updated successfully!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('FlashSale update failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to update flash sale. Please try again.');
         }
+
+        return redirect()->route('admin.flash-sales.index')
+            ->with('success', 'Flash sale updated successfully.');
     }
 
     public function destroy(FlashSale $flashSale)
     {
-        try {
-            $flashSale->products()->detach();
-            $flashSale->delete();
+        $flashSale->products()->detach();
+        $flashSale->delete();
 
-            return redirect()->route('admin.flash-sales.index')
-                ->with('success', 'Flash sale deleted successfully!');
-        } catch (\Exception $e) {
-            Log::error('FlashSale deletion failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to delete flash sale. Please try again.');
-        }
+        return redirect()->route('admin.flash-sales.index')
+            ->with('success', 'Flash sale deleted successfully.');
     }
 
-    public function toggleStatus(FlashSale $flashSale)
+    public function publish(FlashSale $flashSale)
     {
-        try {
-            $newStatus = $flashSale->status === 'active' ? 'ended' : 'active';
-            $flashSale->update(['status' => $newStatus]);
+        $flashSale->update(['status' => 'active']);
 
-            return back()->with('success', 'Flash sale status updated!');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update status.');
-        }
+        return back()->with('success', 'Flash sale published.');
     }
 
-    public function manageProducts(FlashSale $flashSale)
+    public function unpublish(FlashSale $flashSale)
     {
-        $flashSale->load('products');
-        $products = Product::select('id', 'name', 'price', 'stock_quantity')->get();
-        return view('admin.flash-sales.manage-products', compact('flashSale', 'products'));
-    }
+        $flashSale->update(['status' => 'inactive']);
 
-    public function updateProducts(Request $request, FlashSale $flashSale)
-    {
-        $request->validate([
-            'products' => 'nullable|array',
-            'products.*' => 'exists:products,id',
-        ]);
-
-        try {
-            if ($request->has('products')) {
-                $syncData = [];
-                foreach ($request->products as $productId) {
-                    $product = Product::find($productId);
-                    $syncData[$productId] = [
-                        'discounted_quantity' => min($product->stock_quantity, $request->discounted_quantity ?? $product->stock_quantity),
-                    ];
-                }
-                $flashSale->products()->sync($syncData);
-            } else {
-                $flashSale->products()->detach();
-            }
-
-            return redirect()->route('admin.flash-sales.show', $flashSale)
-                ->with('success', 'Products updated successfully!');
-        } catch (\Exception $e) {
-            Log::error('FlashSale products update failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to update products.');
-        }
-    }
-
-    protected function calculateStatus($startsAt, $endsAt)
-    {
-        $now = now();
-        if ($now->lt($startsAt)) {
-            return 'scheduled';
-        } elseif ($now->between($startsAt, $endsAt)) {
-            return 'active';
-        } else {
-            return 'ended';
-        }
+        return back()->with('success', 'Flash sale unpublished.');
     }
 }

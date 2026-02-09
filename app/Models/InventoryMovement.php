@@ -1,0 +1,161 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class InventoryMovement extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'movement_number',
+        'product_id',
+        'purchase_batch_id',
+        'inventory_item_id',
+        'movement_type',
+        'quantity',
+        'unit_cost',
+        'total_cost',
+        'selling_price',
+        'reference_type',
+        'reference_id',
+        'partner_id',
+        'notes',
+        'movement_date',
+    ];
+
+    protected $casts = [
+        'quantity' => 'integer',
+        'unit_cost' => 'decimal:2',
+        'total_cost' => 'decimal:2',
+        'selling_price' => 'decimal:2',
+        'movement_date' => 'datetime',
+    ];
+
+    const TYPE_PURCHASE = 'purchase';
+    const TYPE_SALE = 'sale';
+    const TYPE_ADJUSTMENT = 'adjustment';
+    const TYPE_RETURN = 'return';
+    const TYPE_TRANSFER = 'transfer';
+    const TYPE_DAMAGE = 'damage';
+    const TYPE_EXPIRE = 'expire';
+
+    /**
+     * Boot method to auto-generate movement number
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($movement) {
+            if (empty($movement->movement_number)) {
+                $movement->movement_number = 'MOV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
+            }
+        });
+    }
+
+    /**
+     * Get the product for this movement.
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the purchase batch for this movement.
+     */
+    public function purchaseBatch(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseBatch::class, 'purchase_batch_id');
+    }
+
+    /**
+     * Get the inventory item for this movement.
+     */
+    public function inventoryItem(): BelongsTo
+    {
+        return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
+    }
+
+    /**
+     * Get the partner for this movement.
+     */
+    public function partner(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class, 'partner_id');
+    }
+
+    /**
+     * Check if this is an inflow (purchase, return).
+     */
+    public function isInflow(): bool
+    {
+        return in_array($this->movement_type, [self::TYPE_PURCHASE, self::TYPE_RETURN]);
+    }
+
+    /**
+     * Check if this is an outflow (sale, damage, expire).
+     */
+    public function isOutflow(): bool
+    {
+        return in_array($this->movement_type, [self::TYPE_SALE, self::TYPE_DAMAGE, self::TYPE_EXPIRE]);
+    }
+
+    /**
+     * Calculate profit/loss for this movement (if sale).
+     */
+    public function getProfitAttribute(): ?float
+    {
+        if ($this->movement_type !== self::TYPE_SALE) {
+            return null;
+        }
+        $cost = $this->unit_cost ?? 0;
+        $revenue = $this->selling_price ?? 0;
+        return ($revenue - $cost) * abs($this->quantity);
+    }
+
+    /**
+     * Get badge class for movement type.
+     */
+    public function getMovementTypeBadgeClassAttribute(): string
+    {
+        return match($this->movement_type) {
+            self::TYPE_PURCHASE => 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
+            self::TYPE_SALE => 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400',
+            self::TYPE_ADJUSTMENT => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-400',
+            self::TYPE_RETURN => 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-400',
+            self::TYPE_TRANSFER => 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+            self::TYPE_DAMAGE => 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',
+            self::TYPE_EXPIRE => 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400',
+            default => 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+        };
+    }
+
+    /**
+     * Scope for purchases.
+     */
+    public function scopePurchases($query)
+    {
+        return $query->where('movement_type', self::TYPE_PURCHASE);
+    }
+
+    /**
+     * Scope for sales.
+     */
+    public function scopeSales($query)
+    {
+        return $query->where('movement_type', self::TYPE_SALE);
+    }
+
+    /**
+     * Scope for date range.
+     */
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('movement_date', [$startDate, $endDate]);
+    }
+}

@@ -3,287 +3,220 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Expense;
-use App\Models\ExpenseCategory;
-use App\Models\Investment;
+use App\Models\Order;
+use App\Models\Product;
+use App\Models\User;
 use App\Models\Partner;
-use App\Models\PartnerPayment;
-use App\Models\PartnerCalculation;
+use App\Models\Expense;
+use App\Services\FinancialCalculationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    public function expenses(Request $request)
+    protected $financialService;
+
+    public function __construct(FinancialCalculationService $financialService)
     {
-        $query = Expense::with(['category', 'partner']);
-
-        if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('from_date')) {
-            $query->whereDate('expense_date', '>=', $request->from_date);
-        }
-
-        if ($request->filled('to_date')) {
-            $query->whereDate('expense_date', '<=', $request->to_date);
-        }
-
-        $expenses = $query->orderBy('expense_date', 'desc')->get();
-        $categories = ExpenseCategory::all();
-
-        // Calculate totals
-        $totalAmount = $expenses->where('status', 'approved')->sum('amount');
-        $pendingAmount = $expenses->where('status', 'pending')->sum('amount');
-
-        // Category breakdown
-        $categoryBreakdown = ExpenseCategory::with(['expenses' => function ($query) use ($request) {
-            $query->where('status', 'approved');
-            if ($request->filled('from_date')) {
-                $query->whereDate('expense_date', '>=', $request->from_date);
-            }
-            if ($request->filled('to_date')) {
-                $query->whereDate('expense_date', '<=', $request->to_date);
-            }
-        }])->get();
-
-        return view('admin.reports.expenses', compact(
-            'expenses',
-            'categories',
-            'totalAmount',
-            'pendingAmount',
-            'categoryBreakdown'
-        ));
+        $this->financialService = $financialService;
     }
 
-    public function partners(Request $request)
+    public function dashboard()
     {
-        $partners = Partner::with(['payments', 'calculations'])->get();
+        $today = Carbon::today();
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+        $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
+        $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
 
-        $totalPaid = PartnerPayment::where('status', 'completed')
-            ->when($request->filled('from_date'), function ($query) use ($request) {
-                $query->whereDate('payment_date', '>=', $request->from_date);
-            })
-            ->when($request->filled('to_date'), function ($query) use ($request) {
-                $query->whereDate('payment_date', '<=', $request->to_date);
-            })
-            ->sum('amount');
+        $todayOrders = Order::whereDate('created_at', $today)->count();
+        $todayRevenue = Order::whereDate('created_at', $today)->sum('total');
 
-        $pendingPayments = PartnerCalculation::where('status', 'approved')->sum('payment_amount');
+        $monthOrders = Order::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+        $monthRevenue = Order::whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('total');
 
-        $partnerStats = $partners->map(function ($partner) {
-            return [
-                'partner' => $partner,
-                'total_paid' => $partner->payments()->where('status', 'completed')->sum('amount'),
-                'pending' => $partner->calculations()->where('status', 'approved')->sum('payment_amount'),
-            ];
-        });
+        $lastMonthOrders = Order::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
+        $lastMonthRevenue = Order::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->sum('total');
 
-        return view('admin.reports.partners', compact(
-            'partners',
-            'totalPaid',
-            'pendingPayments',
-            'partnerStats'
-        ));
-    }
+        $totalProducts = Product::count();
+        $totalCustomers = User::where('is_admin', false)->count();
+        $totalPartners = Partner::count();
 
-    public function investments(Request $request)
-    {
-        $query = Investment::query();
+        $recentOrders = Order::with('user')->latest()->take(5)->get();
+        $topProducts = Product::withCount('orderItems')->orderBy('order_items_count', 'desc')->take(5)->get();
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $investments = $query->orderBy('investment_date', 'desc')->get();
-
-        $totalInvested = $investments->sum('amount');
-        $totalExpectedReturn = $investments->sum('expected_return');
-        $totalActualReturn = $investments->where('status', 'completed')->sum('actual_return');
-
-        $roi = $totalInvested > 0 ? (($totalActualReturn - $totalInvested) / $totalInvested) * 100 : 0;
-
-        $typeBreakdown = Investment::select('type', DB::raw('SUM(amount) as total_amount'))
-            ->groupBy('type')
-            ->pluck('total_amount', 'type');
-
-        return view('admin.reports.investments', compact(
-            'investments',
-            'totalInvested',
-            'totalExpectedReturn',
-            'totalActualReturn',
-            'roi',
-            'typeBreakdown'
-        ));
-    }
-
-    public function profitLoss(Request $request)
-    {
-        // Get date range
-        $fromDate = $request->filled('from_date') ? $request->from_date : now()->startOfMonth()->toDateString();
-        $toDate = $request->filled('to_date') ? $request->to_date : now()->endOfMonth()->toDateString();
-
-        // Calculate total revenue (from orders)
-        $totalRevenue = \App\Models\Order::where('status', 'delivered')
-            ->whereBetween('created_at', [$fromDate, $toDate . ' 23:59:59'])
-            ->sum('total_amount');
-
-        // Calculate total expenses
-        $totalExpenses = Expense::where('status', 'approved')
-            ->whereBetween('expense_date', [$fromDate, $toDate])
-            ->sum('amount');
-
-        // Calculate partner payments
-        $partnerPayments = PartnerPayment::where('status', 'completed')
-            ->whereBetween('payment_date', [$fromDate, $toDate])
-            ->sum('amount');
-
-        // Calculate investments
-        $totalInvestments = Investment::whereBetween('investment_date', [$fromDate, $toDate])
-            ->sum('amount');
-
-        // Net profit/loss
-        $grossProfit = $totalRevenue - $totalExpenses - $partnerPayments;
-        $netProfit = $grossProfit - $totalInvestments;
-
-        // Expense breakdown by category
-        $expenseBreakdown = ExpenseCategory::with(['expenses' => function ($query) use ($fromDate, $toDate) {
-            $query->where('status', 'approved')
-                  ->whereBetween('expense_date', [$fromDate, $toDate]);
-        }])->get()->map(function ($category) {
-            return [
-                'name' => $category->name,
-                'amount' => $category->expenses->sum('amount'),
-                'color' => $category->color,
-            ];
-        })->sortByDesc('amount');
-
-        return view('admin.reports.profit-loss', compact(
-            'fromDate',
-            'toDate',
-            'totalRevenue',
-            'totalExpenses',
-            'partnerPayments',
-            'totalInvestments',
-            'grossProfit',
-            'netProfit',
-            'expenseBreakdown'
+        return view('admin.reports.dashboard', compact(
+            'todayOrders', 'todayRevenue',
+            'monthOrders', 'monthRevenue',
+            'lastMonthOrders', 'lastMonthRevenue',
+            'totalProducts', 'totalCustomers', 'totalPartners',
+            'recentOrders', 'topProducts'
         ));
     }
 
     public function sales(Request $request)
     {
-        $fromDate = $request->filled('from_date') ? $request->from_date : now()->startOfMonth()->toDateString();
-        $toDate = $request->filled('to_date') ? $request->to_date : now()->endOfMonth()->toDateString();
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
 
-        $query = \App\Models\Order::query();
+        $query = Order::whereBetween('created_at', [$startDate, $endDate]);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
-        }
+        $orders = $query->with('user', 'items')->latest()->paginate(15);
+        $totalRevenue = $query->sum('total');
+        $totalOrders = $query->count();
+        $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
 
-        $orders = $query->whereBetween('created_at', [$fromDate, $toDate . ' 23:59:59'])
-            ->orderBy('created_at', 'desc')
+        $dailySales = $query->selectRaw('DATE(created_at) as date, COUNT(*) as orders, SUM(total) as revenue')
+            ->groupBy('date')
+            ->orderBy('date')
             ->get();
 
-        $totalSales = $orders->where('payment_status', 'paid')->sum('total_amount');
-        $totalOrders = $orders->count();
-        $avgOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
-
         return view('admin.reports.sales', compact(
-            'fromDate',
-            'toDate',
-            'orders',
-            'totalSales',
-            'totalOrders',
-            'avgOrderValue'
+            'orders', 'totalRevenue', 'totalOrders', 'averageOrderValue',
+            'dailySales', 'startDate', 'endDate'
         ));
     }
 
     public function products(Request $request)
     {
-        $query = \App\Models\Product::query();
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        $products = Product::withCount(['orderItems' => function ($query) use ($startDate, $endDate) {
+            $query->whereHas('order', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate]);
+            });
+        }])
+        ->withSum(['orderItems' => function ($query) use ($startDate, $endDate) {
+            $query->whereHas('order', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate]);
+            });
+        }], 'quantity')
+        ->withSum(['orderItems' => function ($query) use ($startDate, $endDate) {
+            $query->whereHas('order', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate]);
+            });
+        }], 'subtotal')
+        ->get();
+
+        return view('admin.reports.products', compact('products', 'startDate', 'endDate'));
+    }
+
+    public function customers(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        $customers = User::where('is_admin', false)
+            ->withCount(['orders' => function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }])
+            ->withSum(['orders' => function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }], 'total')
+            ->orderBy('orders_count', 'desc')
+            ->paginate(15);
+
+        return view('admin.reports.customers', compact('customers', 'startDate', 'endDate'));
+    }
+
+    public function partners(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        $partners = Partner::withCount(['orders' => function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }])
+        ->withSum(['orders' => function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }], 'total')
+        ->orderBy('orders_count', 'desc')
+        ->paginate(15);
+
+        return view('admin.reports.partners', compact('partners', 'startDate', 'endDate'));
+    }
+
+    public function expenses(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        $query = Expense::whereBetween('expense_date', [$startDate, $endDate]);
 
         if ($request->filled('category')) {
-            $query->where('catalog_id', $request->category);
+            $query->where('category_id', $request->category);
         }
 
-        if ($request->filled('status')) {
-            $status = $request->status === 'active' ? 'active' : 'inactive';
-            $query->where('status', $status);
-        }
+        $expenses = $query->with('category', 'partner')->latest()->paginate(15);
+        $totalExpenses = $query->sum('amount');
 
-        $products = $query->with('catalog')->orderBy('created_at', 'desc')->get();
+        $expensesByCategory = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->join('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
+            ->selectRaw('expense_categories.name as category, SUM(expenses.amount) as total')
+            ->groupBy('expense_categories.name')
+            ->get();
 
-        $totalProducts = $products->count();
-        $activeProducts = $products->where('status', 'active')->count();
-        $lowStockProducts = $products->filter(function ($p) {
-            return $p->stock <= 10 && $p->stock > 0;
-        })->count();
-        $outOfStockProducts = $products->where('stock_quantity', 0)->count();
-
-        $totalStockValue = $products->sum(function ($p) {
-            return $p->stock * $p->price;
-        });
-
-        return view('admin.reports.products', compact(
-            'products',
-            'totalProducts',
-            'activeProducts',
-            'lowStockProducts',
-            'outOfStockProducts',
-            'totalStockValue'
-        ));
+        return view('admin.reports.expenses', compact('expenses', 'totalExpenses', 'expensesByCategory', 'startDate', 'endDate'));
     }
 
     public function inventory(Request $request)
     {
-        $query = \App\Models\Product::query();
+        $products = Product::with(['inventory', 'category', 'brand'])
+            ->when($request->filled('low_stock'), function ($query) {
+                $query->whereHas('inventory', function ($q) {
+                    $q->whereRaw('quantity <= reorder_level');
+                });
+            })
+            ->when($request->filled('out_of_stock'), function ($query) {
+                $query->whereHas('inventory', function ($q) {
+                    $q->where('quantity', 0);
+                });
+            })
+            ->paginate(15);
 
-        if ($request->filled('category')) {
-            $query->where('catalog_id', $request->category);
-        }
+        return view('admin.reports.inventory', compact('products'));
+    }
 
-        if ($request->filled('stock_status')) {
-            if ($request->stock_status === 'out_of_stock') {
-                $query->where('stock_quantity', 0);
-            } elseif ($request->stock_status === 'low_stock') {
-                $query->whereBetween('stock_quantity', [1, 10]);
-            } elseif ($request->stock_status === 'in_stock') {
-                $query->where('stock_quantity', '>', 10);
+    public function financial(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        $report = $this->financialService->generateReport($startDate, $endDate);
+
+        return view('admin.reports.financial', compact('report', 'startDate', 'endDate'));
+    }
+
+    public function exportSales(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        $orders = Order::whereBetween('created_at', [$startDate, $endDate])
+            ->with('user')
+            ->get();
+
+        return response()->streamDownload(function () use ($orders) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Order ID', 'Customer', 'Email', 'Total', 'Status', 'Date']);
+
+            foreach ($orders as $order) {
+                fputcsv($file, [
+                    $order->order_number,
+                    $order->user?->name,
+                    $order->user?->email,
+                    $order->total,
+                    $order->status,
+                    $order->created_at->format('Y-m-d H:i:s'),
+                ]);
             }
-        }
 
-        $products = $query->with('catalog')->orderBy('stock_quantity', 'asc')->get();
-
-        $totalProducts = $products->count();
-        $totalStock = $products->sum('stock_quantity');
-        $totalValue = $products->sum(function ($p) {
-            return $p->stock_quantity * $p->price;
-        });
-        $lowStockCount = $products->whereBetween('stock_quantity', [1, 10])->count();
-        $outOfStockCount = $products->where('stock_quantity', 0)->count();
-
-        return view('admin.reports.inventory', compact(
-            'products',
-            'totalProducts',
-            'totalStock',
-            'totalValue',
-            'lowStockCount',
-            'outOfStockCount'
-        ));
+            fclose($file);
+        }, 'sales-report-' . now()->format('Y-m-d') . '.csv');
     }
 }

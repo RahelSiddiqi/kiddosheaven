@@ -7,12 +7,17 @@
     $currentPath = request()->path();
 @endphp
 
+<script>
+    // Make currentPath available globally for Alpine
+    window.menuCurrentPath = '{{ $currentPath }}';
+</script>
+
 <aside id="sidebar"
     class="fixed flex flex-col mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-99999 border-r border-gray-200"
     x-data="{
         openSubmenus: {},
         init() {
-            // Auto-open Dashboard menu on page load
+            // Auto-open menu based on current path
             this.initializeActiveMenus();
         },
         initializeActiveMenus() {
@@ -21,14 +26,18 @@
             @foreach ($menuGroups as $groupIndex => $menuGroup)
                 @foreach ($menuGroup['items'] as $itemIndex => $item)
                     @if (isset($item['subItems']))
-                        // Check if any submenu item matches current path
+                        // Check if any submenu item matches current path (including child pages)
                         @foreach ($item['subItems'] as $subItem)
-                            if (currentPath === '{{ ltrim($subItem['path'], '/') }}' ||
-                                window.location.pathname === '{{ $subItem['path'] }}') {
+                            const subItemPath{{ $loop->parent->index }}_{{ $loop->index }} = '{{ ltrim($subItem['path'], '/') }}';
+                            if (currentPath === subItemPath{{ $loop->parent->index }}_{{ $loop->index }} ||
+                                currentPath.startsWith(subItemPath{{ $loop->parent->index }}_{{ $loop->index }} + '/') ||
+                                window.location.pathname === subItemPath{{ $loop->parent->index }}_{{ $loop->index }} ||
+                                window.location.pathname.startsWith(subItemPath{{ $loop->parent->index }}_{{ $loop->index }} + '/')) {
                                 this.openSubmenus['{{ $groupIndex }}-{{ $itemIndex }}'] = true;
-                            } @endforeach
-            @endif
-            @endforeach
+                            }
+                        @endforeach
+                    @endif
+                @endforeach
             @endforeach
         },
         toggleSubmenu(groupIndex, itemIndex) {
@@ -47,7 +56,13 @@
             return this.openSubmenus[key] || false;
         },
         isActive(path) {
-            return window.location.pathname === path || '{{ $currentPath }}' === path.replace(/^\//, '');
+            const currentPath = window.menuCurrentPath || '{{ $currentPath }}';
+            const cleanPath = path.replace(/^\//, '');
+            // Check for exact match or child pages
+            return window.location.pathname === path ||
+                   currentPath === cleanPath ||
+                   currentPath.startsWith(cleanPath + '/') ||
+                   window.location.pathname.startsWith(path + '/');
         }
     }"
     :class="{

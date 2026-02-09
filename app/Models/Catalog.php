@@ -22,6 +22,7 @@ class Catalog extends Model
 
     /**
      * Get the attributes for this catalog.
+     * This returns attributes from the catalog's type that are enabled for this catalog.
      */
     public function attributes()
     {
@@ -31,23 +32,51 @@ class Catalog extends Model
     }
 
     /**
-     * Get catalog type options.
+     * Get all available attributes from the catalog's type.
+     * These are attributes that CAN be enabled for this catalog.
+     */
+    public function availableAttributes()
+    {
+        if (!$this->type) {
+            return collect();
+        }
+
+        return $this->type->attributes;
+    }
+
+    /**
+     * Get the enabled attribute IDs for this catalog.
+     */
+    public function getEnabledAttributeIdsAttribute()
+    {
+        return $this->attributes()->pluck('product_attributes.id')->toArray();
+    }
+
+    /**
+     * Check if an attribute is available for this catalog (from its type).
+     */
+    public function canUseAttribute($attributeId)
+    {
+        if (!$this->type) {
+            return false;
+        }
+
+        return $this->type->attributes()->where('product_attributes.id', $attributeId)->exists();
+    }
+
+    /**
+     * Get catalog type options from database.
      */
     public static function getTypeOptions(): array
     {
-        return [
-            'general' => 'General',
-            'grocery' => 'Grocery',
-            'clothing' => 'Clothing & Apparel',
-            'toys' => 'Toys & Games',
-            'food' => 'Food & Beverages',
-            'electronics' => 'Electronics',
-            'home' => 'Home & Garden',
-            'beauty' => 'Beauty & Personal Care',
-            'sports' => 'Sports & Outdoors',
-            'books' => 'Books & Media',
-            'baby' => 'Baby Products',
-            'health' => 'Health & Wellness',
-        ];
+        return CatalogType::getActiveOptions();
+    }
+
+    /**
+     * Get the catalog type.
+     */
+    public function type()
+    {
+        return $this->belongsTo(CatalogType::class, 'type', 'slug');
     }
 }

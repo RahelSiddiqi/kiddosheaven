@@ -76,7 +76,7 @@
 			<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 				<!-- Program Settings -->
 				@if ($program)
-					<form action="{{ route('admin.loyalty.updateProgram', $program) }}" method="POST"
+					<form action="{{ route('admin.loyalty.update', $program) }}" method="POST"
 						class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
 						@csrf
 						@method('PUT')
@@ -164,7 +164,7 @@
 				@endif
 
 				<!-- Add Points Form -->
-				<form action="{{ route('admin.loyalty.addPoints') }}" method="POST"
+				<form action="{{ route('admin.loyalty.add-points') }}" method="POST"
 					class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
 					@csrf
 					<div class="mb-6">
