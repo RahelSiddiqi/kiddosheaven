@@ -168,7 +168,7 @@
 							</td>
 							<td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
 								<div class="flex items-center gap-2 justify-end">
-									<a href="{{ route('admin.catalogs.types.attributes', $type) }}"
+									<a href="{{ route('admin.catalogs.types.attributes.index', $type) }}"
 										class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
 										<svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor"
 											viewBox="0 0 24 24">

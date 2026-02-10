@@ -2,7 +2,8 @@
 
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CatalogController;
-use App\Http\Controllers\Admin\CatalogTypeController;
+use App\Http\Controllers\Admin\Catalog\CatalogTypeController;
+use App\Http\Controllers\Admin\Catalog\CatalogTypeAttributeController;
 use App\Http\Controllers\Admin\CapitalAccountController;
 use App\Http\Controllers\Admin\CmsPageController;
 use App\Http\Controllers\Admin\CouponController;
@@ -14,8 +15,13 @@ use App\Http\Controllers\Admin\InventoryMovementController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\LoyaltyController;
-use App\Http\Controllers\Admin\ProductAttributeController;
-use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\Attribute\AttributeController;
+use App\Http\Controllers\Admin\Attribute\AttributeValueController;
+use App\Http\Controllers\Admin\Attribute\CatalogAttributeController;
+use App\Http\Controllers\Admin\Product\ProductController;
+use App\Http\Controllers\Admin\Product\ProductImageController;
+use App\Http\Controllers\Admin\Product\ProductVariantController;
+use App\Http\Controllers\Admin\Product\ProductAttributeValueController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PurchaseBatchController;
 use App\Http\Controllers\Admin\ReviewController;
@@ -54,12 +60,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::post('reorder', [CatalogTypeController::class, 'reorder'])->name('reorder');
 
             // Nested attribute routes for specific type
-            Route::prefix('{type}')->group(function () {
-                Route::get('attributes', [CatalogTypeController::class, 'attributes'])->name('attributes');
-                Route::post('attach-attribute', [CatalogTypeController::class, 'attachAttribute'])->name('attach-attribute');
-                Route::delete('detach-attribute/{attribute}', [CatalogTypeController::class, 'detachAttribute'])->name('detach-attribute');
-                Route::post('sync-attributes', [CatalogTypeController::class, 'syncAttributes'])->name('sync-attributes');
-                Route::post('reorder-attributes', [CatalogTypeController::class, 'reorderAttributes'])->name('reorder-attributes');
+            Route::prefix('{type}')->name('attributes.')->group(function () {
+                Route::get('attributes', [CatalogTypeAttributeController::class, 'index'])->name('index');
+                Route::post('attach', [CatalogTypeAttributeController::class, 'attach'])->name('attach');
+                Route::delete('detach/{attribute}', [CatalogTypeAttributeController::class, 'detach'])->name('detach');
+                Route::post('sync', [CatalogTypeAttributeController::class, 'sync'])->name('sync');
+                Route::post('reorder', [CatalogTypeAttributeController::class, 'reorder'])->name('reorder');
             });
 
             // Resource routes last
@@ -73,10 +79,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         // CATALOG ATTRIBUTES (nested under specific catalog)
         // ============================================
         Route::prefix('{catalog}/attributes')->name('attributes.')->group(function () {
-            Route::get('/', [ProductAttributeController::class, 'catalogAttributes'])->name('index');
-            Route::post('/', [ProductAttributeController::class, 'attachAttribute'])->name('attach');
-            Route::delete('{attribute}', [ProductAttributeController::class, 'detachAttribute'])->name('detach');
-            Route::put('reorder', [ProductAttributeController::class, 'reorderCatalogAttributes'])->name('reorder');
+            Route::get('/', [CatalogAttributeController::class, 'index'])->name('index');
+            Route::post('/', [CatalogAttributeController::class, 'attach'])->name('attach');
+            Route::delete('{attribute}', [CatalogAttributeController::class, 'detach'])->name('detach');
+            Route::put('reorder', [CatalogAttributeController::class, 'reorder'])->name('reorder');
         });
 
         // Other nested routes for specific catalog
@@ -93,28 +99,53 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     Route::prefix('attributes')->name('attributes.')->group(function () {
         // Action routes before resource
-        Route::post('reorder', [ProductAttributeController::class, 'reorder'])->name('reorder');
+        Route::post('reorder', [AttributeController::class, 'reorder'])->name('reorder');
 
         // Attribute Values (nested under specific attribute)
         Route::prefix('{attribute}/values')->name('values.')->group(function () {
-            Route::get('edit', [ProductAttributeController::class, 'editValues'])->name('edit');
-            Route::post('/', [ProductAttributeController::class, 'storeValue'])->name('store');
-            Route::put('{value}', [ProductAttributeController::class, 'updateValue'])->name('update');
-            Route::delete('{value}', [ProductAttributeController::class, 'destroyValue'])->name('destroy');
-            Route::post('reorder', [ProductAttributeController::class, 'reorderValues'])->name('reorder');
+            Route::get('edit', [AttributeValueController::class, 'edit'])->name('edit');
+            Route::post('/', [AttributeValueController::class, 'store'])->name('store');
+            Route::put('{value}', [AttributeValueController::class, 'update'])->name('update');
+            Route::delete('{value}', [AttributeValueController::class, 'destroy'])->name('destroy');
+            Route::post('reorder', [AttributeValueController::class, 'reorder'])->name('reorder');
         });
 
         // Resource routes last
-        Route::resource('/', ProductAttributeController::class)->parameters(['' => 'attribute']);
+        Route::resource('/', AttributeController::class)->parameters(['' => 'attribute']);
     });
 
     // ============================================
     // PRODUCTS
     // ============================================
     Route::prefix('products')->name('products.')->group(function () {
-        // Action routes before resource
+        // Bulk action route
         Route::post('bulk-action', [ProductController::class, 'bulkAction'])->name('bulk-action');
+        
+        // Get attributes by catalog (AJAX helper)
         Route::get('attributes/{catalog}', [ProductController::class, 'getAttributesByCatalog'])->name('attributes');
+
+        // Product-specific nested routes
+        Route::prefix('{product}')->group(function () {
+            // Image management
+            Route::post('images/upload', [ProductImageController::class, 'upload'])->name('images.upload');
+            Route::post('images/set-primary', [ProductImageController::class, 'setPrimary'])->name('images.set-primary');
+            Route::delete('images/delete', [ProductImageController::class, 'destroy'])->name('images.destroy');
+            Route::post('images/reorder', [ProductImageController::class, 'reorder'])->name('images.reorder');
+
+            // Variant management
+            Route::get('variants', [ProductVariantController::class, 'index'])->name('variants.index');
+            Route::post('variants', [ProductVariantController::class, 'store'])->name('variants.store');
+            Route::put('variants/{variant}', [ProductVariantController::class, 'update'])->name('variants.update');
+            Route::delete('variants/{variant}', [ProductVariantController::class, 'destroy'])->name('variants.destroy');
+            Route::post('variants/generate', [ProductVariantController::class, 'generate'])->name('variants.generate');
+
+            // Attribute value management
+            Route::get('attribute-values', [ProductAttributeValueController::class, 'index'])->name('attribute-values.index');
+            Route::post('attribute-values', [ProductAttributeValueController::class, 'store'])->name('attribute-values.store');
+            Route::put('attribute-values', [ProductAttributeValueController::class, 'update'])->name('attribute-values.update');
+            Route::delete('attribute-values/{attribute}', [ProductAttributeValueController::class, 'destroy'])->name('attribute-values.destroy');
+            Route::post('attribute-values/sync-from-catalog', [ProductAttributeValueController::class, 'syncFromCatalog'])->name('attribute-values.sync');
+        });
 
         // Resource routes last
         Route::resource('/', ProductController::class)->parameters(['' => 'product']);

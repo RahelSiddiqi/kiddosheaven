@@ -339,7 +339,7 @@
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
 			const sortableEl = document.getElementById('sortable-attributes');
-			const reorderRoute = '{{ route('admin.catalogs.types.test-reorder', $type) }}';
+			const reorderRoute = '{{ route('admin.catalogs.types.attributes.reorder', $type) }}';
 			const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
 			if (sortableEl && typeof Sortable !== 'undefined') {
