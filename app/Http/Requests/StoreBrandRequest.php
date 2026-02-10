@@ -22,9 +22,7 @@ class StoreBrandRequest extends FormRequest
             'name' => ['required', 'string', 'max:255', 'unique:brands,name,' . $brandId],
             'slug' => ['required', 'string', 'max:255', 'unique:brands,slug,' . $brandId],
             'description' => ['nullable', 'string'],
-            'logo' => $isUpdate
-                ? ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp,svg', 'max:2048']
-                : ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp,svg', 'max:2048'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp,svg', 'max:2048'],
             'website' => ['nullable', 'url', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ];

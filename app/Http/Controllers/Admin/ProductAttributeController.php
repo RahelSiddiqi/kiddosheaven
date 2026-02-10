@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Catalog;
+use App\Models\CatalogType;
 use App\Models\ProductAttribute;
 use App\Models\ProductAttributeValue;
 use Illuminate\Http\Request;
@@ -39,9 +40,8 @@ class ProductAttributeController extends Controller
      */
     public function catalogAttributes(Catalog $catalog)
     {
-        $attributes = ProductAttribute::orderBy('name')->get();
+        $attributes = CatalogType::where('slug', $catalog->type)->first()->attributes()->with('values')->orderBy('pivot_sort_order')->get();
         $catalogAttributes = $catalog->attributes()->with('values')->orderBy('sort_order')->get();
-
         return view('admin.attributes.catalog-attributes', compact('catalog', 'attributes', 'catalogAttributes'));
     }
 
@@ -115,7 +115,7 @@ class ProductAttributeController extends Controller
             ],
         ]);
 
-        return redirect()->route('admin.attributes.catalog-attributes', $catalog)
+        return redirect()->route('admin.catalogs.attributes.index', $catalog)
             ->with('success', 'Attribute attached successfully');
     }
 
@@ -126,7 +126,7 @@ class ProductAttributeController extends Controller
     {
         $catalog->attributes()->detach($attribute->id);
 
-        return redirect()->route('admin.attributes.catalog-attributes', $catalog)
+        return redirect()->route('admin.catalogs.attributes.index', $catalog)
             ->with('success', 'Attribute detached successfully');
     }
 
@@ -140,9 +140,9 @@ class ProductAttributeController extends Controller
         ]);
 
         foreach ($request->order as $index => $attributeId) {
-            $catalog->attributes()
-                ->where('product_attribute_id', $attributeId)
-                ->update(['sort_order' => $index + 1]);
+            $catalog->attributes()->updateExistingPivot($attributeId, [
+                'sort_order' => $index + 1
+            ]);
         }
 
         return response()->json(['success' => true]);

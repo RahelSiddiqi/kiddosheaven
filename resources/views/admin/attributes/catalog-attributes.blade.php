@@ -2,35 +2,9 @@
 
 @section('title', "Manage {$catalog->name} Attributes — Kiddo's Heaven")
 
-@push('styles')
-	<style>
-		.drag-handle {
-			cursor: grab;
-		}
-
-		.drag-handle:active {
-			cursor: grabbing;
-		}
-
-		.sortable-ghost {
-			opacity: 0.4;
-			background: #f3f4f6;
-		}
-	</style>
-@endpush
-
 @section('content')
-	<!-- Toast Notification -->
-	@if (session('success'))
-		<div x-data="{ show: true }" x-show="show" x-transition
-			class="fixed top-4 right-4 z-99999 px-4 py-3 rounded-lg shadow-lg bg-green-500 text-white flex items-center gap-2 min-w-70"
-			style="animation: slideIn 0.3s ease-out;">
-			<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-			</svg>
-			<span class="text-sm font-medium">{{ session('success') }}</span>
-		</div>
-	@endif
+	<!-- Toast Notification Container -->
+	<div id="toast-container" class="fixed top-4 right-4 z-99999 space-y-2"></div>
 
 	<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
 		<div class="flex items-center gap-3">
@@ -87,7 +61,8 @@
 									@foreach ($catalogAttributes as $attr)
 										<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors" data-id="{{ $attr->id }}">
 											<td class="px-4 py-3">
-												<svg class="w-5 h-5 text-gray-400 drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<svg class="w-5 h-5 text-gray-400 drag-handle cursor-move" fill="none" stroke="currentColor"
+													viewBox="0 0 24 24">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
 												</svg>
 											</td>
@@ -118,12 +93,10 @@
 													class="inline">
 													@csrf
 													@method('DELETE')
-													<button type="submit"
-														class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 dark:bg-gray-800 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-														title="Detach Attribute" onclick="return confirm('Are you sure you want to detach this attribute?')">
-														<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-														</svg>
+													<button type="submit" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+														title="Detach Attribute"
+														onclick="event.preventDefault(); openDetachModal({{ $attr->id }}, '{{ $attr->name }}', this.closest('form'))">
+														<x-icons.delete />
 													</button>
 												</form>
 											</td>
@@ -237,10 +210,75 @@
 		</div>
 	</div>
 
+	<!-- Detach Confirmation Modal -->
+	<x-admin.common.confirm-delete :id="'detach-confirm-modal'" title="Detach Attribute"
+		message="Are you sure you want to detach this attribute from the catalog?" :on-confirm="'confirmDetach'" :on-cancel="'closeDetachModal'" />
+
 	@push('scripts')
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 		<script>
+			// Detach Modal Handler
+			let detachForm = null;
+
+			function openDetachModal(id, name, form) {
+				detachForm = form;
+				document.getElementById('detach-confirm-modal').classList.remove('hidden');
+			}
+
+			function confirmDetach() {
+				closeDetachModal();
+				if (detachForm) {
+					detachForm.submit();
+				}
+			}
+
+			function closeDetachModal() {
+				document.getElementById('detach-confirm-modal').classList.add('hidden');
+			}
+
+			// Toast notification function
+			function showToast(message, type = 'success') {
+				const container = document.getElementById('toast-container');
+				const toast = document.createElement('div');
+
+				const colors = {
+					success: 'bg-green-500',
+					error: 'bg-red-500',
+					info: 'bg-blue-500'
+				};
+
+				const icons = {
+					success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />',
+					error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />',
+					info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+				};
+
+				toast.className =
+					`px-4 py-3 rounded-lg shadow-lg ${colors[type]} text-white flex items-center gap-2 min-w-70 transform transition-all duration-300 ease-out translate-x-full`;
+				toast.innerHTML = `
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${icons[type]}
+                    </svg>
+                    <span class="text-sm font-medium">${message}</span>
+                `;
+
+				container.appendChild(toast);
+
+				// Trigger animation
+				setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+
+				// Auto remove after 3 seconds
+				setTimeout(() => {
+					toast.classList.add('translate-x-full', 'opacity-0');
+					setTimeout(() => toast.remove(), 300);
+				}, 3000);
+			}
+
 			document.addEventListener('DOMContentLoaded', function() {
+				// Show session success message
+				@if (session('success'))
+					showToast('{{ session('success') }}', 'success');
+				@endif
+
 				const tbody = document.getElementById('sortable-catalog-attributes');
 				if (tbody && typeof Sortable !== 'undefined') {
 					new Sortable(tbody, {
@@ -258,7 +296,9 @@
 										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
 											.content,
 										'Content-Type': 'application/json',
+										'Accept': 'application/json',
 									},
+									method: 'PUT',
 									body: JSON.stringify({
 										order: order
 									})
@@ -271,6 +311,7 @@
 								})
 								.catch(error => {
 									console.error('Error saving order:', error);
+									showToast('Failed to save order', 'error');
 								});
 						}
 					});

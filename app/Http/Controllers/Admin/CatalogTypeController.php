@@ -7,6 +7,7 @@ use App\Models\CatalogType;
 use App\Models\ProductAttribute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CatalogTypeController extends Controller
@@ -59,28 +60,28 @@ class CatalogTypeController extends Controller
     /**
      * Update the specified catalog type.
      */
-    public function update(Request $request, CatalogType $catalogType)
+    public function update(Request $request, CatalogType $type)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:catalog_types,name,' . $catalogType->id,
+            'name' => 'required|string|max:255|unique:catalog_types,name,' . $type->id,
             'description' => 'nullable|string|max:500',
             'icon' => 'nullable|string|max:100',
             'is_active' => 'nullable|boolean',
         ]);
 
-        $catalogType->update([
+        $type->update([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'description' => $validated['description'] ?? null,
             'icon' => $validated['icon'] ?? null,
-            'is_active' => $request->has('is_active'),
+            'is_active' => $validated['is_active'] ?? false,
         ]);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Catalog type updated successfully',
-                'type' => $catalogType,
+                'type' => $type,
             ]);
         }
 
@@ -131,7 +132,7 @@ class CatalogTypeController extends Controller
             CatalogType::where('id', $typeId)->update(['sort_order' => $index + 1]);
         }
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'debug_loaded' => true]);
     }
 
     /**
@@ -139,7 +140,8 @@ class CatalogTypeController extends Controller
      */
     public function attributes(CatalogType $type)
     {
-        $typeAttributes = $type->attributes()->with('values')->orderBy('pivot_sort_order')->get();
+        // The relationship already orders by pivot sort_order, no need to re-order here
+        $typeAttributes = $type->attributes()->with('values')->get();
         $allAttributes = ProductAttribute::orderBy('name')->get();
 
         return view('admin.catalogs.types.attributes', compact('type', 'typeAttributes', 'allAttributes'));
@@ -199,20 +201,51 @@ class CatalogTypeController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Attributes updated successfully']);
     }
-
     /**
      * Reorder attributes for a catalog type.
      */
     public function reorderAttributes(Request $request, CatalogType $type)
     {
-        $request->validate([
-            'order' => 'required|array',
-        ]);
+        try {
+            // Handle both JSON and FormData requests
+            $orderData = null;
+            if ($request->has('order')) {
+                $orderJson = $request->get('order');
+                if (is_string($orderJson)) {
+                    $orderData = json_decode($orderJson, true);
+                } else {
+                    $orderData = $orderJson;
+                }
+            }
+            
+            if (empty($orderData) || !is_array($orderData)) {
+                return response()->json(['success' => false, 'message' => 'Order is required and must be an array'], 422);
+            }
 
-        foreach ($request->order as $index => $attributeId) {
-            $type->attributes()->updateExistingPivot($attributeId, ['sort_order' => $index + 1]);
+            Log::info('reorderAttributes called', [
+                'type_id' => $type->id,
+                'order' => $orderData
+            ]);
+
+            foreach ($orderData as $index => $attributeId) {
+                $type->attributes()->updateExistingPivot($attributeId, ['sort_order' => $index + 1]);
+            }
+
+            // Verify the update
+            $verifyAttrs = $type->attributes()->orderByPivot('sort_order', 'asc')->get();
+            Log::info('Reorder complete', [
+                'type_id' => $type->id,
+                'new_order' => $verifyAttrs->pluck('id')->toArray(),
+                'sort_orders' => $verifyAttrs->pluck('pivot.sort_order')->toArray()
+            ]);
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            Log::error('reorderAttributes error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-
-        return response()->json(['success' => true]);
     }
 }

@@ -131,13 +131,16 @@
 											<td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
 												<div class="flex items-center gap-2 justify-end">
 													<a href="{{ route('admin.catalogs.show', $catalog->id) }}"
-																class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="View Details">
-																<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-																</svg>
-														</a>
-														<button @click="openEditModal({ id: {{ $catalog->id }}, name: '{{ addslashes($catalog->name) }}', type: '{{ $catalog->type }}', show_on_home: {{ $catalog->show_on_home ? 'true' : 'false' }} })"
+														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="View Details">
+														<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+																d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+																d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+														</svg>
+													</a>
+													<button
+														@click="openEditModal({ id: {{ $catalog->id }}, name: '{{ addslashes($catalog->name) }}', type: '{{ $catalog->type }}', show_on_home: {{ $catalog->show_on_home ? 'true' : 'false' }} })"
 														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
 														<x-icons.edit />
 													</button>
@@ -205,7 +208,8 @@
 				<!-- Create/Edit Modal -->
 				<div x-show="showModal" x-cloak class="fixed inset-0 z-10000 overflow-y-auto">
 					<div class="flex min-h-screen items-center justify-center p-4">
-						<div x-show="showModal" @click="closeModal()" class="fixed inset-0 bg-black/50 transition-opacity z-10000 cursor-pointer"></div>
+						<div x-show="showModal" @click="closeModal()"
+							class="fixed inset-0 bg-black/50 transition-opacity z-10000 cursor-pointer"></div>
 						<div class="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 shadow-xl z-10001"
 							x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95"
 							x-transition:enter-end="opacity-100 scale-100">

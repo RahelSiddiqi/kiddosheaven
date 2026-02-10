@@ -15,6 +15,7 @@ class MenuHelper
             [
                 'icon' => 'box',
                 'name' => 'Catalog',
+                'path' => '/admin/catalogs',
                 'subItems' => [
                     ['name' => 'Products', 'path' => '/admin/products'],
                     ['name' => 'Brands', 'path' => '/admin/brands'],
@@ -111,11 +112,101 @@ class MenuHelper
         ];
     }
 
-    public static function isActive($path)
+    /**
+     * Get current request path (cleaned)
+     */
+    public static function getCurrentPath()
     {
-        return request()->is(ltrim($path, '/'));
+        return trim(request()->path(), '/');
     }
 
+    /**
+     * Check if a path exactly matches the current path
+     */
+    public static function isExactActive($path)
+    {
+        return self::getCurrentPath() === trim($path, '/');
+    }
+
+    /**
+     * Check if current path is a child of the given path
+     * e.g., /admin/catalogs/types is a child of /admin/catalogs
+     */
+    public static function isChildActive($path)
+    {
+        $currentPath = self::getCurrentPath();
+        $cleanPath = trim($path, '/');
+
+        // Check if current path starts with this path followed by a slash
+        return $cleanPath !== '' && str_starts_with($currentPath, $cleanPath . '/');
+    }
+
+    /**
+     * Check if parent menu should be active (child is active)
+     */
+    public static function isParentActive($subItems)
+    {
+        foreach ($subItems as $subItem) {
+            // Parent is active if any subitem is exactly matched
+            // or if any subitem's child path is matched
+            if (self::isExactActive($subItem['path'])) {
+                return true;
+            }
+            // Also check if current path is a child of this subitem's path
+            if (self::isChildActive($subItem['path'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the submenu keys that should be open based on current path
+     */
+    public static function getOpenSubmenus($menuGroups)
+    {
+        $openSubmenus = [];
+
+        foreach ($menuGroups as $groupIndex => $menuGroup) {
+            foreach ($menuGroup['items'] as $itemIndex => $item) {
+                if (isset($item['subItems'])) {
+                    // Open submenu if parent is active
+                    if (self::isParentActive($item['subItems'])) {
+                        $openSubmenus[] = $groupIndex . '-' . $itemIndex;
+                    }
+                }
+            }
+        }
+
+        return $openSubmenus;
+    }
+
+    /**
+     * Get which submenu item is exactly active
+     */
+    public static function getActiveSubmenuItem($menuGroups)
+    {
+        foreach ($menuGroups as $groupIndex => $menuGroup) {
+            foreach ($menuGroup['items'] as $itemIndex => $item) {
+                if (isset($item['subItems'])) {
+                    foreach ($item['subItems'] as $subItem) {
+                        if (self::isExactActive($subItem['path'])) {
+                            return [
+                                'groupIndex' => $groupIndex,
+                                'itemIndex' => $itemIndex,
+                                'path' => $subItem['path']
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get icon SVG by name
+     */
     public static function getIconSvg($iconName)
     {
         $icons = [

@@ -440,6 +440,10 @@
 						formData.append('_token', config.csrf);
 
 						const response = await fetch(`${config.baseUrl}/${this.deleteBrandId}`, {
+							headers: {
+								'accept': 'application/json',
+								'X-Requested-With': 'XMLHttpRequest'
+							},
 							method: 'POST',
 							body: formData
 						});
