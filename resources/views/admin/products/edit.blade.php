@@ -154,7 +154,7 @@
 							<label for="description"
 								class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Description</label>
 							<textarea id="description" name="description" rows="4"
-							 class="rich-text w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800 @error('description') border-red-500 @enderror">{{ old('description', $product->description) }}</textarea>
+							 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800 @error('description') border-red-500 @enderror">{{ old('description', $product->description) }}</textarea>
 							@error('description')
 								<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
 							@enderror
@@ -171,24 +171,24 @@
 						<div>
 							<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Features</label>
 							<textarea name="features" rows="3" placeholder="• Feature 1&#10;• Feature 2&#10;• Feature 3"
-							 class="rich-text w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('features', $product->features) }}</textarea>
+							 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('features', $product->features) }}</textarea>
 						</div>
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<div>
 								<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Care Instructions</label>
 								<textarea name="care_instructions" rows="2" placeholder="Machine wash cold, tumble dry low"
-								 class="rich-text w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('care_instructions', $product->care_instructions) }}</textarea>
+								 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('care_instructions', $product->care_instructions) }}</textarea>
 							</div>
 							<div>
 								<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Ingredients</label>
 								<textarea name="ingredients" rows="2" placeholder="List of ingredients"
-								 class="rich-text w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('ingredients', $product->ingredients) }}</textarea>
+								 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('ingredients', $product->ingredients) }}</textarea>
 							</div>
 						</div>
 						<div>
 							<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Safety Warning</label>
 							<textarea name="safety_warning" rows="2" placeholder="Not suitable for children under 3 years"
-							 class="rich-text w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('safety_warning', $product->safety_warning) }}</textarea>
+							 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('safety_warning', $product->safety_warning) }}</textarea>
 						</div>
 					</div>
 				</div>
@@ -368,8 +368,8 @@
 				<div>
 					<label for="meta_description" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Meta
 						Description</label>
-					<textarea id="meta_description" name="meta_description" maxlength="500" rows="2"
-					 class="rich-text w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('meta_description', $product->meta_description) }}</textarea>
+<textarea id="meta_description" name="meta_description" maxlength="500" rows="2"
+										 class="no-tinymce w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('meta_description', $product->meta_description) }}</textarea>
 					@error('meta_description')
 						<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
 					@enderror
@@ -602,7 +602,7 @@
 							<label for="return_policy" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Return
 								Policy</label>
 							<textarea id="return_policy" name="return_policy" rows="2"
-							 class="rich-text w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('return_policy', $product->return_policy) }}</textarea>
+							 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('return_policy', $product->return_policy) }}</textarea>
 						</div>
 						<div>
 							<label for="warranty" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Warranty</label>
@@ -655,65 +655,92 @@
 	@push('scripts')
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
-				// Set up a retry function for initializing libraries
-				const initLibraries = () => {
-					let attempts = 0;
-					const maxAttempts = 50; // 50 * 100ms = 5 seconds
-
-					const tryInit = () => {
-						attempts++;
-
-						// Initialize TinyMCE
-						if (window.tinymce && tinymce.init) {
-							const isDark = document.documentElement.classList.contains('dark');
-							tinymce.init({
-								selector: 'textarea.rich-text',
-								menubar: false,
-								height: 220,
-								statusbar: false,
-								plugins: 'lists link',
-								toolbar: 'undo redo | bold italic underline | bullist numlist | link removeformat',
-								skin: isDark ? 'oxide-dark' : 'oxide',
-								content_css: isDark ? 'dark' : 'default',
-								content_style: isDark ?
-									'body { background-color: #0f172a; color: #e5e7eb; }' :
-									'body { background-color: #ffffff; color: #111827; }'
-							});
+				// Make selects searchable
+				document.querySelectorAll('select:not(.no-select2)').forEach(function(select) {
+					select.style.display = 'block';
+					select.style.opacity = '0';
+					select.style.position = 'absolute';
+					select.style.zIndex = '-1';
+					
+					// Create custom container
+					var container = document.createElement('div');
+					container.className = 'custom-select relative';
+					container.style.height = '44px';
+					select.parentNode.insertBefore(container, select);
+					container.appendChild(select);
+					
+					// Create custom display
+					var display = document.createElement('div');
+					display.className = 'custom-select-display w-full h-11 px-4 flex items-center justify-between rounded-xl border border-gray-300 bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white cursor-pointer';
+					display.innerHTML = '<span class="selected-text">' + (select.options[select.selectedIndex]?.text || 'Select an option') + '</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
+					container.appendChild(display);
+					
+					// Create dropdown
+					var dropdown = document.createElement('div');
+					dropdown.className = 'custom-select-dropdown absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-lg hidden z-50 max-h-60 overflow-auto';
+					container.appendChild(dropdown);
+					
+					// Create search input
+					var search = document.createElement('input');
+					search.type = 'text';
+					search.className = 'w-full px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-transparent dark:text-white focus:outline-none';
+					search.placeholder = 'Search...';
+					dropdown.appendChild(search);
+					
+					// Add options
+					Array.from(select.options).forEach(function(option) {
+						var item = document.createElement('div');
+						item.className = 'px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white';
+						item.textContent = option.text;
+						item.dataset.value = option.value;
+						dropdown.appendChild(item);
+					});
+					
+					// Toggle dropdown
+					display.addEventListener('click', function(e) {
+						e.stopPropagation();
+						dropdown.classList.toggle('hidden');
+						if (!dropdown.classList.contains('hidden')) {
+							search.focus();
 						}
+					});
+					
+					// Select option
+					dropdown.querySelectorAll(':not(input)').forEach(function(item) {
+						item.addEventListener('click', function(e) {
+							if (this.tagName === 'DIV' && !this.querySelector('input')) {
+								select.value = this.dataset.value;
+								display.querySelector('.selected-text').textContent = this.textContent;
+								dropdown.classList.add('hidden');
+								select.dispatchEvent(new Event('change'));
+							}
+						});
+					});
+					
+					// Search
+					search.addEventListener('input', function() {
+						var term = this.value.toLowerCase();
+						Array.from(dropdown.children).forEach(function(item) {
+							if (item.tagName === 'DIV' && !item.querySelector('input')) {
+								item.style.display = item.textContent.toLowerCase().includes(term) ? 'block' : 'none';
+							}
+						});
+					});
+					
+					// Close on outside click
+					document.addEventListener('click', function() {
+						dropdown.classList.add('hidden');
+					});
+				});
 
-						// Initialize Choices.js
-						if (window.Choices) {
-							['category_id', 'brand_id', 'delivery_type', 'status', 'product_type', 'stock_status', 'discount_type'].forEach(id => {
-								const el = document.getElementById(id);
-								if (el && !el.dataset.choicesInitialized) {
-									try {
-										new Choices(el, {
-											searchEnabled: true,
-											shouldSort: false,
-											itemSelectText: ''
-										});
-										el.dataset.choicesInitialized = 'true';
-									} catch (e) {
-										console.error('Choices init error for ' + id, e);
-									}
-								}
-							});
-						}
-
-						// If libraries not loaded and we haven't hit max attempts, retry
-						if ((!window.tinymce || !window.Choices) && attempts < maxAttempts) {
-							setTimeout(tryInit, 100);
-						}
-					};
-
-					tryInit();
-				};
-
-				// Start initialization
-				initLibraries();
-
-				// Collect non-variant attributes before form submission
+				// Form submission
 				const productForm = document.getElementById('product-form');
+				if (productForm) {
+					productForm.addEventListener('submit', function(e) {
+						const nonVariantAttrs = collectNonVariantAttributes();
+						document.getElementById('non_variant_attributes').value = JSON.stringify(nonVariantAttrs);
+					});
+				}
 				productForm.addEventListener('submit', function(e) {
 					const nonVariantAttrs = collectNonVariantAttributes();
 					document.getElementById('non_variant_attributes').value = JSON.stringify(nonVariantAttrs);
@@ -897,18 +924,9 @@
 					html += '</div>';
 					container.innerHTML = html;
 
-					// Initialize Choices.js for searchable selects
+					// Initialize Select2 for searchable selects
 					setTimeout(() => {
-						document.querySelectorAll('.non-variant-select').forEach(select => {
-							if (!select.dataset.choicesInitialized) {
-								new Choices(select, {
-									searchEnabled: true,
-									shouldSort: false,
-									itemSelectText: ''
-								});
-								select.dataset.choicesInitialized = 'true';
-							}
-						});
+						initSelect2();
 					}, 100);
 				}
 
@@ -1066,136 +1084,4 @@
 			});
 		</script>
 	@endpush
-	@push('styles')
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-		<style>
-			/* Choices theme alignment with light/dark */
-			.choices,
-			.choices__inner,
-			.choices__list--single {
-				background-color: #fff;
-				border-color: #d1d5db;
-				color: #111827;
-				min-height: 44px;
-				height: 44px;
-				padding: 0;
-				border-radius: 12px;
-				font-size: 0.875rem;
-				line-height: 1.25rem;
-				display: flex;
-				align-items: center;
-				transition: border-color 0.15s ease, box-shadow 0.15s ease;
-			}
-
-			.choices__inner {
-				padding: 0 14px;
-			}
-
-			.choices__list--single {
-				padding: 0;
-			}
-
-			.dark .choices__inner,
-			.dark .choices__list--single {
-				background-color: #111827;
-				border-color: #374151;
-				color: #e5e7eb;
-			}
-
-			.choices.is-focused .choices__inner {
-				border-color: #93c5fd;
-				box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-			}
-
-			.dark .choices.is-focused .choices__inner {
-				border-color: #60a5fa;
-				box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
-			}
-
-			.choices__list--dropdown {
-				background-color: #fff;
-				border-color: #d1d5db;
-				color: #111827;
-				z-index: 60;
-				border-radius: 12px;
-				font-size: 0.875rem;
-				overflow: auto;
-			}
-
-			.dark .choices__list--dropdown {
-				background-color: #0b1220;
-				border-color: #374151;
-				color: #e5e7eb;
-			}
-
-			.choices__list--dropdown .choices__item--selectable.is-highlighted,
-			.dark .choices__list--dropdown .choices__item--selectable.is-highlighted {
-				background-color: #2563eb;
-				color: #fff;
-			}
-
-			.choices[data-type*=select-one] .choices__input {
-				background-color: transparent;
-				color: inherit;
-			}
-
-			.choices__placeholder {
-				color: #6b7280;
-			}
-
-			.dark .choices__placeholder {
-				color: #9ca3af;
-			}
-
-			.choices__list--dropdown .choices__item--disabled {
-				opacity: .6;
-			}
-
-			/* Scrollbar styling for dropdowns */
-			.choices__list--dropdown::-webkit-scrollbar {
-				width: 8px;
-			}
-
-			.choices__list--dropdown::-webkit-scrollbar-track {
-				background: transparent;
-			}
-
-			.choices__list--dropdown::-webkit-scrollbar-thumb {
-				background: #cbd5e1;
-				border-radius: 9999px;
-			}
-
-			.dark .choices__list--dropdown::-webkit-scrollbar-thumb {
-				background: #475569;
-			}
-
-			/* Textareas match input background */
-			textarea.rich-text,
-			textarea.rich-text:focus-visible {
-				background-color: #fff;
-				border-radius: 12px;
-				border-color: #d1d5db;
-			}
-
-			.dark textarea.rich-text,
-			.dark textarea.rich-text:focus-visible {
-				background-color: #0f172a;
-				border-color: #374151;
-				color: #e5e7eb;
-			}
-
-			/* Layering: let dropdowns sit above TinyMCE toolbar */
-			.tox-tinymce {
-				z-index: 10;
-			}
-
-			.choices {
-				z-index: 40;
-			}
-		</style>
-	@endpush
-	@push('scripts')
-		<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
-	@endpush
-@endsection
+	@endsection

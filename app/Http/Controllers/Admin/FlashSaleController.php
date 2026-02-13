@@ -27,9 +27,9 @@ class FlashSaleController extends Controller
         $now = now();
         $stats = [
             'total' => FlashSale::count(),
-            'active' => FlashSale::where('status', 'active')->where('start_time', '<=', $now)->where('end_time', '>=', $now)->count(),
-            'scheduled' => FlashSale::where('start_time', '>', $now)->count(),
-            'ended' => FlashSale::where('end_time', '<', $now)->count(),
+            'active' => FlashSale::where('status', 'active')->where('starts_at', '<=', $now)->where('ends_at', '>=', $now)->count(),
+            'scheduled' => FlashSale::where('starts_at', '>', $now)->count(),
+            'ended' => FlashSale::where('ends_at', '<', $now)->count(),
         ];
 
         return view('admin.flash-sales.index', compact('flashSales', 'stats'));
@@ -49,8 +49,8 @@ class FlashSaleController extends Controller
             'subtitle' => 'nullable|string|max:255',
             'background_color' => 'nullable|string|max:20',
             'text_color' => 'nullable|string|max:20',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after:start_at',
             'products' => 'required|array|min:1',
             'products.*.id' => 'required|exists:products,id',
             'products.*.discount_price' => 'required|numeric|min:0',
@@ -64,8 +64,8 @@ class FlashSaleController extends Controller
             'subtitle' => $validated['subtitle'] ?? null,
             'background_color' => $validated['background_color'] ?? '#ff6b6b',
             'text_color' => $validated['text_color'] ?? '#ffffff',
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
+            'start_at' => $validated['start_at'],
+            'end_at' => $validated['end_at'],
             'status' => 'draft',
         ]);
 

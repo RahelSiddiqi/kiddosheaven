@@ -1,6 +1,10 @@
 import Alpine from "alpinejs";
 import ApexCharts from "apexcharts";
 import "./bootstrap";
+import {
+    initSelect2,
+    reinitSelect2,
+} from "./global-forms";
 
 // flatpickr
 import flatpickr from "flatpickr";
@@ -24,6 +28,9 @@ Alpine.start();
 
 // Initialize components on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
+    // Initialize Select2 for all select elements
+    initSelect2();
+
     // Map imports
     if (document.querySelector("#mapOne")) {
         import("./components/map").then((module) => module.initMap());
@@ -67,4 +74,13 @@ document.addEventListener("DOMContentLoaded", () => {
             module.calendarInit(),
         );
     }
+});
+
+// Expose reinit functions globally for dynamic content
+window.addEventListener("livewire:loaded", () => {
+    initSelect2();
+});
+
+window.addEventListener("alpine:initialized", () => {
+    initSelect2();
 });
