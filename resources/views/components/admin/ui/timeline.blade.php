@@ -9,13 +9,18 @@
 
     step.status: completed | current | upcoming
 --}}
+
 @props([
     'steps' => [],
     'compact' => false,
+    'horizontal' => false,
 ])
 
-<div {{ $attributes->merge(['class' => '']) }}>
-	<ol class="relative border-l-2 border-gray-200 dark:border-gray-700 ml-3">
+
+<div {{ $attributes->merge(['class' => '']) }}
+	class="border rounded-lg bg-white dark:bg-gray-800 p-4 {{ $horizontal ? 'overflow-x-auto' : '' }}">
+	<ol
+		class="relative {{ $horizontal ? 'flex flex-row items-start space-x-8 border-0 ml-0' : 'border-l-2 border-gray-200 dark:border-gray-700 ml-3' }}">
 		@foreach ($steps as $index => $step)
 			@php
 				$status = $step['status'] ?? 'upcoming';
@@ -25,11 +30,12 @@
 				    'failed' => 'bg-error-500 border-error-200 dark:border-error-800',
 				    default => 'bg-gray-300 border-gray-200 dark:bg-gray-600 dark:border-gray-700',
 				};
-				$lineActive = $status === 'completed';
 			@endphp
-			<li class="mb-{{ $compact ? '6' : '8' }} ml-6 last:mb-0">
+			<li
+				class="relative {{ $horizontal ? 'flex flex-col items-center flex-1 min-w-[120px]' : 'mb-' . ($compact ? '6' : '8') . ' ml-6 last:mb-0' }}">
 				{{-- Dot --}}
-				<span class="absolute -left-2.5 flex items-center justify-center w-5 h-5 rounded-full {{ $dotClasses }}">
+				<span
+					class="{{ $horizontal ? 'mb-2' : 'absolute -left-2.5' }} flex items-center justify-center w-5 h-5 rounded-full {{ $dotClasses }}">
 					@if ($status === 'completed')
 						<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -42,9 +48,12 @@
 						</svg>
 					@endif
 				</span>
-
+				{{-- Connector line for horizontal --}}
+				@if ($horizontal && $index < count($steps) - 1)
+					<span class="absolute top-2.5 left-full w-8 h-0.5 bg-gray-200 dark:bg-gray-700"></span>
+				@endif
 				{{-- Content --}}
-				<div class="flex flex-col {{ !$compact ? 'gap-1' : '' }}">
+				<div class="flex flex-col {{ $horizontal ? 'items-center text-center' : '' }} {{ !$compact ? 'gap-1' : '' }}">
 					<div class="flex items-center gap-2 flex-wrap">
 						@if (!empty($step['url']))
 							<a href="{{ $step['url'] }}" class="text-sm font-semibold text-brand-600 dark:text-brand-400 hover:underline">
@@ -56,27 +65,23 @@
 								{{ $step['label'] }}
 							</span>
 						@endif
-
 						@if (!empty($step['badge']))
 							<span
 								class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                {{ ($step['badgeColor'] ?? 'gray') === 'green' ? 'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400' : '' }}
-                                {{ ($step['badgeColor'] ?? 'gray') === 'red' ? 'bg-error-50 text-error-700 dark:bg-error-500/10 dark:text-error-400' : '' }}
-                                {{ ($step['badgeColor'] ?? 'gray') === 'blue' ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400' : '' }}
-                                {{ ($step['badgeColor'] ?? 'gray') === 'orange' ? 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400' : '' }}
-                                {{ ($step['badgeColor'] ?? 'gray') === 'gray' ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' : '' }}
-                            ">{{ $step['badge'] }}</span>
+								{{ ($step['badgeColor'] ?? 'gray') === 'green' ? 'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400' : '' }}
+								{{ ($step['badgeColor'] ?? 'gray') === 'red' ? 'bg-error-50 text-error-700 dark:bg-error-500/10 dark:text-error-400' : '' }}
+								{{ ($step['badgeColor'] ?? 'gray') === 'blue' ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400' : '' }}
+								{{ ($step['badgeColor'] ?? 'gray') === 'orange' ? 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400' : '' }}
+								{{ ($step['badgeColor'] ?? 'gray') === 'gray' ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' : '' }}
+							">{{ $step['badge'] }}</span>
 						@endif
-
 						@if (!empty($step['date']))
 							<time class="text-xs text-gray-400 dark:text-gray-500">{{ $step['date'] }}</time>
 						@endif
 					</div>
-
 					@if (!empty($step['description']))
 						<p class="text-sm text-gray-500 dark:text-gray-400">{{ $step['description'] }}</p>
 					@endif
-
 					@if (!empty($step['meta']))
 						<div class="flex items-center gap-3 mt-1">
 							@foreach ($step['meta'] as $metaItem)

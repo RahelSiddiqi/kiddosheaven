@@ -14,6 +14,7 @@ class LoyaltyController extends Controller
     public function index(Request $request)
     {
         $program = LoyaltyProgram::where('is_active', true)->first();
+    $transactions = LoyaltyTransaction::orderBy('created_at', 'desc')->paginate(10); // or your actual query
 
         $stats = [
             'total_points_issued' => LoyaltyTransaction::where('points', '>', 0)->sum('points'),
@@ -22,7 +23,7 @@ class LoyaltyController extends Controller
             'active_program' => $program ? true : false,
         ];
 
-        return view('admin.loyalty.index', compact('program', 'stats'));
+        return view('admin.loyalty.index', compact('program', 'stats', 'transactions'));
     }
 
     public function storeProgram(Request $request)

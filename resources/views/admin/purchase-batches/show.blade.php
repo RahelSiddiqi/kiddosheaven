@@ -19,14 +19,53 @@
 		    ],
 		]"
 		:links="[
-					['label' => 'Overview', 'url' => route('admin.purchase-batches.show', $purchaseBatch), 'active' => true],
-					['label' => 'Product', 'url' => $purchaseBatch->product ? route('admin.products.show', $purchaseBatch->product) : '#'],
-					['label' => 'Stock Movements', 'url' => route('admin.inventory.movements.index', ['batch_id' => $purchaseBatch->id]), 'count' => $purchaseBatch->movements->count()],
-					['label' => 'Variant', 'url' => $purchaseBatch->variant ? route('admin.products.variants.show', [$purchaseBatch->product, $purchaseBatch->variant]) : '#'],
-				]"
+											['label' => 'Overview', 'url' => route('admin.purchase-batches.show', $purchaseBatch), 'active' => true],
+											['label' => 'Product', 'url' => $purchaseBatch->product ? route('admin.products.show', $purchaseBatch->product) : '#'],
+											['label' => 'Stock Movements', 'url' => route('admin.inventory.movements.index', ['batch_id' => $purchaseBatch->id]), 'count' => $purchaseBatch->movements->count()],
+											['label' => 'Variant', 'url' => $purchaseBatch->variant ? route('admin.products.variants.show', [$purchaseBatch->product, $purchaseBatch->variant]) : '#'],
+										]"
 		backUrl="{{ route('admin.purchase-batches.index') }}" />
 
-	{{-- Stats Row --}}
+	{{-- Quick Actions --}}
+	<div class="flex flex-wrap gap-3 mb-6">
+		<a href="{{ route('admin.purchase-batches.edit', $purchaseBatch) }}"
+			class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+			<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+					d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+			</svg>
+			Edit Batch
+		</a>
+		<a href="{{ route('admin.inventory.movements.create', ['batch_id' => $purchaseBatch->id]) }}"
+			class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+			<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+			</svg>
+			Add Stock
+		</a>
+		<a href="{{ route('admin.inventory.movements.create', ['batch_id' => $purchaseBatch->id, 'type' => 'adjustment']) }}"
+			class="inline-flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
+			<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+					d="M15 12H9m12 0A9 9 0 11 3 12a9 9 0 0118 0z" />
+			</svg>
+			Adjust Quantity
+		</a>
+		@if ($purchaseBatch->remaining_quantity > 0)
+			<form method="POST" action="{{ route('admin.purchase-batches.mark-exhausted', $purchaseBatch) }}"
+				onsubmit="return confirm('Mark this batch as exhausted?');">
+				@csrf
+				@method('PATCH')
+				<button type="submit"
+					class="inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition">
+					<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+					Mark as Exhausted
+				</button>
+			</form>
+		@endif
+	</div>
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 		<x-admin.ui.stat-card title="Initial Quantity" :value="$purchaseBatch->quantity_received" subtitle="units purchased" icon="box"
 			color="blue" />
@@ -37,36 +76,39 @@
 
 	{{-- Timeline --}}
 	<div class="mb-6">
-		<x-admin.ui.timeline :steps="[
-		    [
-		        'label' => 'Purchased',
-		        'date' => $purchaseBatch->purchase_date->format('M d, Y'),
-		        'status' => 'completed',
-		        'description' =>
-		            $purchaseBatch->quantity_received . ' units @ ৳' . number_format($purchaseBatch->unit_cost, 2),
-		        'badge' => 'Total: ৳' . number_format($purchaseBatch->quantity_received * $purchaseBatch->unit_cost, 2),
-		        'badgeColor' => 'blue',
-		    ],
-		    [
-		        'label' => 'In Stock',
-		        'status' => $purchaseBatch->remaining_quantity > 0 ? 'current' : 'completed',
-		        'description' => $purchaseBatch->remaining_quantity . ' units remaining',
-		        'badge' => 'Value: ৳' . number_format($remainingValue, 2),
-		        'badgeColor' => 'green',
-		    ],
-		    [
-		        'label' => 'Sold',
-		        'status' => $quantitySold > 0 ? 'completed' : 'upcoming',
-		        'description' => $quantitySold . ' units sold via FIFO',
-		        'badge' => 'COGS: ৳' . number_format($soldValue, 2),
-		        'badgeColor' => 'purple',
-		    ],
-		    [
-		        'label' => $purchaseBatch->remaining_quantity == 0 ? 'Exhausted' : 'Pending Sale',
-		        'status' => $purchaseBatch->remaining_quantity == 0 ? 'completed' : 'upcoming',
-		        'description' => $purchaseBatch->remaining_quantity == 0 ? 'All units sold' : 'Awaiting sales',
-		    ],
-		]" />
+		<div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.03] p-6">
+			<h4 class="text-base font-semibold text-gray-800 dark:text-white/90 mb-4">Batch Activity Timeline</h4>
+			<x-admin.ui.timeline :steps="[
+			    [
+			        'label' => 'Purchased',
+			        'date' => $purchaseBatch->purchase_date->format('M d, Y'),
+			        'status' => 'completed',
+			        'description' =>
+			            $purchaseBatch->quantity_received . ' units @ ৳' . number_format($purchaseBatch->unit_cost, 2),
+			        'badge' => 'Total: ৳' . number_format($purchaseBatch->quantity_received * $purchaseBatch->unit_cost, 2),
+			        'badgeColor' => 'blue',
+			    ],
+			    [
+			        'label' => 'In Stock',
+			        'status' => $purchaseBatch->remaining_quantity > 0 ? 'current' : 'completed',
+			        'description' => $purchaseBatch->remaining_quantity . ' units remaining',
+			        'badge' => 'Value: ৳' . number_format($remainingValue, 2),
+			        'badgeColor' => 'green',
+			    ],
+			    [
+			        'label' => 'Sold',
+			        'status' => $quantitySold > 0 ? 'completed' : 'upcoming',
+			        'description' => $quantitySold . ' units sold via FIFO',
+			        'badge' => 'COGS: ৳' . number_format($soldValue, 2),
+			        'badgeColor' => 'purple',
+			    ],
+			    [
+			        'label' => $purchaseBatch->remaining_quantity == 0 ? 'Exhausted' : 'Pending Sale',
+			        'status' => $purchaseBatch->remaining_quantity == 0 ? 'completed' : 'upcoming',
+			        'description' => $purchaseBatch->remaining_quantity == 0 ? 'All units sold' : 'Awaiting sales',
+			    ],
+			]" :horizontal="true" />
+		</div>
 	</div>
 
 	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

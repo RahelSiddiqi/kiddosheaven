@@ -179,6 +179,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::prefix('purchase-batches')->name('purchase-batches.')->group(function () {
         // Specific action routes
         Route::get('product/{product}', [PurchaseBatchController::class, 'getByProduct'])->name('by-product');
+        Route::patch('{purchaseBatch}/mark-exhausted', [PurchaseBatchController::class, 'markExhausted'])->name('mark-exhausted');
 
         // Resource routes
         Route::resource('/', PurchaseBatchController::class)->parameters(['' => 'purchase_batch']);

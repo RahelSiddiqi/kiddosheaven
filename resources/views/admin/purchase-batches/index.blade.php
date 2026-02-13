@@ -3,7 +3,7 @@
 @section('title', 'Purchase Batches — Kiddo\'s Heaven')
 
 @section('content')
-	<div class="grid grid-cols-12 gap-4 md:gap-6">
+	<div x-data="batchManager" class="grid grid-cols-12 gap-4 md:gap-6">
 		<div class="col-span-12">
 			<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
 				<!-- Header -->
@@ -30,7 +30,7 @@
 								<option value="exhausted" {{ request('status') == 'exhausted' ? 'selected' : '' }}>Exhausted</option>
 							</select>
 						</form>
-						<button onclick="openCreateModal()"
+						<button @click="openCreateModal()"
 							class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200">
 							<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none"
 								xmlns="http://www.w3.org/2000/svg">
@@ -70,7 +70,7 @@
 							<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 								@forelse($batches as $batch)
 									<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
-										onclick="window.location='{{ route('admin.purchase-batches.show', $batch) }}'">
+										@click="window.location='{{ route('admin.purchase-batches.show', $batch) }}'">
 										<td class="px-4 py-4 whitespace-nowrap">
 											<div class="text-sm font-medium text-brand-600 dark:text-brand-400">{{ $batch->batch_number }}</div>
 										</td>
@@ -117,11 +117,11 @@
 										</td>
 										<td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
 											<div class="flex items-center gap-2 justify-end">
-												<button onclick="openEditModal({{ json_encode($batch) }})"
+												<button @click="openEditModal({{ json_encode($batch) }})"
 													class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
 													<x-icons.edit />
 												</button>
-												<button onclick="openDeleteConfirm({{ $batch->id }}, '{{ addslashes($batch->batch_number) }}')"
+												<button @click="openDeleteConfirm({{ $batch->id }}, '{{ addslashes($batch->batch_number) }}')"
 													class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
 													<x-icons.delete />
 												</button>

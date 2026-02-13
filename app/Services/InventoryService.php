@@ -252,10 +252,8 @@ class InventoryService
                 'notes'                   => $details['notes'] ?? null,
             ]);
 
+            $variantId = $details['product_variant_id'] ?? null;
             InventoryMovement::create([
-
-                $variantId = $details['product_variant_id'] ?? null;
-
                 'product_id'         => $product->id,
                 'product_variant_id' => $details['product_variant_id'] ?? null,
                     'product_variant_id' => $variantId,

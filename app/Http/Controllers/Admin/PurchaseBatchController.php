@@ -154,4 +154,12 @@ class PurchaseBatchController extends Controller
             'batches' => $batches,
         ]);
     }
+
+    public function markExhausted(PurchaseBatch $purchaseBatch)
+    {
+        $purchaseBatch->remaining_quantity = 0;
+        $purchaseBatch->save();
+        return redirect()->route('admin.purchase-batches.show', $purchaseBatch)
+            ->with('success', 'Batch marked as exhausted.');
+    }
 }
