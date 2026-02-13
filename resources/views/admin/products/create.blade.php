@@ -57,7 +57,7 @@
 									@foreach ($categories as $category)
 										<option value="{{ $category->id }}"
 											{{ old('category_id', request('category_id')) == $category->id ? 'selected' : '' }}>
-											{{ $category->name }} ({{ $category->variant_count ?? 0 }} variants)</option>
+											{{ $category->name }} ({{ $category->attribute_count ?? 0 }} attributes)</option>
 									@endforeach
 								</select>
 							</div>
@@ -479,6 +479,63 @@
 	@push('scripts')
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
+				// Set up a retry function for initializing libraries
+				const initLibraries = () => {
+					let attempts = 0;
+					const maxAttempts = 50; // 50 * 100ms = 5 seconds
+
+					const tryInit = () => {
+						attempts++;
+
+						// Initialize TinyMCE
+						if (window.tinymce && tinymce.init) {
+							const isDark = document.documentElement.classList.contains('dark');
+							tinymce.init({
+								selector: 'textarea.rich-text',
+								menubar: false,
+								height: 220,
+								statusbar: false,
+								plugins: 'lists link',
+								toolbar: 'undo redo | bold italic underline | bullist numlist | link removeformat',
+								skin: isDark ? 'oxide-dark' : 'oxide',
+								content_css: isDark ? 'dark' : 'default',
+								content_style: isDark ?
+									'body { background-color: #0f172a; color: #e5e7eb; }' :
+									'body { background-color: #ffffff; color: #111827; }'
+							});
+						}
+
+						// Initialize Choices.js
+						if (window.Choices) {
+							['category_id', 'brand_id', 'delivery_type', 'status', 'product_type', 'stock_status', 'discount_type'].forEach(id => {
+								const el = document.getElementById(id);
+								if (el && !el.dataset.choicesInitialized) {
+									try {
+										new Choices(el, {
+											searchEnabled: true,
+											shouldSort: false,
+											itemSelectText: ''
+										});
+										el.dataset.choicesInitialized = 'true';
+									} catch (e) {
+										console.error('Choices init error for ' + id, e);
+									}
+								}
+							});
+						}
+
+						// If libraries not loaded and we haven't hit max attempts, retry
+						if ((!window.tinymce || !window.Choices) && attempts < maxAttempts) {
+							setTimeout(tryInit, 100);
+						}
+					};
+
+					tryInit();
+				};
+
+				// Start initialization
+				initLibraries();
+
 				// Collect non-variant attributes before form submission
 				const productForm = document.getElementById('product-form');
 				productForm.addEventListener('submit', function(e) {
@@ -834,83 +891,6 @@
 				document.getElementById('publish-btn').addEventListener('click', () => {
 					if (statusSelect) statusSelect.value = 'active';
 				});
-
-				const enhanceSelects = () => {
-					if (!window.Choices) return false;
-					['category_id', 'brand_id', 'delivery_type', 'status', 'product_type', 'stock_status',
-						'discount_type'
-					]
-					.forEach(id => {
-						const el = document.getElementById(id);
-						if (el && !el.dataset.enhanced) {
-							try {
-								new Choices(el, {
-									searchEnabled: true,
-									shouldSort: false,
-									itemSelectText: ''
-								});
-								el.dataset.enhanced = 'true';
-							} catch (e) {
-								console.error('Failed to initialize Choices for ' + id, e);
-							}
-						}
-					});
-					return true;
-				};
-
-				const enhanceRichText = () => {
-					if (!window.tinymce || !tinymce.init) return false;
-					try {
-						const existingEditors = (tinymce.EditorManager && tinymce.EditorManager.editors) || [];
-						if (Array.isArray(existingEditors) && existingEditors.length) return true;
-						const isDark = document.documentElement.classList.contains('dark');
-						tinymce.init({
-							selector: 'textarea.rich-text',
-							menubar: false,
-							height: 220,
-							statusbar: false,
-							plugins: 'lists link',
-							toolbar: 'undo redo | bold italic underline | bullist numlist | link removeformat',
-							skin: isDark ? 'oxide-dark' : 'oxide',
-							content_css: isDark ? 'dark' : 'default',
-							content_style: isDark ?
-								'body { background-color: #0f172a; color: #e5e7eb; }' :
-								'body { background-color: #ffffff; color: #111827; }'
-						});
-						return true;
-					} catch (e) {
-						console.error('Failed to initialize TinyMCE', e);
-						return false;
-					}
-				};
-
-				const tryEnhance = () => {
-					const selectsOk = enhanceSelects();
-					const editorsOk = enhanceRichText();
-					if (!selectsOk || !editorsOk) {
-						setTimeout(tryEnhance, 200);
-					}
-				};
-
-				// Ensure scripts are loaded before trying to enhance
-				const scriptLoadWait = () => {
-					if (window.Choices && window.tinymce) {
-						tryEnhance();
-					} else {
-						setTimeout(scriptLoadWait, 100);
-					}
-				};
-
-				if (document.readyState === 'complete') {
-					scriptLoadWait();
-				} else {
-					window.addEventListener('load', scriptLoadWait, {
-						once: true
-					});
-				}
-
-				toggleVariantSection();
-			});
 		</script>
 	@endpush
 	@push('styles')

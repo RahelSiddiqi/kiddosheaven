@@ -65,10 +65,10 @@ class ProductController extends Controller
     {
         $categories = $this->categoryService->getHierarchicalList();
 
-        // Add variant count to each category
+        // Add attribute count to each category
         $categories = $categories->map(function ($category) {
-            $variantCount = \App\Models\ProductVariant::whereIn('product_id', $category->products()->pluck('id'))->count();
-            $category->variant_count = $variantCount;
+            $attributeCount = $category->attributes()->count();
+            $category->attribute_count = $attributeCount;
             return $category;
         });
 
@@ -156,10 +156,10 @@ class ProductController extends Controller
         $product->load(['variants.variantAttributes']);
         $categories = $this->categoryService->getHierarchicalList();
 
-        // Add variant count to each category
+        // Add attribute count to each category
         $categories = $categories->map(function ($category) {
-            $variantCount = \App\Models\ProductVariant::whereIn('product_id', $category->products()->pluck('id'))->count();
-            $category->variant_count = $variantCount;
+            $attributeCount = $category->attributes()->count();
+            $category->attribute_count = $attributeCount;
             return $category;
         });
 
