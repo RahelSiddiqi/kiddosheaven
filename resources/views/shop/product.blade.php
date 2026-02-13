@@ -10,13 +10,13 @@
 			<li><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 				</svg></li>
-			<li><a href="{{ route('catalog') }}" class="hover:text-primary transition">Catalog</a></li>
-			@if ($product->catalog)
+			<li><a href="{{ route('catalog') }}" class="hover:text-primary transition">Shop</a></li>
+			@if ($product->category)
 				<li><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 					</svg></li>
-				<li><a href="{{ route('catalog', ['catalog_id' => $product->catalog->id]) }}"
-						class="hover:text-primary transition">{{ $product->catalog->name }}</a>
+				<li><a href="{{ route('catalog', ['category_id' => $product->category->id]) }}"
+						class="hover:text-primary transition">{{ $product->category->name }}</a>
 				</li>
 			@endif
 			<li><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,14 +90,14 @@
 		<div class="space-y-6">
 			{{-- Category & Rating --}}
 			<div class="flex items-center justify-between">
-				@if ($product->catalog)
-					<a href="{{ route('catalog', ['catalog_id' => $product->catalog->id]) }}"
+				@if ($product->category)
+					<a href="{{ route('catalog', ['category_id' => $product->category->id]) }}"
 						class="inline-flex items-center gap-1 text-primary hover:text-primary-dark font-medium transition">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
 						</svg>
-						{{ $product->catalog->name }}
+						{{ $product->category->name }}
 					</a>
 				@endif
 				<div class="flex items-center gap-2">
@@ -137,9 +137,9 @@
 
 			{{-- Price --}}
 			<div class="flex items-center gap-4">
-				<span class="text-4xl font-bold text-primary-dark">${{ number_format($product->price / 100, 2) }}</span>
+				<span class="text-4xl font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
 				@if ($product->compare_price)
-					<span class="text-xl text-gray-400 line-through">${{ number_format($product->compare_price / 100, 2) }}</span>
+					<span class="text-xl text-gray-400 line-through">৳{{ number_format($product->compare_price, 2) }}</span>
 					<span class="px-2 py-1 rounded-full bg-red-100 text-red-600 text-sm font-bold">Save
 						{{ round((1 - $product->price / $product->compare_price) * 100) }}%</span>
 				@endif
@@ -285,14 +285,14 @@
 							</div>
 						</a>
 						<div class="p-4">
-							@if ($item->catalog)
+							@if ($item->category)
 								<span
-									class="inline-block px-2 py-1 rounded-full bg-light text-primary text-xs font-semibold mb-1">{{ $item->catalog->name }}</span>
+									class="inline-block px-2 py-1 rounded-full bg-light text-primary text-xs font-semibold mb-1">{{ $item->category->name }}</span>
 							@endif
 							<a href="{{ route('products.show', $item->slug) }}"
 								class="font-semibold text-gray-800 hover:text-primary line-clamp-2 text-sm">{{ $item->name }}</a>
 							<div class="flex items-center justify-between mt-2">
-								<span class="font-bold text-primary-dark">${{ number_format($item->price / 100, 2) }}</span>
+								<span class="font-bold text-primary-dark">৳{{ number_format($item->price, 2) }}</span>
 								<form action="{{ route('cart.add', $item->slug) }}" method="post">
 									@csrf
 									<button type="submit"

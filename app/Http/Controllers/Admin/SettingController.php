@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Cache;
 
 class SettingController extends Controller
 {
-    public function index()
+    public function edit()
     {
         $settings = Setting::pluck('value', 'key')->toArray();
 

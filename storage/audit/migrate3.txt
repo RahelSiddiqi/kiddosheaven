@@ -1,0 +1,6 @@
+
+   INFO  Running migrations.  
+
+  2026_02_11_130000_fix_price_columns_to_decimal ...................................................... 1s DONE
+  2026_02_11_130001_add_movement_type_check_constraint .......................................... 304.43ms DONE
+

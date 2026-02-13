@@ -1,0 +1,14 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+TABLE_NAME	COLUMN_NAME	DATA_TYPE	IS_NULLABLE	COLUMN_DEFAULT
+order_items	id	bigint	NO	NULL
+order_items	order_id	bigint	NO	NULL
+order_items	product_id	bigint	NO	NULL
+order_items	product_variant_id	bigint	YES	NULL
+order_items	quantity	int	NO	NULL
+order_items	unit_price	int	NO	NULL
+order_items	unit_cost	decimal	YES	NULL
+order_items	purchase_batch_id	bigint	YES	NULL
+order_items	total_price	int	NO	NULL
+order_items	profit	decimal	YES	NULL
+order_items	created_at	timestamp	YES	NULL
+order_items	updated_at	timestamp	YES	NULL

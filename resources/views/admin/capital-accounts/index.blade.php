@@ -5,6 +5,13 @@
 @section('content')
 	<div class="grid grid-cols-12 gap-4 md:gap-6">
 		<div class="col-span-12">
+			<!-- Stats Cards -->
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+				<x-admin.ui.stat-card title="Total Capital" :value="number_format($accounts->sum('current_balance'), 2) . ' BDT'" icon="currency" color="blue" />
+				<x-admin.ui.stat-card title="Total Partners" :value="$accounts->where('account_type', 'partner')->count()" icon="users" color="green" />
+				<x-admin.ui.stat-card title="Total Investors" :value="$accounts->where('account_type', 'investor')->count()" icon="trending" color="purple" />
+			</div>
+
 			<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
 				<!-- Header -->
 				<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 pt-4">
@@ -30,30 +37,6 @@
 								<option value="investor" {{ request('type') == 'investor' ? 'selected' : '' }}>Investor</option>
 							</select>
 						</form>
-					</div>
-				</div>
-
-				<!-- Stats Cards -->
-				<div class="px-6 pb-4">
-					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-							<div class="text-sm text-gray-500 dark:text-gray-400">Total Capital</div>
-							<div class="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
-								{{ number_format($accounts->sum('current_balance'), 2) }} BDT
-							</div>
-						</div>
-						<div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-							<div class="text-sm text-gray-500 dark:text-gray-400">Total Partners</div>
-							<div class="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
-								{{ $accounts->where('account_type', 'partner')->count() }}
-							</div>
-						</div>
-						<div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-							<div class="text-sm text-gray-500 dark:text-gray-400">Total Investors</div>
-							<div class="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
-								{{ $accounts->where('account_type', 'investor')->count() }}
-							</div>
-						</div>
 					</div>
 				</div>
 

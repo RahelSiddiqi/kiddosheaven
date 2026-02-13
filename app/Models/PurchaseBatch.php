@@ -14,29 +14,28 @@ class PurchaseBatch extends Model
     protected $fillable = [
         'batch_number',
         'product_id',
+        'product_variant_id',
         'partner_id',
-        'inventory_item_id',
         'unit_cost',
-        'total_cost',
         'quantity_received',
-        'quantity_remaining',
+        'remaining_quantity',
         'quantity_reserved',
+        'status',
+        'supplier',
         'supplier_invoice_number',
         'purchase_date',
         'manufacture_date',
         'expiry_date',
-        'status',
         'notes',
     ];
 
     protected $casts = [
         'unit_cost' => 'decimal:2',
-        'total_cost' => 'decimal:2',
         'purchase_date' => 'date',
         'manufacture_date' => 'date',
         'expiry_date' => 'date',
         'quantity_received' => 'integer',
-        'quantity_remaining' => 'integer',
+        'remaining_quantity' => 'integer',
         'quantity_reserved' => 'integer',
     ];
 
@@ -69,6 +68,14 @@ class PurchaseBatch extends Model
     }
 
     /**
+     * Get the product variant for this batch.
+     */
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    /**
      * Get the partner (supplier) for this batch.
      */
     public function partner(): BelongsTo
@@ -77,19 +84,11 @@ class PurchaseBatch extends Model
     }
 
     /**
-     * Get the inventory item if this batch is linked to a specific variant.
-     */
-    public function inventoryItem(): BelongsTo
-    {
-        return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
-    }
-
-    /**
      * Get movements for this batch.
      */
     public function movements(): HasMany
     {
-        return $this->hasMany(InventoryMovement::class, 'purchase_batch_id');
+        return $this->hasMany(InventoryMovement::class, 'batch_id');
     }
 
     /**
@@ -97,7 +96,7 @@ class PurchaseBatch extends Model
      */
     public function getRemainingValueAttribute(): float
     {
-        return $this->quantity_remaining * $this->unit_cost;
+        return $this->remaining_quantity * $this->unit_cost;
     }
 
     /**
@@ -105,7 +104,7 @@ class PurchaseBatch extends Model
      */
     public function getQuantitySoldAttribute(): int
     {
-        return $this->quantity_received - $this->quantity_remaining - $this->quantity_reserved;
+        return $this->quantity_received - $this->remaining_quantity - $this->quantity_reserved;
     }
 
     /**
@@ -113,7 +112,15 @@ class PurchaseBatch extends Model
      */
     public function hasStock(): bool
     {
-        return $this->quantity_remaining > 0;
+        return $this->remaining_quantity > 0;
+    }
+
+    /**
+     * Get available quantity (remaining minus reserved).
+     */
+    public function getAvailableQuantityAttribute(): int
+    {
+        return max(0, $this->remaining_quantity - $this->quantity_reserved);
     }
 
     /**
@@ -156,7 +163,7 @@ class PurchaseBatch extends Model
     public function scopeActive($query)
     {
         return $query->where('status', self::STATUS_ACTIVE)
-                    ->where('quantity_remaining', '>', 0);
+                    ->where('remaining_quantity', '>', 0);
     }
 
     /**
@@ -164,7 +171,7 @@ class PurchaseBatch extends Model
      */
     public function scopeWithStock($query)
     {
-        return $query->where('quantity_remaining', '>', 0);
+        return $query->where('remaining_quantity', '>', 0);
     }
 
     /**

@@ -152,24 +152,24 @@
 				</div>
 			@endif
 
-			<!-- Assigned Catalogs -->
+			<!-- Assigned Categories -->
 			<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
 				<div class="flex flex-col gap-4 p-5 border-b border-gray-200 dark:border-gray-700">
 					<div class="flex items-center justify-between">
-						<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Used In Catalogs</h3>
+						<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Used In Categories</h3>
 						<span
 							class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400">
-							{{ $attribute->catalogs->count() }}
+							{{ $attribute->categories->count() }}
 						</span>
 					</div>
 				</div>
 				<div class="p-5">
-					@if ($attribute->catalogs->count() > 0)
+					@if ($attribute->categories->count() > 0)
 						<ul class="space-y-2">
-							@foreach ($attribute->catalogs as $catalog)
+							@foreach ($attribute->categories as $category)
 								<li class="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
-									<span class="text-sm text-gray-700 dark:text-gray-300">{{ $catalog->name }}</span>
-									<a href="{{ route('admin.catalogs.show', $catalog->id) }}"
+									<span class="text-sm text-gray-700 dark:text-gray-300">{{ $category->name }}</span>
+									<a href="{{ route('admin.categories.show', $category->id) }}"
 										class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
 										<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -179,7 +179,7 @@
 							@endforeach
 						</ul>
 					@else
-						<p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Not used in any catalog</p>
+						<p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Not used in any category</p>
 					@endif
 				</div>
 			</div>

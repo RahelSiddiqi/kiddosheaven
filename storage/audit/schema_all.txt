@@ -1,0 +1,322 @@
+===== products =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: products
+Create Table: CREATE TABLE `products` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `cost_price` decimal(10,2) DEFAULT NULL,
+  `profit_margin` decimal(5,2) DEFAULT NULL,
+  `discount_price` decimal(10,2) DEFAULT NULL,
+  `discount_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'percentage',
+  `vat_rate` decimal(5,2) NOT NULL DEFAULT '0.00',
+  `wholesale_price` decimal(10,2) DEFAULT NULL,
+  `sku` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `short_description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `features` text COLLATE utf8mb4_unicode_ci,
+  `care_instructions` text COLLATE utf8mb4_unicode_ci,
+  `ingredients` text COLLATE utf8mb4_unicode_ci,
+  `safety_warning` text COLLATE utf8mb4_unicode_ci,
+  `primary_image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `images` json DEFAULT NULL,
+  `is_featured` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `stock_quantity` bigint unsigned NOT NULL DEFAULT '0',
+  `low_stock_alert` int NOT NULL DEFAULT '5',
+  `stock_status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'in_stock',
+  `sold_count` bigint unsigned NOT NULL DEFAULT '0',
+  `catalog_id` bigint unsigned DEFAULT NULL,
+  `product_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple',
+  `delivery_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'instant',
+  `barcode` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `brand_id` bigint unsigned DEFAULT NULL,
+  `video_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_description` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tags` json DEFAULT NULL,
+  `weight` decimal(8,2) DEFAULT NULL,
+  `length` decimal(8,2) DEFAULT NULL,
+  `width` decimal(8,2) DEFAULT NULL,
+  `height` decimal(8,2) DEFAULT NULL,
+  `custom_attributes` json DEFAULT NULL,
+  `halal_certified` tinyint(1) NOT NULL DEFAULT '0',
+  `organic_certified` tinyint(1) NOT NULL DEFAULT '0',
+  `return_policy` text COLLATE utf8mb4_unicode_ci,
+  `warranty` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `manufacturer` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `products_slug_unique` (`slug`),
+  UNIQUE KEY `products_sku_unique` (`sku`),
+  KEY `products_status_index` (`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== product_attributes =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: product_attributes
+Create Table: CREATE TABLE `product_attributes` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` enum('text','number','select','multiselect','boolean','date','color') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'text',
+  `is_required` tinyint(1) NOT NULL DEFAULT '0',
+  `is_filterable` tinyint(1) NOT NULL DEFAULT '0',
+  `use_for_variants` tinyint(1) NOT NULL DEFAULT '0',
+  `sort_order` int NOT NULL DEFAULT '0',
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `product_attributes_slug_unique` (`slug`)
+) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== product_attribute_values =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: product_attribute_values
+Create Table: CREATE TABLE `product_attribute_values` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `product_attribute_id` bigint unsigned NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `price_modifier` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `sort_order` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pav_attr_value_unique` (`product_attribute_id`,`value`),
+  KEY `product_attribute_values_product_id_product_attribute_id_index` (`product_id`,`product_attribute_id`),
+  CONSTRAINT `product_attribute_values_product_attribute_id_foreign` FOREIGN KEY (`product_attribute_id`) REFERENCES `product_attributes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `product_attribute_values_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== product_variants =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: product_variants
+Create Table: CREATE TABLE `product_variants` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `sku` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `barcode` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `cost_price` decimal(10,2) DEFAULT NULL,
+  `compare_at_price` decimal(10,2) DEFAULT NULL,
+  `stock_quantity` int NOT NULL DEFAULT '0',
+  `reserved_quantity` int NOT NULL DEFAULT '0',
+  `low_stock_alert` int DEFAULT NULL,
+  `weight` decimal(8,2) DEFAULT NULL,
+  `length` decimal(8,2) DEFAULT NULL,
+  `width` decimal(8,2) DEFAULT NULL,
+  `height` decimal(8,2) DEFAULT NULL,
+  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `sort_order` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `product_variants_sku_unique` (`sku`),
+  UNIQUE KEY `product_variants_barcode_unique` (`barcode`),
+  KEY `product_variants_product_id_is_active_index` (`product_id`,`is_active`),
+  KEY `product_variants_product_id_is_default_index` (`product_id`,`is_default`),
+  KEY `product_variants_sku_index` (`sku`),
+  KEY `product_variants_stock_quantity_index` (`stock_quantity`),
+  CONSTRAINT `product_variants_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== variant_attributes =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: variant_attributes
+Create Table: CREATE TABLE `variant_attributes` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_variant_id` bigint unsigned NOT NULL,
+  `product_attribute_id` bigint unsigned NOT NULL,
+  `product_attribute_value_id` bigint unsigned NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `variant_attr_unique` (`product_variant_id`,`product_attribute_id`),
+  KEY `variant_attributes_product_attribute_value_id_foreign` (`product_attribute_value_id`),
+  KEY `attr_value_idx` (`product_attribute_id`,`product_attribute_value_id`),
+  CONSTRAINT `variant_attributes_product_attribute_id_foreign` FOREIGN KEY (`product_attribute_id`) REFERENCES `product_attributes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `variant_attributes_product_attribute_value_id_foreign` FOREIGN KEY (`product_attribute_value_id`) REFERENCES `product_attribute_values` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `variant_attributes_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== purchase_batches =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: purchase_batches
+Create Table: CREATE TABLE `purchase_batches` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `batch_number` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `product_variant_id` bigint unsigned DEFAULT NULL,
+  `partner_id` bigint unsigned DEFAULT NULL,
+  `unit_cost` decimal(10,2) NOT NULL,
+  `quantity_received` int NOT NULL,
+  `remaining_quantity` int NOT NULL DEFAULT '0',
+  `quantity_reserved` int NOT NULL DEFAULT '0',
+  `status` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `supplier` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `supplier_invoice_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `purchase_date` date DEFAULT NULL,
+  `manufacture_date` date DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `purchase_batches_batch_number_unique` (`batch_number`),
+  KEY `purchase_batches_product_id_remaining_quantity_index` (`product_id`,`remaining_quantity`),
+  KEY `purchase_batches_product_id_purchase_date_index` (`product_id`,`purchase_date`),
+  KEY `purchase_batches_batch_number_index` (`batch_number`),
+  KEY `purchase_batches_expiry_date_index` (`expiry_date`),
+  KEY `variant_stock_idx` (`product_variant_id`,`remaining_quantity`),
+  KEY `purchase_batches_status_index` (`status`),
+  KEY `purchase_batches_partner_id_foreign` (`partner_id`),
+  CONSTRAINT `purchase_batches_partner_id_foreign` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `purchase_batches_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `purchase_batches_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== inventory_movements =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: inventory_movements
+Create Table: CREATE TABLE `inventory_movements` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `movement_number` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `product_variant_id` bigint unsigned DEFAULT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `inventory_item_id` bigint unsigned DEFAULT NULL,
+  `movement_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `quantity` int NOT NULL,
+  `unit_cost` decimal(10,2) DEFAULT NULL,
+  `reference_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reference_id` bigint unsigned DEFAULT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `inventory_movements_movement_number_unique` (`movement_number`),
+  KEY `inventory_movements_user_id_foreign` (`user_id`),
+  KEY `inventory_movements_product_id_movement_type_index` (`product_id`,`movement_type`),
+  KEY `inventory_movements_product_id_created_at_index` (`product_id`,`created_at`),
+  KEY `inventory_movements_batch_id_index` (`batch_id`),
+  KEY `inventory_movements_movement_number_index` (`movement_number`),
+  KEY `variant_movement_idx` (`product_variant_id`,`movement_type`),
+  KEY `inventory_movements_inventory_item_id_index` (`inventory_item_id`),
+  CONSTRAINT `inventory_movements_batch_id_foreign` FOREIGN KEY (`batch_id`) REFERENCES `purchase_batches` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `inventory_movements_inventory_item_id_foreign` FOREIGN KEY (`inventory_item_id`) REFERENCES `inventory_items` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `inventory_movements_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventory_movements_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventory_movements_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== inventory_items =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: inventory_items
+Create Table: CREATE TABLE `inventory_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `product_variant_id` bigint unsigned DEFAULT NULL,
+  `purchase_batch_id` bigint unsigned NOT NULL,
+  `quantity_on_hand` int NOT NULL DEFAULT '0',
+  `quantity_reserved` int NOT NULL DEFAULT '0',
+  `quantity_available` int GENERATED ALWAYS AS ((`quantity_on_hand` - `quantity_reserved`)) VIRTUAL,
+  `location` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'main',
+  `bin_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `aisle` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `shelf` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `unit_cost` decimal(10,2) NOT NULL,
+  `total_value` decimal(10,2) GENERATED ALWAYS AS ((`quantity_on_hand` * `unit_cost`)) VIRTUAL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `inventory_items_product_id_foreign` (`product_id`),
+  KEY `inventory_items_product_variant_id_location_index` (`product_variant_id`,`location`),
+  KEY `inventory_items_purchase_batch_id_index` (`purchase_batch_id`),
+  KEY `inventory_items_quantity_on_hand_index` (`quantity_on_hand`),
+  KEY `inventory_items_location_bin_number_index` (`location`,`bin_number`),
+  CONSTRAINT `inventory_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventory_items_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventory_items_purchase_batch_id_foreign` FOREIGN KEY (`purchase_batch_id`) REFERENCES `purchase_batches` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== orders =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: orders
+Create Table: CREATE TABLE `orders` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `customer_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `customer_phone` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `address_line` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `postal_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `total_amount` int unsigned NOT NULL,
+  `payment_method` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'cod',
+  `status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `orders_user_id_foreign` (`user_id`),
+  CONSTRAINT `orders_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== order_items =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: order_items
+Create Table: CREATE TABLE `order_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `product_variant_id` bigint unsigned DEFAULT NULL,
+  `quantity` int unsigned NOT NULL,
+  `unit_price` int unsigned NOT NULL,
+  `unit_cost` decimal(10,2) DEFAULT NULL COMMENT 'Cost at time of sale for COGS',
+  `purchase_batch_id` bigint unsigned DEFAULT NULL,
+  `total_price` int unsigned NOT NULL,
+  `profit` decimal(10,2) GENERATED ALWAYS AS (((`unit_price` - coalesce(`unit_cost`,0)) * `quantity`)) VIRTUAL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `order_items_order_id_foreign` (`order_id`),
+  KEY `order_items_product_variant_id_foreign` (`product_variant_id`),
+  KEY `order_items_purchase_batch_id_foreign` (`purchase_batch_id`),
+  KEY `order_items_product_created_index` (`product_id`,`created_at`),
+  CONSTRAINT `order_items_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `order_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `order_items_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `order_items_purchase_batch_id_foreign` FOREIGN KEY (`purchase_batch_id`) REFERENCES `purchase_batches` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+===== settings =====
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: settings
+Create Table: CREATE TABLE `settings` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `settings_key_unique` (`key`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+

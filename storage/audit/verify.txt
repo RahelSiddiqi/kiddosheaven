@@ -1,0 +1,20 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+COLUMN_NAME
+order_number
+subtotal
+tax_amount
+status_notes
+cancellation_reason
+CONSTRAINT_NAME
+chk_remaining_lte_received
+chk_remaining_qty_non_negative
+chk_reserved_lte_remaining
+chk_reserved_non_negative
+total	still_null
+16	0
+id	order_number
+1	ORD202602030001
+5	ORD202602030005
+2	ORD202602060002
+6	ORD202602060006
+4	ORD202602070004

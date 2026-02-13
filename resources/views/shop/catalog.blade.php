@@ -42,7 +42,7 @@
 							<span class="text-xs text-gray-400">{{ $products->total() }}</span>
 						</a>
 						@foreach ($categories as $category)
-							<a href="{{ route('catalog', ['catalog_id' => $category->id]) }}"
+							<a href="{{ route('catalog', ['category_id' => $category->id]) }}"
 								class="flex items-center justify-between px-3 py-2 rounded-lg transition {{ $activeCategory == $category->id ? 'bg-primary/10 text-primary font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
 								<span>{{ $category->name }}</span>
 								{{-- Note: You'd need to add product count per category --}}
@@ -237,9 +237,9 @@
 								</div>
 							</a>
 							<div class="p-4">
-								@if ($product->catalog)
+								@if ($product->category)
 									<span
-										class="inline-block px-2 py-1 rounded-full bg-light text-primary text-xs font-semibold mb-2">{{ $product->catalog->name }}</span>
+										class="inline-block px-2 py-1 rounded-full bg-light text-primary text-xs font-semibold mb-2">{{ $product->category->name }}</span>
 								@endif
 								<a href="{{ route('products.show', $product->slug) }}"
 									class="font-semibold text-gray-800 hover:text-primary line-clamp-2 group-hover:text-primary transition">{{ $product->name }}</a>

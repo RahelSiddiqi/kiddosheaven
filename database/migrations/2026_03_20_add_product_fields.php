@@ -14,7 +14,7 @@ return new class extends Migration
         // Add new fields to products table if they don't exist
         if (!Schema::hasColumn('products', 'product_type')) {
             Schema::table('products', function (Blueprint $table) {
-                $table->string('product_type')->default('simple')->after('catalog_id');
+                $table->string('product_type')->default('simple')->after('category_id');
                 $table->string('delivery_type')->default('instant')->after('product_type');
                 $table->string('barcode')->nullable()->after('delivery_type');
                 $table->string('discount_type')->default('percentage')->after('discount_price');

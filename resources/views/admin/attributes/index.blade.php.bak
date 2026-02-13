@@ -1,0 +1,512 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Product Attributes — Kiddo\'s Heaven')
+
+@section('content')
+	<div x-data="attributeManager()" x-init="init()">
+		<!-- Toast Notification -->
+		<div x-show="showToast" x-transition.opacity.duration.300ms x-cloak
+			class="fixed top-4 right-4 z-99999 px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 min-w-70"
+			:class="toastType === 'error' ? 'bg-red-500' : 'bg-green-500'" style="display: none;">
+			<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+			</svg>
+			<span class="text-sm font-medium" x-text="toastMessage"></span>
+		</div>
+
+
+
+		<!-- Stats Cards -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+			<x-admin.ui.stat-card title="Total Attributes" :value="$attributes->count()" icon="tag" color="blue" />
+			@php
+				$withValues = 0;
+				foreach ($attributes as $attr) {
+				    if ($attr->values && $attr->values->count() > 0) {
+				        $withValues++;
+				    }
+				}
+			@endphp
+			<x-admin.ui.stat-card title="Required Fields" :value="$attributes->where('is_required', true)->count()" icon="alert" color="red" />
+			<x-admin.ui.stat-card title="Filterable" :value="$attributes->where('is_filterable', true)->count()" icon="trending" color="purple" />
+			<x-admin.ui.stat-card title="With Values" :value="$withValues" icon="box" color="orange" />
+		</div>
+
+		<!-- Attributes List -->
+		<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] pt-4">
+			<!-- Header -->
+			<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+				<div>
+					<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Product Attributes</h3>
+					<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Click values to edit • Drag to reorder</p>
+				</div>
+				<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+					<button type="button" @click="openCreateModal()"
+						class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
+						<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none"
+							xmlns="http://www.w3.org/2000/svg">
+							<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+								stroke-linejoin="round" />
+						</svg>
+						Add Attribute
+					</button>
+				</div>
+			</div>
+
+			<div class="px-5 pb-5 space-y-4">
+				@forelse($attributes as $attribute)
+					<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3 p-6">
+						<div class="flex items-start justify-between mb-4">
+							<div class="flex-1">
+								<div class="flex items-center gap-2">
+									<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ $attribute->name }}</h3>
+									<span class="px-2 py-0.5 text-xs rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+										{{ ucfirst($attribute->type) }}
+									</span>
+									@if ($attribute->is_required)
+										<span class="px-2 py-0.5 text-xs rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+											Required
+										</span>
+									@endif
+									@if ($attribute->is_filterable)
+										<span
+											class="px-2 py-0.5 text-xs rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+											Filterable
+										</span>
+									@endif
+								</div>
+								@if ($attribute->description)
+									<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $attribute->description }}</p>
+								@endif
+							</div>
+							<div class="flex items-center gap-2">
+								<button type="button"
+									@click="editAttribute({{ $attribute->id }}, '{{ $attribute->name }}', '{{ $attribute->type }}', {{ $attribute->is_required ? 'true' : 'false' }}, {{ $attribute->is_filterable ? 'true' : 'false' }}, '{{ addslashes($attribute->description ?? '') }}')"
+									class="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+											d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+									</svg>
+								</button>
+								<button type="button" @click="deleteAttribute({{ $attribute->id }})"
+									class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+											d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+								</button>
+							</div>
+						</div>
+
+						<!-- Values Section -->
+						@if ($attribute->values && $attribute->values->count() > 0)
+							<div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4" x-data="valueManager({{ $attribute->id }}, {{ $attribute->values->toJson() }})">
+								<div class="flex items-center justify-between mb-3">
+									<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+										Values ({{ $attribute->values->count() }})
+										<span class="text-xs text-gray-500 dark:text-gray-400 ml-2">Click to edit • Drag to reorder</span>
+									</h4>
+									<button type="button" @click="addValue()"
+										class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1">
+										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+										</svg>
+										Add Value
+									</button>
+								</div>
+								<div class="flex flex-wrap gap-2" x-ref="valueContainer">
+									<template x-for="(value, index) in values" :key="value.id">
+										<div :data-value-id="value.id"
+											class="value-chip group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 cursor-move hover:border-blue-300 dark:hover:border-blue-600 transition">
+											<!-- Drag Handle -->
+											<svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+											</svg>
+
+											<!-- Value Display/Edit -->
+											<div x-show="!value.editing" @click="startEdit(index)"
+												class="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+												<span x-text="value.value"></span>
+											</div>
+											<input x-show="value.editing" x-model="value.value" @blur="saveValue(index)"
+												@keydown.enter="saveValue(index)" @keydown.escape="cancelEdit(index)"
+												class="text-sm bg-white dark:bg-gray-900 border border-blue-500 rounded px-2 py-0.5 w-24 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+
+											<!-- Delete Button -->
+											<button type="button" @click="deleteValue(index)"
+												class="opacity-0 group-hover:opacity-100 transition-opacity">
+												<svg class="w-3.5 h-3.5 text-red-500 hover:text-red-600" fill="none" stroke="currentColor"
+													viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+												</svg>
+											</button>
+										</div>
+									</template>
+								</div>
+							</div>
+						@else
+							<div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+								<div class="text-center py-4">
+									<p class="text-sm text-gray-500 dark:text-gray-400 mb-2">No values added yet</p>
+									<button type="button" @click="$dispatch('add-value', {{ $attribute->id }})"
+										class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+										+ Add First Value
+									</button>
+								</div>
+							</div>
+						@endif
+					</div>
+				@empty
+					<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3 p-12 text-center">
+						<svg class="mx-auto w-12 h-12 text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor"
+							viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+						</svg>
+						<h3 class="text-lg font-medium text-gray-800 dark:text-white/90 mb-2">No attributes yet</h3>
+						<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first attribute</p>
+						<button type="button" @click="openCreateModal()"
+							class="inline-flex items-center justify-center rounded-lg border border-blue-500 bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600">
+							<svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+							</svg>
+							Add First Attribute
+						</button>
+					</div>
+				@endforelse
+			</div>
+
+			<!-- Create/Edit Modal -->
+			<div x-show="showModal" x-cloak class="fixed inset-0 z-99999 overflow-y-auto" style="display: none;">
+				<div class="flex min-h-screen items-center justify-center p-4">
+					<div class="fixed inset-0 bg-black/50 transition-opacity" @click="closeModal()"></div>
+					<div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-lg w-full p-6">
+						<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4"
+							x-text="formData.id ? 'Edit Attribute' : 'Add New Attribute'"></h3>
+
+						<form @submit.prevent="saveAttribute()">
+							<div class="space-y-4">
+								<div>
+									<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+									<input type="text" x-model="formData.name" required
+										class="w-full h-10.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+								</div>
+
+								<div>
+									<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
+									<select x-model="formData.type"
+										class="w-full h-10.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+										<option value="text">Text</option>
+										<option value="select">Select (Dropdown)</option>
+										<option value="multiselect">Multi-Select</option>
+										<option value="color">Color</option>
+										<option value="number">Number</option>
+									</select>
+								</div>
+
+								<div>
+									<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+									<textarea x-model="formData.description" rows="2"
+									 class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></textarea>
+								</div>
+
+								<div class="flex gap-4">
+									<label class="flex items-center gap-2 cursor-pointer">
+										<input type="checkbox" x-model="formData.is_required"
+											class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+										<span class="text-sm text-gray-700 dark:text-gray-300">Required</span>
+									</label>
+									<label class="flex items-center gap-2 cursor-pointer">
+										<input type="checkbox" x-model="formData.is_filterable"
+											class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+										<span class="text-sm text-gray-700 dark:text-gray-300">Filterable</span>
+									</label>
+								</div>
+							</div>
+
+							<div class="flex justify-end gap-3 mt-6">
+								<button type="button" @click="closeModal()"
+									class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+									Cancel
+								</button>
+								<button type="submit"
+									class="px-4 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg">
+									<span x-text="formData.id ? 'Update' : 'Create'"></span>
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		@push('scripts')
+			<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+			<script>
+				function attributeManager() {
+					return {
+						showModal: false,
+						showToast: false,
+						toastMessage: '',
+						formData: {
+							id: null,
+							name: '',
+							type: 'text',
+							description: '',
+							is_required: false,
+							is_filterable: false
+						},
+
+						init() {
+							@if (session('success'))
+								this.toast('{{ session('success') }}');
+							@endif
+
+							// Listen for add-value events
+							this.$el.addEventListener('add-value', (e) => {
+								this.addValuePrompt(e.detail);
+							});
+						},
+
+						openCreateModal() {
+							this.resetForm();
+							this.showModal = true;
+						},
+
+						editAttribute(id, name, type, is_required, is_filterable, description) {
+							this.formData = {
+								id: id,
+								name: name,
+								type: type,
+								description: description,
+								is_required: is_required,
+								is_filterable: is_filterable
+							};
+							this.showModal = true;
+						},
+
+						closeModal() {
+							this.showModal = false;
+							this.resetForm();
+						},
+
+						resetForm() {
+							this.formData = {
+								id: null,
+								name: '',
+								type: 'text',
+								description: '',
+								is_required: false,
+								is_filterable: false
+							};
+						},
+
+						async saveAttribute() {
+							const url = this.formData.id ?
+								`/admin/attributes/${this.formData.id}` :
+								'/admin/attributes';
+							const method = this.formData.id ? 'PUT' : 'POST';
+
+							try {
+								const response = await fetch(url, {
+									method: method,
+									headers: {
+										'Content-Type': 'application/json',
+										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+									},
+									body: JSON.stringify(this.formData)
+								});
+
+								const data = await response.json();
+								if (data.success) {
+									this.toast(data.message || 'Attribute saved successfully');
+									setTimeout(() => window.location.reload(), 1500);
+								}
+							} catch (error) {
+								console.error('Error:', error);
+								this.toast('Error saving attribute');
+							}
+						},
+
+						async deleteAttribute(id) {
+							if (!confirm('Are you sure you want to delete this attribute?')) return;
+
+							try {
+								const response = await fetch(`/admin/attributes/${id}`, {
+									method: 'DELETE',
+									headers: {
+										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+									}
+								});
+
+								const data = await response.json();
+								if (data.success) {
+									this.toast(data.message || 'Attribute deleted successfully');
+									setTimeout(() => window.location.reload(), 1500);
+								}
+							} catch (error) {
+								console.error('Error:', error);
+								this.toast('Error deleting attribute');
+							}
+						},
+
+						addValuePrompt(attributeId) {
+							const value = prompt('Enter new value:');
+							if (!value) return;
+
+							fetch(`/admin/attributes/${attributeId}/values`, {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+									},
+									body: JSON.stringify({
+										value: value
+									})
+								})
+								.then(res => res.json())
+								.then(data => {
+									if (data.success) {
+										this.toast('Value added successfully');
+										setTimeout(() => window.location.reload(), 1500);
+									}
+								});
+						},
+
+						toast(message) {
+							this.toastMessage = message;
+							this.showToast = true;
+							setTimeout(() => this.showToast = false, 3000);
+						}
+					};
+				}
+
+				function valueManager(attributeId, initialValues) {
+					return {
+						attributeId: attributeId,
+						values: initialValues.map(v => ({
+							...v,
+							editing: false
+						})),
+						sortable: null,
+
+						init() {
+							this.$nextTick(() => {
+								const container = this.$refs.valueContainer;
+								if (container && typeof Sortable !== 'undefined') {
+									this.sortable = Sortable.create(container, {
+										animation: 150,
+										ghostClass: 'opacity-50',
+										onEnd: () => this.saveOrder()
+									});
+								}
+							});
+						},
+
+						startEdit(index) {
+							// Close all other editors first
+							this.values.forEach((v, i) => {
+								if (i !== index) v.editing = false;
+							});
+							this.values[index].editing = true;
+							this.$nextTick(() => {
+								const input = this.$el.querySelectorAll('input[x-model="value.value"]')[index];
+								if (input) {
+									input.focus();
+									input.select();
+								}
+							});
+						},
+
+						cancelEdit(index) {
+							this.values[index].editing = false;
+						},
+
+						async saveValue(index) {
+							const value = this.values[index];
+							value.editing = false;
+
+							try {
+								await fetch(`/admin/attributes/${this.attributeId}/values/${value.id}`, {
+									method: 'PUT',
+									headers: {
+										'Content-Type': 'application/json',
+										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+									},
+									body: JSON.stringify({
+										value: value.value
+									})
+								});
+							} catch (error) {
+								console.error('Error:', error);
+							}
+						},
+
+						async deleteValue(index) {
+							if (!confirm('Delete this value?')) return;
+
+							const value = this.values[index];
+							try {
+								const response = await fetch(`/admin/attributes/${this.attributeId}/values/${value.id}`, {
+									method: 'DELETE',
+									headers: {
+										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+									}
+								});
+								const data = await response.json();
+								if (data.success) {
+									this.values.splice(index, 1);
+								}
+							} catch (error) {
+								console.error('Error:', error);
+							}
+						},
+
+						async addValue() {
+							const newValue = prompt('Enter new value:');
+							if (!newValue) return;
+
+							try {
+								const response = await fetch(`/admin/attributes/${this.attributeId}/values`, {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+									},
+									body: JSON.stringify({
+										value: newValue
+									})
+								});
+								const data = await response.json();
+								if (data.success) {
+									window.location.reload();
+								}
+							} catch (error) {
+								console.error('Error:', error);
+							}
+						},
+
+						async saveOrder() {
+							const order = Array.from(this.$refs.valueContainer.querySelectorAll('.value-chip')).map(el => el
+								.dataset.valueId);
+
+							try {
+								await fetch(`/admin/attributes/${this.attributeId}/values/reorder`, {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+										'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+									},
+									body: JSON.stringify({
+										order: order
+									})
+								});
+							} catch (error) {
+								console.error('Error:', error);
+							}
+						}
+					};
+				}
+			</script>
+		@endpush
+	@endsection

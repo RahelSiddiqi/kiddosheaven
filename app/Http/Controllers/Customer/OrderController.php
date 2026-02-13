@@ -4,11 +4,19 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\Order\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
+    protected OrderService $orderService;
+
+    public function __construct(OrderService $orderService)
+    {
+        $this->orderService = $orderService;
+    }
+
     /**
      * Display a listing of customer orders.
      */
@@ -40,13 +48,13 @@ class OrderController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $order->load(['items.product', 'items.product.catalog', 'statusHistory', 'address']);
+        $order->load(['items.product', 'items.product.category', 'statusHistory', 'address']);
 
         return view('customer.orders.show', compact('order'));
     }
 
     /**
-     * Cancel an order.
+     * Cancel an order — routes through OrderService to restore FIFO batches.
      */
     public function cancel(Request $request, Order $order)
     {
@@ -55,19 +63,21 @@ class OrderController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Only allow cancellation of pending orders
+        // Only allow cancellation of pending/processing orders
         if (!in_array($order->status, ['pending', 'processing'])) {
             return redirect()->back()->with('error', 'Order cannot be cancelled at this stage.');
         }
 
-        $order->update([
-            'status' => 'cancelled',
-            'cancellation_reason' => $request->input('reason', 'Customer requested cancellation'),
-        ]);
+        try {
+            // Route through OrderService — restores batches + stock counter
+            $this->orderService->cancel($order->id);
 
-        // Restore inventory
-        foreach ($order->items as $item) {
-            $item->product->increment('stock_quantity', $item->quantity);
+            // Save cancellation reason
+            $order->update([
+                'cancellation_reason' => $request->input('reason', 'Customer requested cancellation'),
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Cancellation failed. Please try again.');
         }
 
         return redirect()->route('customer.orders.show', $order)->with('success', 'Order cancelled successfully.');

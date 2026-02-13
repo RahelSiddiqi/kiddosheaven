@@ -26,66 +26,14 @@
 				</div>
 
 				<!-- Stats Cards -->
-				<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/30">
-								<svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Flash Sales</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/30">
-								<svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Now</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ $stats['active'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/30">
-								<svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Scheduled</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ $stats['scheduled'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-red-100 dark:bg-red-900/30">
-								<svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Ended</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ $stats['ended'] }}</p>
-							</div>
-						</div>
-					</div>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+					<x-admin.ui.stat-card title="Total Flash Sales" :value="$stats['total']" icon="flash" color="blue" />
+					<x-admin.ui.stat-card title="Active Now" :value="$stats['active']" icon="check" color="green" />
+					<x-admin.ui.stat-card title="Scheduled" :value="$stats['scheduled']" icon="clock" color="purple" />
+					<x-admin.ui.stat-card title="Ended" :value="$stats['ended']" icon="x-circle" color="red" />
 				</div>
 
-				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
+				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
 					<!-- Header -->
 					<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 						<div>
@@ -106,12 +54,12 @@
 										class="h-10.5 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-10.5 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800 xl:w-64" />
 								</div>
 							</form>
-							<a href="{{ route('admin.flash-sales.create') }}"
+							<a href="{{ route('admin.marketing.flash-sales.create') }}"
 								class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200">
 								<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none"
 									xmlns="http://www.w3.org/2000/svg">
-									<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="2"
-										stroke-linecap="round" stroke-linejoin="round" />
+									<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round" />
 								</svg>
 								Create Flash Sale
 							</a>
@@ -167,7 +115,7 @@
 											</td>
 											<td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
 												<div class="flex items-center gap-2 justify-end">
-													<a href="{{ route('admin.flash-sales.show', $flashSale) }}"
+													<a href="{{ route('admin.marketing.flash-sales.show', $flashSale) }}"
 														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
 														<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -176,11 +124,12 @@
 																d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
 														</svg>
 													</a>
-													<a href="{{ route('admin.flash-sales.edit', $flashSale) }}"
+													<a href="{{ route('admin.marketing.flash-sales.edit', $flashSale) }}"
 														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
 														<x-icons.edit />
 													</a>
-													<form action="{{ route('admin.flash-sales.destroy', $flashSale) }}" method="POST" class="inline">
+													<form action="{{ route('admin.marketing.flash-sales.destroy', $flashSale) }}" method="POST"
+														class="inline">
 														@csrf
 														@method('DELETE')
 														<button type="submit" @click="deleteFlashSale({{ $flashSale->id }})"

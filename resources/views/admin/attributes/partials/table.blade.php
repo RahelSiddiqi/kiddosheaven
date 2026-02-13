@@ -7,7 +7,7 @@
 				<th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Type</th>
 				<th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Values</th>
 				<th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Options</th>
-				<th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Catalogs</th>
+				<th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Categories</th>
 				<th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">
 					Actions</th>
 			</tr>
@@ -98,13 +98,13 @@
 					</td>
 					<td class="px-6 py-4">
 						@php
-							$catalogs = $attribute->catalogs ?? collect();
-							$catalogCount = $catalogs->count();
+							$categories = $attribute->categories ?? collect();
+							$categoryCount = $categories->count();
 						@endphp
-						@if ($catalogCount > 0)
-							<a href="{{ route('admin.catalogs.attributes.index', [$catalogs->first()->id]) }}"
+						@if ($categoryCount > 0)
+							<a href="{{ route('admin.categories.show', [$categories->first()->id]) }}"
 								class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-								{{ $catalogCount }} catalog(s)
+								{{ $categoryCount }} category(ies)
 							</a>
 						@else
 							<span class="text-sm text-gray-400">Not assigned</span>

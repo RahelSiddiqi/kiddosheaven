@@ -1,0 +1,10 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Field	Type	Null	Key	Default	Extra
+unit_price	int unsigned	NO		NULL	
+unit_cost	decimal(10,2)	YES		NULL	
+total_price	int unsigned	NO		NULL	
+Field	Type	Null	Key	Default	Extra
+price	decimal(10,2)	NO		NULL	
+cost_price	decimal(10,2)	YES		NULL	
+Field	Type	Null	Key	Default	Extra
+total_amount	int unsigned	NO		NULL	

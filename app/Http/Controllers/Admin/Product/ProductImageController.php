@@ -31,7 +31,7 @@ class ProductImageController extends Controller
 
         // Merge with existing images
         $allImages = array_merge($existingImages, $uploadedImages);
-        
+
         $product->update([
             'images' => $allImages,
             'primary_image' => $product->primary_image ?? ($allImages[0] ?? null),
@@ -54,7 +54,7 @@ class ProductImageController extends Controller
         ]);
 
         $images = $product->images ?? [];
-        
+
         if (!in_array($request->image, $images)) {
             return response()->json([
                 'success' => false,

@@ -8,7 +8,7 @@
 			<div x-data="couponManager({
     initialSearch: '{{ request('search', '') }}',
     baseUrl: '/admin/coupons',
-    usersUrl: '{{ route('admin.coupons.users') }}',
+    usersUrl: '{{ route('admin.marketing.coupons.users') }}',
     csrf: '{{ csrf_token() }}',
     initialUsers: @json($users ?? [])
 })">
@@ -29,67 +29,12 @@
 
 				<!-- Stats Cards -->
 				<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-teal-100 dark:bg-teal-900/30">
-								<svg class="w-6 h-6 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Coupons</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ $coupons->total() }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/30">
-								<svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">
-									{{ $coupons->filter(fn($c) => $c->isValid())->count() }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-red-100 dark:bg-red-900/30">
-								<svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Inactive</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">
-									{{ $coupons->filter(fn($c) => !$c->isValid())->count() }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/30">
-								<svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Expiring Soon</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">
-									{{ $coupons->filter(fn($c) => $c->valid_until && $c->valid_until->isBetween(now(), now()->addDays(7)))->count() }}
-								</p>
-							</div>
-						</div>
-					</div>
+					<x-admin.ui.stat-card title="Total Coupons" :value="$coupons->total()" icon="tag" color="blue" />
+					<x-admin.ui.stat-card title="Active" :value="$coupons->filter(fn($c) => $c->isValid())->count()" icon="check" color="green" />
+					<x-admin.ui.stat-card title="Inactive" :value="$coupons->filter(fn($c) => !$c->isValid())->count()" icon="x-circle" color="red" />
+					<x-admin.ui.stat-card title="Expiring Soon" :value="$coupons
+					    ->filter(fn($c) => $c->valid_until && $c->valid_until->isBetween(now(), now()->addDays(7)))
+					    ->count()" icon="clock" color="purple" />
 				</div>
 
 				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
@@ -117,8 +62,8 @@
 								class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200">
 								<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none"
 									xmlns="http://www.w3.org/2000/svg">
-									<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="2"
-										stroke-linecap="round" stroke-linejoin="round" />
+									<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round" />
 								</svg>
 								Add Coupon
 							</button>

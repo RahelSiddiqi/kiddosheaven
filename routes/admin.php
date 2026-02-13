@@ -1,9 +1,6 @@
 <?php
 
 use App\Http\Controllers\Admin\BrandController;
-use App\Http\Controllers\Admin\CatalogController;
-use App\Http\Controllers\Admin\Catalog\CatalogTypeController;
-use App\Http\Controllers\Admin\Catalog\CatalogTypeAttributeController;
 use App\Http\Controllers\Admin\CapitalAccountController;
 use App\Http\Controllers\Admin\CmsPageController;
 use App\Http\Controllers\Admin\CouponController;
@@ -17,7 +14,6 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\LoyaltyController;
 use App\Http\Controllers\Admin\Attribute\AttributeController;
 use App\Http\Controllers\Admin\Attribute\AttributeValueController;
-use App\Http\Controllers\Admin\Attribute\CatalogAttributeController;
 use App\Http\Controllers\Admin\Product\ProductController;
 use App\Http\Controllers\Admin\Product\ProductImageController;
 use App\Http\Controllers\Admin\Product\ProductVariantController;
@@ -49,49 +45,21 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // ============================================
-    // CATALOGS
+    // CATEGORIES
     // ============================================
-    Route::prefix('catalogs')->name('catalogs.')->group(function () {
-        // ============================================
-        // CATALOG TYPES (must be before resource to avoid {catalog} catching "types")
-        // ============================================
-        Route::prefix('types')->name('types.')->group(function () {
-            // Action routes before resource
-            Route::post('reorder', [CatalogTypeController::class, 'reorder'])->name('reorder');
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::post('reorder', [\App\Http\Controllers\Admin\CategoryController::class, 'reorder'])->name('reorder');
+        Route::resource('/', \App\Http\Controllers\Admin\CategoryController::class)->parameters(['' => 'category']);
+    });
 
-            // Nested attribute routes for specific type
-            Route::prefix('{type}')->name('attributes.')->group(function () {
-                Route::get('attributes', [CatalogTypeAttributeController::class, 'index'])->name('index');
-                Route::post('attach', [CatalogTypeAttributeController::class, 'attach'])->name('attach');
-                Route::delete('detach/{attribute}', [CatalogTypeAttributeController::class, 'detach'])->name('detach');
-                Route::post('sync', [CatalogTypeAttributeController::class, 'sync'])->name('sync');
-                Route::post('reorder', [CatalogTypeAttributeController::class, 'reorder'])->name('reorder');
-            });
-
-            // Resource routes last
-            Route::resource('/', CatalogTypeController::class)->parameters(['' => 'type']);
-        });
-
-        // Action routes for catalogs (before resource)
-        Route::post('reorder', [CatalogController::class, 'reorder'])->name('reorder');
-
-        // ============================================
-        // CATALOG ATTRIBUTES (nested under specific catalog)
-        // ============================================
-        Route::prefix('{catalog}/attributes')->name('attributes.')->group(function () {
-            Route::get('/', [CatalogAttributeController::class, 'index'])->name('index');
-            Route::post('/', [CatalogAttributeController::class, 'attach'])->name('attach');
-            Route::delete('{attribute}', [CatalogAttributeController::class, 'detach'])->name('detach');
-            Route::put('reorder', [CatalogAttributeController::class, 'reorder'])->name('reorder');
-        });
-
-        // Other nested routes for specific catalog
-        Route::put('{catalog}/attributes', [CatalogController::class, 'updateAttributes'])->name('update-attributes');
-
-        // ============================================
-        // CATALOG RESOURCE (must be last to not catch specific routes)
-        // ============================================
-        Route::resource('', CatalogController::class)->parameters(['' => 'catalog']);
+    // ============================================
+    // PRICING TEMPLATES
+    // ============================================
+    Route::prefix('pricing-templates')->name('pricing-templates.')->group(function () {
+        Route::get('/list', [\App\Http\Controllers\Admin\PricingTemplateController::class, 'list'])->name('list');
+        Route::post('/preview', [\App\Http\Controllers\Admin\PricingTemplateController::class, 'preview'])->name('preview');
+        Route::post('{pricingTemplate}/attach-categories', [\App\Http\Controllers\Admin\PricingTemplateController::class, 'attachCategories'])->name('attach-categories');
+        Route::resource('/', \App\Http\Controllers\Admin\PricingTemplateController::class)->parameters(['' => 'pricingTemplate']);
     });
 
     // ============================================
@@ -120,9 +88,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::prefix('products')->name('products.')->group(function () {
         // Bulk action route
         Route::post('bulk-action', [ProductController::class, 'bulkAction'])->name('bulk-action');
-        
-        // Get attributes by catalog (AJAX helper)
-        Route::get('attributes/{catalog}', [ProductController::class, 'getAttributesByCatalog'])->name('attributes');
+
+        // Get attributes by category (AJAX helper)
+        Route::get('attributes/{category}', [ProductController::class, 'getAttributesByCategory'])->name('attributes');
+
+        // Get variant attributes by category (AJAX helper)
+        Route::get('variant-attributes/{category}', [ProductController::class, 'getVariantAttributes'])->name('variant-attributes');
 
         // Product-specific nested routes
         Route::prefix('{product}')->group(function () {
@@ -134,17 +105,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
             // Variant management
             Route::get('variants', [ProductVariantController::class, 'index'])->name('variants.index');
+            Route::get('variants/{variant}', [ProductVariantController::class, 'show'])->name('variants.show');
             Route::post('variants', [ProductVariantController::class, 'store'])->name('variants.store');
             Route::put('variants/{variant}', [ProductVariantController::class, 'update'])->name('variants.update');
             Route::delete('variants/{variant}', [ProductVariantController::class, 'destroy'])->name('variants.destroy');
             Route::post('variants/generate', [ProductVariantController::class, 'generate'])->name('variants.generate');
+            Route::post('variants/bulk-update', [ProductVariantController::class, 'bulkUpdate'])->name('variants.bulk-update');
 
             // Attribute value management
             Route::get('attribute-values', [ProductAttributeValueController::class, 'index'])->name('attribute-values.index');
             Route::post('attribute-values', [ProductAttributeValueController::class, 'store'])->name('attribute-values.store');
             Route::put('attribute-values', [ProductAttributeValueController::class, 'update'])->name('attribute-values.update');
             Route::delete('attribute-values/{attribute}', [ProductAttributeValueController::class, 'destroy'])->name('attribute-values.destroy');
-            Route::post('attribute-values/sync-from-catalog', [ProductAttributeValueController::class, 'syncFromCatalog'])->name('attribute-values.sync');
+            Route::post('attribute-values/sync-from-category', [ProductAttributeValueController::class, 'syncFromCategory'])->name('attribute-values.sync');
         });
 
         // Resource routes last
@@ -158,8 +131,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         // Action routes before resource
         Route::post('{brand}/toggle', [BrandController::class, 'toggleActive'])->name('toggle');
 
-        // Resource routes (only specific methods)
-        Route::resource('/', BrandController::class)->parameters(['' => 'brand'])->only(['index', 'store', 'update', 'destroy']);
+        // Resource routes
+        Route::resource('/', BrandController::class)->parameters(['' => 'brand']);
     });
 
     // ============================================
@@ -187,6 +160,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('alerts', [InventoryController::class, 'alerts'])->name('alerts');
         Route::post('update', [InventoryController::class, 'updateStock'])->name('update');
         Route::get('/', [InventoryController::class, 'index'])->name('index');
+
+        // Inventory Movements (nested under inventory)
+        Route::prefix('movements')->name('movements.')->group(function () {
+            // Specific action routes
+            Route::get('product/{product}', [InventoryMovementController::class, 'getByProduct'])->name('by-product');
+
+            // Resource routes
+            Route::resource('/', InventoryMovementController::class)->parameters(['' => 'inventory_movement']);
+        });
     });
 
     // Purchase Batches
@@ -196,15 +178,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
         // Resource routes
         Route::resource('/', PurchaseBatchController::class)->parameters(['' => 'purchase_batch']);
-    });
-
-    // Inventory Movements
-    Route::prefix('inventory-movements')->name('inventory-movements.')->group(function () {
-        // Specific action routes
-        Route::get('product/{product}', [InventoryMovementController::class, 'getByProduct'])->name('by-product');
-
-        // Resource routes
-        Route::resource('/', InventoryMovementController::class)->parameters(['' => 'inventory_movement']);
     });
 
     // ============================================
@@ -340,6 +313,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/', [ReportController::class, 'index'])->name('index');
 
         // Inventory Reports
+        Route::get('inventory', [ReportController::class, 'inventory'])->name('inventory');
         Route::get('batch-stock', [ReportController::class, 'batchStock'])->name('batch-stock');
         Route::get('batch-stock/export', [ReportController::class, 'exportBatchStock'])->name('batch-stock-export');
         Route::get('expiring', [ReportController::class, 'expiringItems'])->name('expiring');

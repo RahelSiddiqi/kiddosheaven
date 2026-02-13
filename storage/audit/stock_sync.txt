@@ -1,0 +1,18 @@
+🔧 Syncing stock counters...
+  ✅ Product #1 'Wooden Train Set': 0 → 0 (drift was 25)
+  ✅ Product #2 'Stacking Rainbow': 292 → 292 (drift was -262)
+  ✅ Product #3 'Cuddly Bear': 125 → 125 (drift was -85)
+  ✅ Product #4 'Bunny Plush': 158 → 158 (drift was -123)
+  ✅ Product #5 'Math Learning Set': 172 → 172 (drift was -152)
+  ✅ Product #6 'Alphabet Puzzle': 183 → 183 (drift was -138)
+  ✅ Product #7 'Mega Block Set': 284 → 284 (drift was -269)
+  ✅ Product #8 'Colorful Blocks': 273 → 273 (drift was -265)
+  ✅ Product #9 'Baby Activity Gym': 269 → 269 (drift was -257)
+  ✅ Product #10 'RC Racing Car': 48 → 48 (drift was -30)
+  ✅ Product #12 'Wooden Building Blocks Set': 0 → 0 (drift was 50)
+  ✅ Product #13 'Educational E-Book Bundle': 0 → 0 (drift was 9999)
+  ✅ Product #14 'Kids Winter Jacket': 0 → 0 (drift was 28)
+  ✅ Product #15 'Baby Care Gift Set': 0 → 0 (drift was 20)
+
+Products fixed: 14/14
+Variants fixed: 0/0

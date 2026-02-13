@@ -26,67 +26,11 @@
 				</div>
 
 				<!-- Stats Cards -->
-				<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/30">
-								<svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ $customers->total() }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/30">
-								<svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">
-									{{ $customers->where('is_active', true)->count() }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-red-100 dark:bg-red-900/30">
-								<svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Inactive</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">
-									{{ $customers->where('is_active', false)->count() }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/30">
-								<svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">New This Month</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">
-									{{ $customers->where('created_at', '>=', now()->startOfMonth())->count() }}</p>
-							</div>
-						</div>
-					</div>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+					<x-admin.ui.stat-card title="Total Customers" :value="$customers->total()" icon="users" color="blue" />
+					<x-admin.ui.stat-card title="Active" :value="$customers->where('is_active', true)->count()" icon="cart" color="green" />
+					<x-admin.ui.stat-card title="Inactive" :value="$customers->where('is_active', false)->count()" icon="alert" color="red" />
+					<x-admin.ui.stat-card title="New This Month" :value="$customers->where('created_at', '>=', now()->startOfMonth())->count()" icon="trending" color="purple" />
 				</div>
 
 				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
@@ -133,7 +77,7 @@
 								</thead>
 								<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 									@forelse ($customers as $customer)
-										<tr>
+<tr>
 											<td class="py-4 whitespace-nowrap">
 												<div class="flex items-center gap-3">
 													<div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
@@ -156,16 +100,16 @@
 											</td>
 											<td class="px-4 py-4 whitespace-nowrap">
 												@if ($customer->is_active ?? true)
-													<span
+<span
 														class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500">
 														Active
 													</span>
-												@else
-													<span
+@else
+<span
 														class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-50 text-gray-600 dark:bg-gray-500/15 dark:text-gray-400">
 														Inactive
 													</span>
-												@endif
+@endif
 											</td>
 											<td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
 												<div class="flex items-center gap-2 justify-end">
@@ -183,16 +127,16 @@
 														<button type="submit" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
 															title="{{ $customer->is_active ?? true ? 'Disable' : 'Enable' }}">
 															@if ($customer->is_active ?? true)
-																<svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 																		d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
 																</svg>
-															@else
-																<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+@else
+<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 																		d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 																</svg>
-															@endif
+@endif
 														</button>
 													</form>
 												</div>
@@ -202,7 +146,7 @@
 										<tr>
 											<td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">No customers found</td>
 										</tr>
-									@endforelse
+@endforelse
 								</tbody>
 							</table>
 						</div>
@@ -213,46 +157,46 @@
 						<div class="px-6 py-4 border-t border-gray-200 dark:border-white/5">
 							<div class="flex items-center justify-between">
 								<button @click="window.location.href='{{ $customers->appends(request()->query())->previousPageUrl() }}'"
-									{{ !$customers->appends(request()->query())->previousPageUrl() ? 'disabled' : '' }}
-									class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200 sm:px-3.5 {{ !$customers->appends(request()->query())->previousPageUrl() ? 'opacity-50 cursor-not-allowed' : '' }}">
-									<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path fill-rule="evenodd" clip-rule="evenodd"
-											d="M2.58301 9.99868C2.58272 10.1909 2.65588 10.3833 2.80249 10.53L7.79915 15.5301C8.09194 15.8231 8.56682 15.8233 8.85981 15.5305C9.15281 15.2377 9.15297 14.7629 8.86018 14.4699L5.14009 10.7472L16.6675 10.7472C17.0817 10.7472 17.4175 10.4114 17.4175 9.99715C17.4175 9.58294 17.0817 9.24715 16.6675 9.24715L5.14554 9.24715L8.86017 5.53016C9.15297 5.23717 9.15282 4.7623 8.85983 4.4695C8.56684 4.1767 8.09197 4.17685 7.79917 4.46984L2.84167 9.43049C2.68321 9.568 2.58301 9.77087 2.58301 9.99715C2.58301 9.99766 2.58301 9.99817 2.58301 9.99868Z"
-											fill="currentColor" />
-									</svg>
-									<span class="hidden sm:inline">Previous</span>
-								</button>
+						{{ !$customers->appends(request()->query())->previousPageUrl() ? 'disabled' : '' }}
+						class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200 sm:px-3.5 {{ !$customers->appends(request()->query())->previousPageUrl() ? 'opacity-50 cursor-not-allowed' : '' }}">
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fill-rule="evenodd" clip-rule="evenodd"
+								d="M2.58301 9.99868C2.58272 10.1909 2.65588 10.3833 2.80249 10.53L7.79915 15.5301C8.09194 15.8231 8.56682 15.8233 8.85981 15.5305C9.15281 15.2377 9.15297 14.7629 8.86018 14.4699L5.14009 10.7472L16.6675 10.7472C17.0817 10.7472 17.4175 10.4114 17.4175 9.99715C17.4175 9.58294 17.0817 9.24715 16.6675 9.24715L5.14554 9.24715L8.86017 5.53016C9.15297 5.23717 9.15282 4.7623 8.85983 4.4695C8.56684 4.1767 8.09197 4.17685 7.79917 4.46984L2.84167 9.43049C2.68321 9.568 2.58301 9.77087 2.58301 9.99715C2.58301 9.99766 2.58301 9.99817 2.58301 9.99868Z"
+								fill="currentColor" />
+						</svg>
+						<span class="hidden sm:inline">Previous</span>
+						</button>
 
-								<span class="block text-sm font-medium text-gray-700 dark:text-gray-400 sm:hidden">Page
-									{{ $customers->currentPage() }} of {{ $customers->lastPage() }}</span>
+						<span class="block text-sm font-medium text-gray-700 dark:text-gray-400 sm:hidden">Page
+							{{ $customers->currentPage() }} of {{ $customers->lastPage() }}</span>
 
-								<ul class="hidden items-center gap-0.5 sm:flex">
-									@foreach ($customers->appends(request()->query())->links()->elements[0] as $page => $url)
-										<li>
-											<button @click="window.location.href='{{ $url }}'"
-												class="flex h-10 w-10 items-center justify-center rounded-lg text-theme-sm font-medium {{ $page == $customers->currentPage() ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-blue-500/8 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-500' }}">
-												{{ $page }}
-											</button>
-										</li>
-									@endforeach
-								</ul>
+						<ul class="hidden items-center gap-0.5 sm:flex">
+							@foreach ($customers->appends(request()->query())->links()->elements[0] as $page => $url)
+								<li>
+									<button @click="window.location.href='{{ $url }}'"
+										class="flex h-10 w-10 items-center justify-center rounded-lg text-theme-sm font-medium {{ $page == $customers->currentPage() ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-blue-500/8 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-500' }}">
+										{{ $page }}
+									</button>
+								</li>
+							@endforeach
+						</ul>
 
-								<button @click="window.location.href='{{ $customers->appends(request()->query())->nextPageUrl() }}'"
-									{{ !$customers->appends(request()->query())->nextPageUrl() ? 'disabled' : '' }}
-									class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200 sm:px-3.5 {{ !$customers->appends(request()->query())->nextPageUrl() ? 'opacity-50 cursor-not-allowed' : '' }}">
-									<span class="hidden sm:inline">Next</span>
-									<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path fill-rule="evenodd" clip-rule="evenodd"
-											d="M17.4175 9.9986C17.4178 10.1909 17.3446 10.3832 17.198 10.53L12.2013 15.5301C11.9085 15.8231 11.4337 15.8233 11.1407 15.5305C10.8477 15.2377 10.8475 14.7629 11.1403 14.4699L14.8604 10.7472L3.33301 10.7472C2.91879 10.7472 2.58301 10.4114 2.58301 9.99715C2.58301 9.58294 2.91879 9.24715 3.33301 9.24715L14.8549 9.24715L11.1403 5.53016C10.8475 5.23717 10.8477 4.7623 11.1407 4.4695C11.4336 4.1767 11.9085 4.17685 12.2013 4.46984L17.1588 9.43049C17.3173 9.568 17.4175 9.77087 17.4175 9.99715C17.4175 9.99763 17.4175 9.99812 17.4175 9.9986Z"
-											fill="currentColor" />
-									</svg>
-								</button>
-							</div>
-						</div>
-					@endif
+						<button @click="window.location.href='{{ $customers->appends(request()->query())->nextPageUrl() }}'"
+							{{ !$customers->appends(request()->query())->nextPageUrl() ? 'disabled' : '' }}
+							class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3 dark:hover:text-gray-200 sm:px-3.5 {{ !$customers->appends(request()->query())->nextPageUrl() ? 'opacity-50 cursor-not-allowed' : '' }}">
+							<span class="hidden sm:inline">Next</span>
+							<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path fill-rule="evenodd" clip-rule="evenodd"
+									d="M17.4175 9.9986C17.4178 10.1909 17.3446 10.3832 17.198 10.53L12.2013 15.5301C11.9085 15.8231 11.4337 15.8233 11.1407 15.5305C10.8477 15.2377 10.8475 14.7629 11.1403 14.4699L14.8604 10.7472L3.33301 10.7472C2.91879 10.7472 2.58301 10.4114 2.58301 9.99715C2.58301 9.58294 2.91879 9.24715 3.33301 9.24715L14.8549 9.24715L11.1403 5.53016C10.8475 5.23717 10.8477 4.7623 11.1407 4.4695C11.4336 4.1767 11.9085 4.17685 12.2013 4.46984L17.1588 9.43049C17.3173 9.568 17.4175 9.77087 17.4175 9.99715C17.4175 9.99763 17.4175 9.99812 17.4175 9.9986Z"
+									fill="currentColor" />
+							</svg>
+						</button>
 				</div>
 			</div>
+			@endif
 		</div>
+	</div>
+	</div>
 	</div>
 @endsection
 

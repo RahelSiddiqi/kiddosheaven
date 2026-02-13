@@ -8,7 +8,7 @@
 			<!-- Header with Back -->
 			<div class="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between">
 				<div>
-					<a href="{{ route('admin.flash-sales.index') }}"
+					<a href="{{ route('admin.marketing.flash-sales.index') }}"
 						class="inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mb-1">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -19,7 +19,7 @@
 					<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ $flashSale->description ?? 'No description' }}</p>
 				</div>
 				<div class="flex gap-3">
-					<a href="{{ route('admin.flash-sales.edit', $flashSale) }}"
+					<a href="{{ route('admin.marketing.flash-sales.edit', $flashSale) }}"
 						class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3">
 						<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none"
 							xmlns="http://www.w3.org/2000/svg">
@@ -29,7 +29,7 @@
 						</svg>
 						Edit
 					</a>
-					<form action="{{ route('admin.flash-sales.destroy', $flashSale) }}" method="POST" class="inline">
+					<form action="{{ route('admin.marketing.flash-sales.destroy', $flashSale) }}" method="POST" class="inline">
 						@csrf
 						@method('DELETE')
 						<button type="submit"
@@ -248,7 +248,7 @@
 								d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
 						</svg>
 						<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">No products added to this flash sale yet.</p>
-						<a href="{{ route('admin.flash-sales.edit', $flashSale) }}"
+						<a href="{{ route('admin.marketing.flash-sales.edit', $flashSale) }}"
 							class="inline-flex items-center justify-center rounded-lg border border-blue-500 bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-theme-xs hover:bg-blue-600">
 							<svg class="mr-2" width="16" height="16" viewBox="0 0 20 20" fill="none"
 								xmlns="http://www.w3.org/2000/svg">

@@ -27,7 +27,7 @@ class StoreProductRequest extends FormRequest
             'description' => ['required', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
-            'catalog_id' => ['required', 'exists:catalogs,id'],
+            'category_id' => ['required', 'exists:categories,id'],
             'brand_id' => ['nullable', 'exists:brands,id'],
             'sku' => ['nullable', 'string', 'max:100', 'unique:products,sku'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
@@ -48,7 +48,7 @@ class StoreProductRequest extends FormRequest
             'price.required' => 'Product price is required',
             'price.numeric' => 'Price must be a number',
             'stock_quantity.required' => 'Stock quantity is required',
-            'catalog_id.required' => 'Please select a category',
+            'category_id.required' => 'Please select a category',
             'sku.unique' => 'This SKU is already in use',
         ];
     }

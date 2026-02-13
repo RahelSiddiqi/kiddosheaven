@@ -4,11 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\Order\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    protected OrderService $orderService;
+
+    public function __construct(OrderService $orderService)
+    {
+        $this->orderService = $orderService;
+    }
+
     public function index(Request $request)
     {
         $query = Order::with('items.product', 'user')
@@ -67,23 +75,22 @@ class OrderController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $oldStatus = $order->status;
-        $order->update([
-            'status' => $validated['status'],
-            'status_notes' => $validated['notes'] ?? $order->status_notes,
-        ]);
-
-        // If order is delivered, update product stock
-        if ($validated['status'] === 'delivered' && $oldStatus !== 'delivered') {
-            DB::transaction(function() use ($order) {
-                foreach ($order->items as $item) {
-                    $product = $item->product;
-                    if ($product) {
-                        $product->decrement('stock', $item->quantity);
-                    }
-                }
-            });
+        // Route cancellation through OrderService so FIFO batches are restored
+        if ($validated['status'] === 'cancelled' && $order->status !== 'cancelled') {
+            $this->orderService->cancel($order->id);
+            // Save optional notes after cancel
+            $order->update([
+                'status_notes' => $validated['notes'] ?? null,
+            ]);
+        } else {
+            $order->update([
+                'status' => $validated['status'],
+                'status_notes' => $validated['notes'] ?? $order->status_notes,
+            ]);
         }
+
+        // NOTE: Stock is deducted at order CREATION via FIFO.
+        // "delivered" does NOT need to decrement again.
 
         return redirect()->route('admin.orders.show', $order)
             ->with('success', 'Order status updated successfully.');
@@ -97,8 +104,25 @@ class OrderController extends Controller
             'status' => ['required', 'string', 'in:pending,processing,shipped,delivered,cancelled'],
         ]);
 
-        $count = Order::whereIn('id', $validated['order_ids'])
-            ->update(['status' => $validated['status']]);
+        $count = 0;
+
+        if ($validated['status'] === 'cancelled') {
+            // Route each cancellation through OrderService to restore FIFO batches
+            foreach ($validated['order_ids'] as $orderId) {
+                $order = Order::find($orderId);
+                if ($order && $order->status !== 'cancelled') {
+                    try {
+                        $this->orderService->cancel($orderId);
+                        $count++;
+                    } catch (\Exception $e) {
+                        \Log::warning("Bulk cancel failed for order #{$orderId}: " . $e->getMessage());
+                    }
+                }
+            }
+        } else {
+            $count = Order::whereIn('id', $validated['order_ids'])
+                ->update(['status' => $validated['status']]);
+        }
 
         $message = "{$count} orders updated successfully.";
 
@@ -142,7 +166,7 @@ class OrderController extends Controller
                 $order->customer_name,
                 $order->customer_email,
                 $order->status,
-                number_format($order->total_amount / 100, 2),
+                number_format($order->total_amount, 2),
                 $order->items->sum('quantity'),
                 $order->created_at->format('Y-m-d H:i:s'),
             ];

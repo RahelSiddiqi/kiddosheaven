@@ -14,14 +14,13 @@ class MenuHelper
             ],
             [
                 'icon' => 'box',
-                'name' => 'Catalog',
-                'path' => '/admin/catalogs',
+                'name' => 'Products',
                 'subItems' => [
-                    ['name' => 'Products', 'path' => '/admin/products'],
-                    ['name' => 'Brands', 'path' => '/admin/brands'],
-                    ['name' => 'Catalogs', 'path' => '/admin/catalogs'],
-                    ['name' => 'Catalog Types', 'path' => '/admin/catalogs/types'],
+                    ['name' => 'All Products', 'path' => '/admin/products'],
+                    ['name' => 'Categories', 'path' => '/admin/categories'],
                     ['name' => 'Attributes', 'path' => '/admin/attributes'],
+                    ['name' => 'Pricing Templates', 'path' => '/admin/pricing-templates'],
+                    ['name' => 'Brands', 'path' => '/admin/brands'],
                 ],
             ],
             [
@@ -29,8 +28,6 @@ class MenuHelper
                 'name' => 'Sales',
                 'subItems' => [
                     ['name' => 'Orders', 'path' => '/admin/orders'],
-                    ['name' => 'Coupons', 'path' => '/admin/coupons'],
-                    ['name' => 'Flash Sales', 'path' => '/admin/flash-sales'],
                 ],
             ],
             [
@@ -48,23 +45,26 @@ class MenuHelper
                 'subItems' => [
                     ['name' => 'Stock Overview', 'path' => '/admin/inventory'],
                     ['name' => 'Purchase Batches', 'path' => '/admin/purchase-batches'],
-                    ['name' => 'Stock Movements', 'path' => '/admin/inventory-movements'],
+                    ['name' => 'Stock Movements', 'path' => '/admin/inventory/movements'],
                     ['name' => 'Low Stock Alerts', 'path' => '/admin/inventory/alerts'],
                 ],
             ],
             [
-                'icon' => 'document',
-                'name' => 'Content',
+                'icon' => 'ecommerce',
+                'name' => 'Marketing',
                 'subItems' => [
-                    ['name' => 'CMS Pages', 'path' => '/admin/cms/pages'],
+                    ['name' => 'Coupons', 'path' => '/admin/marketing/coupons'],
+                    ['name' => 'Flash Sales', 'path' => '/admin/marketing/flash-sales'],
                 ],
             ],
             [
                 'icon' => 'chart',
                 'name' => 'Reports',
                 'subItems' => [
+                    ['name' => 'Reports Overview', 'path' => '/admin/reports'],
                     ['name' => 'Sales Report', 'path' => '/admin/reports/sales'],
                     ['name' => 'Products Report', 'path' => '/admin/reports/products'],
+                    ['name' => 'Inventory Report', 'path' => '/admin/reports/inventory'],
                     ['name' => 'Batch Stock Report', 'path' => '/admin/reports/batch-stock'],
                     ['name' => 'Expiring Items', 'path' => '/admin/reports/expiring'],
                     ['name' => 'Product Profit', 'path' => '/admin/reports/product-profit'],
@@ -88,6 +88,13 @@ class MenuHelper
                     ['name' => 'Investments', 'path' => '/admin/investments'],
                     ['name' => 'Capital Accounts', 'path' => '/admin/capital-accounts'],
                     ['name' => 'Transactions', 'path' => '/admin/financial-transactions'],
+                ],
+            ],
+            [
+                'icon' => 'document',
+                'name' => 'Content',
+                'subItems' => [
+                    ['name' => 'CMS Pages', 'path' => '/admin/cms/pages'],
                 ],
             ],
             [
@@ -130,7 +137,7 @@ class MenuHelper
 
     /**
      * Check if current path is a child of the given path
-     * e.g., /admin/catalogs/types is a child of /admin/catalogs
+     * e.g., /admin/categories/5 is a child of /admin/categories
      */
     public static function isChildActive($path)
     {

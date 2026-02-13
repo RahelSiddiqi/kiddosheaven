@@ -1,0 +1,5 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+COLUMN_NAME
+is_active
+COLUMN_NAME
+is_active

@@ -21,6 +21,21 @@ class ReportController extends Controller
         $this->financialService = $financialService;
     }
 
+    public function index()
+    {
+        // Calculate stats for reports overview
+        $stats = [
+            'total_expenses' => \App\Models\Expense::where('status', 'approved')->sum('amount'),
+            'total_investments' => \App\Models\Investment::sum('amount'),
+            'total_partner_payouts' => \App\Models\PartnerPayment::where('status', 'completed')->sum('amount'),
+            'net_total' => 0, // Will be calculated
+        ];
+
+        $stats['net_total'] = $stats['total_investments'] - $stats['total_expenses'] - $stats['total_partner_payouts'];
+
+        return view('admin.reports.index', compact('stats'));
+    }
+
     public function dashboard()
     {
         $today = Carbon::today();
@@ -30,13 +45,13 @@ class ReportController extends Controller
         $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
 
         $todayOrders = Order::whereDate('created_at', $today)->count();
-        $todayRevenue = Order::whereDate('created_at', $today)->sum('total');
+        $todayRevenue = Order::whereDate('created_at', $today)->sum('total_amount');
 
         $monthOrders = Order::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
-        $monthRevenue = Order::whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('total');
+        $monthRevenue = Order::whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('total_amount');
 
         $lastMonthOrders = Order::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
-        $lastMonthRevenue = Order::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->sum('total');
+        $lastMonthRevenue = Order::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->sum('total_amount');
 
         $totalProducts = Product::count();
         $totalCustomers = User::where('is_admin', false)->count();
@@ -56,8 +71,8 @@ class ReportController extends Controller
 
     public function sales(Request $request)
     {
-        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
-        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+        $startDate = $request->filled('from_date') ? Carbon::parse($request->from_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('to_date') ? Carbon::parse($request->to_date) : Carbon::now()->endOfMonth();
 
         $query = Order::whereBetween('created_at', [$startDate, $endDate]);
 
@@ -65,45 +80,49 @@ class ReportController extends Controller
             $query->where('status', $request->status);
         }
 
-        $orders = $query->with('user', 'items')->latest()->paginate(15);
-        $totalRevenue = $query->sum('total');
-        $totalOrders = $query->count();
-        $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
 
-        $dailySales = $query->selectRaw('DATE(created_at) as date, COUNT(*) as orders, SUM(total) as revenue')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        $orders = $query->with('user', 'items')->latest()->paginate(15);
+
+        // Calculate stats for the entire period (not filtered)
+        $totalRevenue = Order::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount');
+        $totalOrders = Order::whereBetween('created_at', [$startDate, $endDate])->count();
+        $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
+        $completedOrders = Order::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'delivered')
+            ->count();
 
         return view('admin.reports.sales', compact(
-            'orders', 'totalRevenue', 'totalOrders', 'averageOrderValue',
-            'dailySales', 'startDate', 'endDate'
+            'orders', 'totalRevenue', 'totalOrders', 'averageOrderValue', 'completedOrders',
+            'startDate', 'endDate'
         ));
     }
 
     public function products(Request $request)
     {
-        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
-        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+        $query = Product::with(['category']);
 
-        $products = Product::withCount(['orderItems' => function ($query) use ($startDate, $endDate) {
-            $query->whereHas('order', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate]);
-            });
-        }])
-        ->withSum(['orderItems' => function ($query) use ($startDate, $endDate) {
-            $query->whereHas('order', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate]);
-            });
-        }], 'quantity')
-        ->withSum(['orderItems' => function ($query) use ($startDate, $endDate) {
-            $query->whereHas('order', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate]);
-            });
-        }], 'subtotal')
-        ->get();
+        // Apply category filter
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
 
-        return view('admin.reports.products', compact('products', 'startDate', 'endDate'));
+        // Apply status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $products = $query->paginate(20);
+
+        // Calculate stats
+        $totalProducts = Product::count();
+        $activeProducts = Product::where('status', 'active')->count();
+        $lowStockProducts = Product::whereBetween('stock_quantity', [1, 10])->count();
+        $outOfStockProducts = Product::where('stock_quantity', '<=', 0)->count();
+
+        return view('admin.reports.products', compact('products', 'totalProducts', 'activeProducts', 'lowStockProducts', 'outOfStockProducts'));
     }
 
     public function customers(Request $request)
@@ -117,7 +136,7 @@ class ReportController extends Controller
             }])
             ->withSum(['orders' => function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('created_at', [$startDate, $endDate]);
-            }], 'total')
+            }], 'total_amount')
             ->orderBy('orders_count', 'desc')
             ->paginate(15);
 
@@ -126,60 +145,83 @@ class ReportController extends Controller
 
     public function partners(Request $request)
     {
-        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
-        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+        $startDate = $request->filled('from_date') ? Carbon::parse($request->from_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('to_date') ? Carbon::parse($request->to_date) : Carbon::now()->endOfMonth();
 
-        $partners = Partner::withCount(['orders' => function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
-        }])
-        ->withSum(['orders' => function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
-        }], 'total')
-        ->orderBy('orders_count', 'desc')
-        ->paginate(15);
+        $partners = Partner::with('payments')->paginate(15);
 
-        return view('admin.reports.partners', compact('partners', 'startDate', 'endDate'));
+        // Calculate stats
+        $totalPaid = \App\Models\PartnerPayment::where('status', 'completed')->sum('amount');
+        $pendingPayments = \App\Models\PartnerPayment::where('status', 'pending')->sum('amount');
+
+        return view('admin.reports.partners', compact('partners', 'totalPaid', 'pendingPayments'));
     }
 
     public function expenses(Request $request)
     {
-        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
-        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+        $startDate = $request->filled('from_date') ? Carbon::parse($request->from_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('to_date') ? Carbon::parse($request->to_date) : Carbon::now()->endOfMonth();
 
-        $query = Expense::whereBetween('expense_date', [$startDate, $endDate]);
+        $query = Expense::whereBetween('expense_date', [$startDate, $endDate])->with(['category', 'partner']);
 
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
 
-        $expenses = $query->with('category', 'partner')->latest()->paginate(15);
-        $totalExpenses = $query->sum('amount');
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-        $expensesByCategory = Expense::whereBetween('expense_date', [$startDate, $endDate])
-            ->join('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
-            ->selectRaw('expense_categories.name as category, SUM(expenses.amount) as total')
-            ->groupBy('expense_categories.name')
-            ->get();
+        $expenses = $query->orderBy('expense_date', 'desc')->paginate(20);
 
-        return view('admin.reports.expenses', compact('expenses', 'totalExpenses', 'expensesByCategory', 'startDate', 'endDate'));
+        // Calculate stats
+        $totalAmount = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->where('status', 'approved')
+            ->sum('amount');
+        $pendingAmount = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        // Get categories for filter
+        $categories = \App\Models\ExpenseCategory::all();
+
+        return view('admin.reports.expenses', compact('expenses', 'totalAmount', 'pendingAmount', 'categories'));
     }
 
     public function inventory(Request $request)
     {
-        $products = Product::with(['inventory', 'category', 'brand'])
-            ->when($request->filled('low_stock'), function ($query) {
-                $query->whereHas('inventory', function ($q) {
-                    $q->whereRaw('quantity <= reorder_level');
-                });
-            })
-            ->when($request->filled('out_of_stock'), function ($query) {
-                $query->whereHas('inventory', function ($q) {
-                    $q->where('quantity', 0);
-                });
-            })
-            ->paginate(15);
+        $query = Product::with(['category']);
 
-        return view('admin.reports.inventory', compact('products'));
+        // Apply category filter
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        // Apply stock status filter
+        if ($request->filled('stock_status')) {
+            switch ($request->stock_status) {
+                case 'in_stock':
+                    $query->where('stock_quantity', '>', 10);
+                    break;
+                case 'low_stock':
+                    $query->whereBetween('stock_quantity', [1, 10]);
+                    break;
+                case 'out_of_stock':
+                    $query->where('stock_quantity', '<=', 0);
+                    break;
+            }
+        }
+
+        $products = $query->paginate(20);
+
+        // Calculate stats
+        $totalProducts = Product::count();
+        $totalStock = Product::sum('stock_quantity');
+        $lowStockCount = Product::whereBetween('stock_quantity', [1, 10])->count();
+        $outOfStockCount = Product::where('stock_quantity', '<=', 0)->count();
+        $totalValue = Product::selectRaw('SUM(stock_quantity * price)')->value('SUM(stock_quantity * price)') ?? 0;
+
+        return view('admin.reports.inventory', compact('products', 'totalProducts', 'totalStock', 'lowStockCount', 'outOfStockCount', 'totalValue'));
     }
 
     public function financial(Request $request)
@@ -210,7 +252,7 @@ class ReportController extends Controller
                     $order->order_number,
                     $order->user?->name,
                     $order->user?->email,
-                    $order->total,
+                    $order->total_amount,
                     $order->status,
                     $order->created_at->format('Y-m-d H:i:s'),
                 ]);
@@ -218,5 +260,118 @@ class ReportController extends Controller
 
             fclose($file);
         }, 'sales-report-' . now()->format('Y-m-d') . '.csv');
+    }
+
+    public function productProfit(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        // Get products with their order items in the date range
+        $products = Product::with(['orderItems' => function ($query) use ($startDate, $endDate) {
+            $query->whereHas('order', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate])
+                  ->where('status', 'delivered');
+            })->with('order');
+        }])->get();
+
+        // Calculate profit for each product
+        $report = $products->map(function ($product) {
+            $totalRevenue = 0;
+            $totalCost = 0;
+            $quantitySold = 0;
+
+            foreach ($product->orderItems as $item) {
+                $quantitySold += $item->quantity;
+                $totalRevenue += $item->price * $item->quantity;
+                $totalCost += $item->cost_price * $item->quantity; // Assuming cost_price is stored on order_items
+            }
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'category_name' => $product->category?->name ?? 'N/A',
+                'quantity_sold' => $quantitySold,
+                'revenue' => $totalRevenue,
+                'cost' => $totalCost,
+                'profit' => $totalRevenue - $totalCost,
+            ];
+        })->filter(function ($item) {
+            return $item['quantity_sold'] > 0; // Only show products that were sold
+        })->sortByDesc('profit')->values();
+
+        // Calculate totals
+        $totalRevenue = $report->sum('revenue');
+        $totalCost = $report->sum('cost');
+        $totalProfit = $report->sum('profit');
+        $profitMargin = $totalRevenue > 0 ? ($totalProfit / $totalRevenue) * 100 : 0;
+
+        return view('admin.reports.product-profit', compact(
+            'report', 'startDate', 'endDate',
+            'totalRevenue', 'totalCost', 'totalProfit', 'profitMargin'
+        ));
+    }
+
+    public function categoryProfit(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+        $categoryId = $request->filled('category_id') ? $request->category_id : null;
+
+        // Get categories for filter
+        $categories = \App\Models\Category::all();
+        $selectedCategory = $categoryId ? \App\Models\Category::find($categoryId) : null;
+
+        // Get products filtered by category if specified
+        $query = Product::with(['orderItems' => function ($query) use ($startDate, $endDate) {
+            $query->whereHas('order', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate])
+                  ->where('status', 'delivered');
+            });
+        }]);
+
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+
+        $products = $query->get();
+
+        // Calculate profit for each product
+        $topProducts = $products->map(function ($product) {
+            $totalRevenue = 0;
+            $totalCost = 0;
+            $quantitySold = 0;
+
+            foreach ($product->orderItems as $item) {
+                $quantitySold += $item->quantity;
+                $totalRevenue += $item->price * $item->quantity;
+                $totalCost += $item->cost_price * $item->quantity;
+            }
+
+            $profit = $totalRevenue - $totalCost;
+
+            return [
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'quantity_sold' => $quantitySold,
+                'revenue' => $totalRevenue,
+                'cost' => $totalCost,
+                'profit' => $profit,
+            ];
+        })->filter(function ($item) {
+            return $item['quantity_sold'] > 0;
+        })->sortByDesc('profit')->take(20)->values();
+
+        // Calculate overall report
+        $report = [
+            'total_revenue' => $topProducts->sum('revenue'),
+            'total_cost' => $topProducts->sum('cost'),
+            'gross_profit' => $topProducts->sum('profit'),
+            'top_products' => $topProducts,
+        ];
+
+        return view('admin.reports.category-profit', compact(
+            'report', 'startDate', 'endDate', 'categories', 'selectedCategory'
+        ));
     }
 }

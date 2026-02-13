@@ -4,35 +4,35 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\Catalog;
+use App\Models\Category;
 use App\Models\ProductAttribute;
 
 class PuzzleAttributesSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * Creates puzzle-specific attributes and associates them with the Puzzles catalog.
+     * Creates puzzle-specific attributes and associates them with the Puzzles category.
      */
     public function run(): void
     {
         $this->command->info('Setting up puzzle-specific attributes...');
 
-        // First, ensure we have a Puzzles catalog with correct type
-        $puzzlesCatalog = Catalog::where('name', 'Puzzles')->first();
+        // First, ensure we have a Puzzles category with correct type
+        $puzzlesCategory = Category::where('name', 'Puzzles')->first();
 
-        if (!$puzzlesCatalog) {
-            $puzzlesCatalog = Catalog::create([
+        if (!$puzzlesCategory) {
+            $puzzlesCategory = Category::create([
                 'name' => 'Puzzles',
                 'type' => 'puzzles',
                 'description' => 'Challenge your mind with our collection of puzzles',
                 'show_on_home' => true,
             ]);
-            $this->command->info('Created Puzzles catalog');
+            $this->command->info('Created Puzzles category');
         } else {
             // Update the type to puzzles if it's wrong
-            if ($puzzlesCatalog->type !== 'puzzles') {
-                $puzzlesCatalog->update(['type' => 'puzzles']);
-                $this->command->info('Updated Puzzles catalog type to: puzzles');
+            if ($puzzlesCategory->type !== 'puzzles') {
+                $puzzlesCategory->update(['type' => 'puzzles']);
+                $this->command->info('Updated Puzzles category type to: puzzles');
             }
         }
 
@@ -135,23 +135,23 @@ class PuzzleAttributesSeeder extends Seeder
             }
         }
 
-        // Associate attributes with Puzzles catalog
+        // Associate attributes with Puzzles category
         foreach ($attributeIds as $index => $attributeId) {
-            $exists = DB::table('catalog_attributes')
-                ->where('catalog_id', $puzzlesCatalog->id)
+            $exists = DB::table('category_attributes')
+                ->where('category_id', $puzzlesCategory->id)
                 ->where('product_attribute_id', $attributeId)
                 ->exists();
 
             if (!$exists) {
-                DB::table('catalog_attributes')->insert([
-                    'catalog_id' => $puzzlesCatalog->id,
+                DB::table('category_attributes')->insert([
+                    'category_id' => $puzzlesCategory->id,
                     'product_attribute_id' => $attributeId,
                     'sort_order' => $index + 1,
                     'is_required' => $puzzleAttributes[$index]['is_required'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-                $this->command->info('Associated ' . $puzzleAttributes[$index]['name'] . ' with Puzzles catalog');
+                $this->command->info('Associated ' . $puzzleAttributes[$index]['name'] . ' with Puzzles category');
             }
         }
 

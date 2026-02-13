@@ -8,7 +8,7 @@
 			<div x-data="orderManager({
     initialSearch: '{{ request('search', '') }}',
     baseUrl: '/admin/orders',
-    bulkUpdateUrl: '{{ route('admin.orders.bulkUpdateStatus') }}',
+    bulkUpdateUrl: '{{ route('admin.orders.bulk-status') }}',
     csrf: '{{ csrf_token() }}'
 })">
 				<!-- Toast Notification -->
@@ -27,94 +27,13 @@
 				</div>
 
 				<!-- Stats Cards -->
-				<div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/30">
-								<svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Orders</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-yellow-100 dark:bg-yellow-900/30">
-								<svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</p>
-								<p class="text-xl font-semibold text-yellow-600 dark:text-yellow-400">{{ $stats['pending'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/30">
-								<svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Processing</p>
-								<p class="text-xl font-semibold text-blue-600 dark:text-blue-400">{{ $stats['processing'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/30">
-								<svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Shipped</p>
-								<p class="text-xl font-semibold text-purple-600 dark:text-purple-400">{{ $stats['shipped'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/30">
-								<svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Delivered</p>
-								<p class="text-xl font-semibold text-green-600 dark:text-green-400">{{ $stats['delivered'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
-								<svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Revenue</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">
-									৳{{ number_format($stats['total_revenue'] / 100, 2) }}</p>
-							</div>
-						</div>
-					</div>
+				<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+					<x-admin.ui.stat-card title="Total Orders" :value="$stats['total']" icon="cart" color="blue" :compact="true" />
+					<x-admin.ui.stat-card title="Pending" :value="$stats['pending']" icon="cart" color="yellow" :compact="true" />
+					<x-admin.ui.stat-card title="Processing" :value="$stats['processing']" icon="cart" color="blue" :compact="true" />
+					<x-admin.ui.stat-card title="Shipped" :value="$stats['shipped']" icon="cart" color="purple" :compact="true" />
+					<x-admin.ui.stat-card title="Delivered" :value="$stats['delivered']" icon="cart" color="green" :compact="true" />
+					<x-admin.ui.stat-card title="Revenue" :value="'৳' . number_format($stats['total_revenue'] / 100, 2)" icon="currency" color="brand" :compact="true" />
 				</div>
 
 				<!-- Bulk Actions -->
@@ -164,8 +83,8 @@
 							<form @submit.prevent="searchOrders()">
 								<div class="relative">
 									<button type="button" @click="searchOrders()" class="absolute -translate-y-1/2 left-4 top-1/2">
-										<svg class="fill-gray-500 dark:fill-gray-400" width="20" height="20" viewBox="0 0 20 20"
-											fill="none" xmlns="http://www.w3.org/2000/svg">
+										<svg class="fill-gray-500 dark:fill-gray-400" width="20" height="20" viewBox="0 0 20 20" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
 											<path fill-rule="evenodd" clip-rule="evenodd"
 												d="M3.04199 9.37381C3.04199 5.87712 5.87735 3.04218 9.37533 3.04218C12.8733 3.04218 15.7087 5.87712 15.7087 9.37381C15.7087 12.8705 12.8733 15.7055 9.37533 15.7055C5.87735 15.7055 3.04199 12.8705 3.04199 9.37381ZM9.37533 1.54218C5.04926 1.54218 1.54199 5.04835 1.54199 9.37381C1.54199 13.6993 5.04926 17.2055 9.37533 17.2055C11.2676 17.2055 13.0032 16.5346 14.3572 15.4178L17.1773 18.2381C17.4702 18.531 17.945 18.5311 18.2379 18.2382C18.5308 17.9453 18.5309 17.4704 18.238 17.1775L15.4182 14.3575C16.5367 13.0035 17.2087 11.2671 17.2087 9.37381C17.2087 5.04835 13.7014 1.54218 9.37533 1.54218Z"
 												fill="" />

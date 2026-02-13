@@ -21,11 +21,22 @@ class CartController extends Controller
         $product = Product::where('slug', $slug)->firstOrFail();
         $quantity = max(1, (int) $request->input('quantity', 1));
 
+        // Stock availability check
+        if ($product->stock_quantity < $quantity) {
+            return redirect()->back()
+                ->with('error', 'Insufficient stock. Only ' . $product->stock_quantity . ' available.');
+        }
+
         $cart = $this->getCart($request);
 
         $key = (string) $product->id;
         if (isset($cart['items'][$key])) {
-            $cart['items'][$key]['quantity'] += $quantity;
+            $newQuantity = $cart['items'][$key]['quantity'] + $quantity;
+            if ($product->stock_quantity < $newQuantity) {
+                return redirect()->back()
+                    ->with('error', 'Insufficient stock. Only ' . $product->stock_quantity . ' available.');
+            }
+            $cart['items'][$key]['quantity'] = $newQuantity;
         } else {
             $cart['items'][$key] = [
                 'product_id' => $product->id,

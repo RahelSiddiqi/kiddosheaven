@@ -8,6 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Drop FK from variant_attributes first if table exists
+        if (Schema::hasTable('variant_attributes')) {
+            Schema::table('variant_attributes', function (Blueprint $table) {
+                $table->dropForeign(['product_attribute_value_id']);
+            });
+        }
+
         // Drop the existing table and recreate with nullable product_id
         Schema::dropIfExists('product_attribute_values');
 
@@ -23,6 +30,13 @@ return new class extends Migration
             // Allow null product_id for global attribute values
             $table->index(['product_id', 'product_attribute_id']);
         });
+
+        // Recreate FK on variant_attributes
+        if (Schema::hasTable('variant_attributes')) {
+            Schema::table('variant_attributes', function (Blueprint $table) {
+                $table->foreign('product_attribute_value_id')->references('id')->on('product_attribute_values')->onDelete('cascade');
+            });
+        }
     }
 
     public function down(): void

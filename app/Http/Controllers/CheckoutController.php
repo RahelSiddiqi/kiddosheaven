@@ -3,11 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Models\OrderItem;
+use App\Services\Order\OrderService;
 use Illuminate\Http\Request;
 
 class CheckoutController extends Controller
 {
+    protected OrderService $orderService;
+
+    public function __construct(OrderService $orderService)
+    {
+        $this->orderService = $orderService;
+    }
+
     public function show(Request $request)
     {
         $cart = $request->session()->get('cart', [
@@ -47,21 +54,27 @@ class CheckoutController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $order = Order::create([
-            ...$validated,
-            'total_amount' => $cart['subtotal'],
-            'payment_method' => 'cod',
-            'status' => 'pending',
-        ]);
-
+        // Build items array for OrderService (triggers FIFO deduction)
+        $items = [];
         foreach ($cart['items'] as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
+            $items[] = [
                 'product_id' => $item['product_id'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['price'],
-                'total_price' => $item['line_total'],
+                'quantity'   => $item['quantity'],
+                'price'      => $item['price'],
+            ];
+        }
+
+        try {
+            $order = $this->orderService->create([
+                ...$validated,
+                'total_amount'   => $cart['subtotal'],
+                'payment_method' => 'cod',
+                'status'         => 'pending',
+                'items'          => $items,
             ]);
+        } catch (\Exception $e) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Could not place order: ' . $e->getMessage());
         }
 
         $request->session()->forget('cart');

@@ -15,7 +15,13 @@ class AttributeValueController extends Controller
     public function edit(ProductAttribute $attribute)
     {
         $attribute->load('values');
-        return view('admin.attributes.values.edit', compact('attribute'));
+
+        // Get categories that use this attribute
+        $categories = \App\Models\Category::whereHas('attributes', function($query) use ($attribute) {
+            $query->where('product_attributes.id', $attribute->id);
+        })->get();
+
+        return view('admin.attributes.values.edit', compact('attribute', 'categories'));
     }
 
     /**
@@ -85,18 +91,6 @@ class AttributeValueController extends Controller
     public function destroy($attribute, $value)
     {
         $attributeValue = ProductAttributeValue::findOrFail($value);
-
-        // Check if value is used by any products
-        $productCount = $attributeValue->products()->count();
-        if ($productCount > 0) {
-            if (request()->ajax() || request()->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Cannot delete. This value is used by {$productCount} product(s).",
-                ], 422);
-            }
-            return back()->with('error', "Cannot delete. This value is used by {$productCount} product(s).");
-        }
 
         $attributeValue->delete();
 

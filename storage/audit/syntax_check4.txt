@@ -1,0 +1,6 @@
+No syntax errors detected in app/Http/Controllers/Admin/DashboardController.php
+No syntax errors detected in app/Http/Controllers/Admin/ReportController.php
+No syntax errors detected in app/Http/Controllers/Admin/PartnerCalculationController.php
+No syntax errors detected in app/Services/Order/OrderService.php
+No syntax errors detected in app/Services/FinancialCalculationService.php
+No syntax errors detected in app/Models/Partner.php

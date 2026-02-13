@@ -1,0 +1,3 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+COLUMN_NAME	COLUMN_TYPE	GENERATION_EXPRESSION
+profit	decimal(10,2)	((`unit_price` - coalesce(`unit_cost`,0)) * `quantity`)

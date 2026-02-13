@@ -37,7 +37,14 @@ class ReviewController extends Controller
 
         $reviews = $query->latest()->paginate(15);
 
-        return view('admin.reviews.index', compact('reviews'));
+        $stats = [
+            'total' => Review::count(),
+            'approved' => Review::where('is_approved', true)->count(),
+            'pending' => Review::where('is_approved', false)->count(),
+            'avg_rating' => Review::avg('rating') ?? 0,
+        ];
+
+        return view('admin.reviews.index', compact('reviews', 'stats'));
     }
 
     public function show(Review $review)

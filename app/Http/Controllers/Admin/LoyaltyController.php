@@ -11,21 +11,18 @@ use Illuminate\Support\Str;
 
 class LoyaltyController extends Controller
 {
-    public function programs(Request $request)
+    public function index(Request $request)
     {
-        $programs = LoyaltyProgram::query();
+        $program = LoyaltyProgram::where('is_active', true)->first();
 
-        if ($request->filled('search')) {
-            $programs->where('name', 'like', '%' . $request->search . '%');
-        }
+        $stats = [
+            'total_points_issued' => LoyaltyTransaction::where('points', '>', 0)->sum('points'),
+            'total_points_redeemed' => abs(LoyaltyTransaction::where('points', '<', 0)->sum('points')),
+            'active_users' => User::where('loyalty_points', '>', 0)->count(),
+            'active_program' => $program ? true : false,
+        ];
 
-        if ($request->filled('status')) {
-            $programs->where('is_active', $request->status === 'active');
-        }
-
-        $programs = $programs->paginate(10);
-
-        return view('admin.loyalty.programs', compact('programs'));
+        return view('admin.loyalty.index', compact('program', 'stats'));
     }
 
     public function storeProgram(Request $request)

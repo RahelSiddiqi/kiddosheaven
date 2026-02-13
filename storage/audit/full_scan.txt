@@ -1,0 +1,28 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE
+order_items	total_price	decimal(10,2)
+order_items	unit_cost	decimal(10,2)
+order_items	unit_price	decimal(10,2)
+orders	subtotal	decimal(10,2)
+orders	tax_amount	decimal(10,2)
+orders	total_amount	decimal(10,2)
+product_variants	compare_at_price	decimal(10,2)
+product_variants	cost_price	decimal(10,2)
+product_variants	price	decimal(10,2)
+products	cost_price	decimal(10,2)
+products	discount_price	decimal(10,2)
+products	price	decimal(10,2)
+products	wholesale_price	decimal(10,2)
+purchase_batches	unit_cost	decimal(10,2)
+CONSTRAINT_NAME	CHECK_CLAUSE
+chk_remaining_lte_received	(`remaining_quantity` <= `quantity_received`)
+chk_remaining_qty_non_negative	(`remaining_quantity` >= 0)
+chk_reserved_non_negative	(`quantity_reserved` >= 0)
+chk_reserved_lte_remaining	(`quantity_reserved` <= `remaining_quantity`)
+chk_movement_type	(`movement_type` in (_utf8mb4\\'purchase\\',_utf8mb4\\'sale\\',_utf8mb4\\'return\\',_utf8mb4\\'adjustment\\',_utf8mb4\\'transfer\\',_utf8mb4\\'damage\\',_utf8mb4\\'expire\\',_utf8mb4\\'expired\\'))
+null_unit_cost
+0
+sale_no_batch
+0
+orphan_mvmt
+0

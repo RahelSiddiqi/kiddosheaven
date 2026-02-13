@@ -24,12 +24,12 @@ class CmsPageController extends Controller
 
         $pages = $query->latest()->paginate(10);
 
-        return view('admin.cms.index', compact('pages'));
+        return view('admin.cms.pages.index', compact('pages'));
     }
 
     public function create()
     {
-        return view('admin.cms.create');
+        return view('admin.cms.pages.create');
     }
 
     public function store(Request $request)
@@ -57,12 +57,12 @@ class CmsPageController extends Controller
 
     public function show(CmsPage $page)
     {
-        return view('admin.cms.show', compact('page'));
+        return view('admin.cms.pages.show', compact('page'));
     }
 
     public function edit(CmsPage $page)
     {
-        return view('admin.cms.edit', compact('page'));
+        return view('admin.cms.pages.edit', compact('page'));
     }
 
     public function update(Request $request, CmsPage $page)
@@ -110,7 +110,7 @@ class CmsPageController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return view('admin.cms.footer', compact('pages'));
+        return view('admin.cms.pages.footer', compact('pages'));
     }
 
     public function updateFooterOrder(Request $request)

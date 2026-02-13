@@ -50,16 +50,45 @@ class InventoryMovementController extends Controller
 
         DB::beginTransaction();
         try {
+            // Determine signed quantity: outbound types store negative
+            $outboundTypes = ['sale', 'damage', 'transfer'];
+            $signedQty = in_array($validated['movement_type'], $outboundTypes)
+                ? -1 * abs($validated['quantity'])
+                : abs($validated['quantity']);
+
+            // If a batch is specified, update its remaining_quantity
+            if (!empty($validated['batch_id'])) {
+                $batch = \App\Models\PurchaseBatch::lockForUpdate()->findOrFail($validated['batch_id']);
+                if ($signedQty < 0) {
+                    // Deducting from batch
+                    if ($batch->remaining_quantity < abs($signedQty)) {
+                        throw new \Exception('Insufficient batch quantity. Remaining: ' . $batch->remaining_quantity);
+                    }
+                    $batch->decrement('remaining_quantity', abs($signedQty));
+                } else {
+                    // Adding to batch (return / purchase)
+                    $batch->increment('remaining_quantity', $signedQty);
+                }
+            }
+
             $movement = InventoryMovement::create([
                 'product_id' => $validated['product_id'],
                 'movement_type' => $validated['movement_type'],
-                'quantity' => $validated['quantity'],
+                'quantity' => $signedQty,
                 'batch_id' => $validated['batch_id'] ?? null,
                 'reference_type' => $validated['reference_type'] ?? null,
                 'reference_id' => $validated['reference_id'] ?? null,
                 'notes' => $validated['notes'] ?? null,
-                'user_id' => auth()->user() ? auth()->user()->id : null,
+                'user_id' => auth()->id(),
             ]);
+
+            // Sync the denormalised product counter
+            $product = Product::lockForUpdate()->findOrFail($validated['product_id']);
+            if ($signedQty > 0) {
+                $product->increment('stock_quantity', $signedQty);
+            } else {
+                $product->decrement('stock_quantity', min(abs($signedQty), $product->stock_quantity));
+            }
 
             DB::commit();
             return redirect()->route('admin.inventory-movements.index')

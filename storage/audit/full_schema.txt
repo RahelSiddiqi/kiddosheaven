@@ -1,0 +1,187 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_KEY	COLUMN_DEFAULT	EXTRA
+inventory_items	id	bigint unsigned	NO	PRI	NULL	auto_increment
+inventory_items	product_id	bigint unsigned	NO	MUL	NULL	
+inventory_items	product_variant_id	bigint unsigned	YES	MUL	NULL	
+inventory_items	purchase_batch_id	bigint unsigned	NO	MUL	NULL	
+inventory_items	quantity_on_hand	int	NO	MUL	0	
+inventory_items	quantity_reserved	int	NO		0	
+inventory_items	quantity_available	int	YES		NULL	VIRTUAL GENERATED
+inventory_items	location	varchar(255)	NO	MUL	main	
+inventory_items	bin_number	varchar(255)	YES		NULL	
+inventory_items	aisle	varchar(255)	YES		NULL	
+inventory_items	shelf	varchar(255)	YES		NULL	
+inventory_items	unit_cost	decimal(10,2)	NO		NULL	
+inventory_items	total_value	decimal(10,2)	YES		NULL	VIRTUAL GENERATED
+inventory_items	created_at	timestamp	YES		NULL	
+inventory_items	updated_at	timestamp	YES		NULL	
+inventory_movements	id	bigint unsigned	NO	PRI	NULL	auto_increment
+inventory_movements	movement_number	char(36)	NO	UNI	NULL	
+inventory_movements	product_id	bigint unsigned	NO	MUL	NULL	
+inventory_movements	product_variant_id	bigint unsigned	YES	MUL	NULL	
+inventory_movements	batch_id	bigint unsigned	YES	MUL	NULL	
+inventory_movements	inventory_item_id	bigint unsigned	YES	MUL	NULL	
+inventory_movements	movement_type	varchar(255)	NO		NULL	
+inventory_movements	quantity	int	NO		NULL	
+inventory_movements	unit_cost	decimal(10,2)	YES		NULL	
+inventory_movements	reference_type	varchar(255)	YES		NULL	
+inventory_movements	reference_id	bigint unsigned	YES		NULL	
+inventory_movements	user_id	bigint unsigned	YES	MUL	NULL	
+inventory_movements	notes	text	YES		NULL	
+inventory_movements	created_at	timestamp	YES		NULL	
+inventory_movements	updated_at	timestamp	YES		NULL	
+order_items	id	bigint unsigned	NO	PRI	NULL	auto_increment
+order_items	order_id	bigint unsigned	NO	MUL	NULL	
+order_items	product_id	bigint unsigned	NO	MUL	NULL	
+order_items	product_variant_id	bigint unsigned	YES	MUL	NULL	
+order_items	quantity	int unsigned	NO		NULL	
+order_items	unit_price	decimal(10,2)	NO		NULL	
+order_items	unit_cost	decimal(10,2)	YES		NULL	
+order_items	purchase_batch_id	bigint unsigned	YES	MUL	NULL	
+order_items	total_price	decimal(10,2)	NO		NULL	
+order_items	profit	decimal(10,2)	YES		NULL	VIRTUAL GENERATED
+order_items	created_at	timestamp	YES		NULL	
+order_items	updated_at	timestamp	YES		NULL	
+orders	id	bigint unsigned	NO	PRI	NULL	auto_increment
+orders	order_number	varchar(30)	YES	UNI	NULL	
+orders	user_id	bigint unsigned	YES	MUL	NULL	
+orders	customer_name	varchar(255)	NO		NULL	
+orders	customer_email	varchar(255)	YES		NULL	
+orders	customer_phone	varchar(255)	NO		NULL	
+orders	address_line	varchar(255)	NO		NULL	
+orders	city	varchar(255)	NO		NULL	
+orders	postal_code	varchar(255)	YES		NULL	
+orders	notes	text	YES		NULL	
+orders	subtotal	decimal(10,2)	YES		NULL	
+orders	tax_amount	int unsigned	NO		0	
+orders	total_amount	decimal(10,2)	NO		NULL	
+orders	payment_method	varchar(255)	NO		cod	
+orders	status	varchar(255)	NO	MUL	pending	
+orders	status_notes	text	YES		NULL	
+orders	cancellation_reason	text	YES		NULL	
+orders	created_at	timestamp	YES	MUL	NULL	
+orders	updated_at	timestamp	YES		NULL	
+partners	id	bigint unsigned	NO	PRI	NULL	auto_increment
+partners	name	varchar(255)	NO		NULL	
+partners	type	enum('supplier','affiliate','franchise','employee','service_provider','reseller')	NO		NULL	
+partners	contact_info	json	YES		NULL	
+partners	bank_details	json	YES		NULL	
+partners	commission_rate	decimal(5,2)	NO		0.00	
+partners	status	enum('active','inactive','suspended')	NO		active	
+partners	notes	text	YES		NULL	
+partners	created_at	timestamp	YES		NULL	
+partners	updated_at	timestamp	YES		NULL	
+product_attribute_values	id	bigint unsigned	NO	PRI	NULL	auto_increment
+product_attribute_values	product_id	bigint unsigned	YES	MUL	NULL	
+product_attribute_values	product_attribute_id	bigint unsigned	NO	MUL	NULL	
+product_attribute_values	value	varchar(255)	YES		NULL	
+product_attribute_values	price_modifier	decimal(10,2)	NO		0.00	
+product_attribute_values	sort_order	int	NO		0	
+product_attribute_values	created_at	timestamp	YES		NULL	
+product_attribute_values	updated_at	timestamp	YES		NULL	
+product_attributes	id	bigint unsigned	NO	PRI	NULL	auto_increment
+product_attributes	name	varchar(255)	NO		NULL	
+product_attributes	slug	varchar(255)	NO	UNI	NULL	
+product_attributes	type	enum('text','number','select','multiselect','boolean','date','color')	NO		text	
+product_attributes	is_required	tinyint(1)	NO		0	
+product_attributes	is_filterable	tinyint(1)	NO		0	
+product_attributes	use_for_variants	tinyint(1)	NO		0	
+product_attributes	sort_order	int	NO		0	
+product_attributes	description	text	YES		NULL	
+product_attributes	created_at	timestamp	YES		NULL	
+product_attributes	updated_at	timestamp	YES		NULL	
+product_variants	id	bigint unsigned	NO	PRI	NULL	auto_increment
+product_variants	product_id	bigint unsigned	NO	MUL	NULL	
+product_variants	sku	varchar(255)	NO	UNI	NULL	
+product_variants	barcode	varchar(255)	YES	UNI	NULL	
+product_variants	name	varchar(255)	YES		NULL	
+product_variants	price	decimal(10,2)	NO		NULL	
+product_variants	cost_price	decimal(10,2)	YES		NULL	
+product_variants	compare_at_price	decimal(10,2)	YES		NULL	
+product_variants	stock_quantity	int	NO	MUL	0	
+product_variants	reserved_quantity	int	NO		0	
+product_variants	low_stock_alert	int	YES		NULL	
+product_variants	weight	decimal(8,2)	YES		NULL	
+product_variants	length	decimal(8,2)	YES		NULL	
+product_variants	width	decimal(8,2)	YES		NULL	
+product_variants	height	decimal(8,2)	YES		NULL	
+product_variants	image	varchar(255)	YES		NULL	
+product_variants	is_default	tinyint(1)	NO		0	
+product_variants	is_active	tinyint(1)	NO		1	
+product_variants	sort_order	int	NO		0	
+product_variants	created_at	timestamp	YES		NULL	
+product_variants	updated_at	timestamp	YES		NULL	
+products	id	bigint unsigned	NO	PRI	NULL	auto_increment
+products	name	varchar(255)	NO		NULL	
+products	slug	varchar(255)	NO	UNI	NULL	
+products	price	decimal(10,2)	NO		NULL	
+products	cost_price	decimal(10,2)	YES		NULL	
+products	profit_margin	decimal(5,2)	YES		NULL	
+products	discount_price	decimal(10,2)	YES		NULL	
+products	discount_type	varchar(255)	NO		percentage	
+products	vat_rate	decimal(5,2)	NO		0.00	
+products	wholesale_price	decimal(10,2)	YES		NULL	
+products	sku	varchar(255)	YES	UNI	NULL	
+products	short_description	varchar(255)	YES		NULL	
+products	description	text	YES		NULL	
+products	features	text	YES		NULL	
+products	care_instructions	text	YES		NULL	
+products	ingredients	text	YES		NULL	
+products	safety_warning	text	YES		NULL	
+products	primary_image	varchar(255)	YES		NULL	
+products	images	json	YES		NULL	
+products	is_featured	tinyint(1)	NO		0	
+products	is_active	tinyint(1)	NO		1	
+products	status	enum('active','inactive')	NO	MUL	active	
+products	stock_quantity	bigint unsigned	NO		0	
+products	low_stock_alert	int	NO		5	
+products	stock_status	varchar(255)	NO		in_stock	
+products	sold_count	bigint unsigned	NO		0	
+products	catalog_id	bigint unsigned	YES		NULL	
+products	product_type	varchar(255)	NO		simple	
+products	delivery_type	varchar(255)	NO		instant	
+products	barcode	varchar(255)	YES		NULL	
+products	brand_id	bigint unsigned	YES		NULL	
+products	video_url	varchar(255)	YES		NULL	
+products	meta_title	varchar(255)	YES		NULL	
+products	meta_description	varchar(500)	YES		NULL	
+products	tags	json	YES		NULL	
+products	weight	decimal(8,2)	YES		NULL	
+products	length	decimal(8,2)	YES		NULL	
+products	width	decimal(8,2)	YES		NULL	
+products	height	decimal(8,2)	YES		NULL	
+products	custom_attributes	json	YES		NULL	
+products	halal_certified	tinyint(1)	NO		0	
+products	organic_certified	tinyint(1)	NO		0	
+products	return_policy	text	YES		NULL	
+products	warranty	varchar(255)	YES		NULL	
+products	manufacturer	varchar(255)	YES		NULL	
+products	created_at	timestamp	YES		NULL	
+products	updated_at	timestamp	YES		NULL	
+purchase_batches	id	bigint unsigned	NO	PRI	NULL	auto_increment
+purchase_batches	batch_number	char(36)	NO	UNI	NULL	
+purchase_batches	product_id	bigint unsigned	NO	MUL	NULL	
+purchase_batches	product_variant_id	bigint unsigned	YES	MUL	NULL	
+purchase_batches	partner_id	bigint unsigned	YES	MUL	NULL	
+purchase_batches	unit_cost	decimal(10,2)	NO		NULL	
+purchase_batches	quantity_received	int	NO		NULL	
+purchase_batches	remaining_quantity	int	NO		0	
+purchase_batches	quantity_reserved	int	NO		0	
+purchase_batches	status	varchar(30)	NO	MUL	active	
+purchase_batches	supplier	varchar(255)	YES		NULL	
+purchase_batches	supplier_invoice_number	varchar(255)	YES		NULL	
+purchase_batches	purchase_date	date	YES		NULL	
+purchase_batches	manufacture_date	date	YES		NULL	
+purchase_batches	expiry_date	date	YES	MUL	NULL	
+purchase_batches	notes	text	YES		NULL	
+purchase_batches	created_at	timestamp	YES		NULL	
+purchase_batches	updated_at	timestamp	YES		NULL	
+settings	id	bigint unsigned	NO	PRI	NULL	auto_increment
+settings	key	varchar(255)	NO	UNI	NULL	
+settings	value	text	YES		NULL	
+variant_attributes	id	bigint unsigned	NO	PRI	NULL	auto_increment
+variant_attributes	product_variant_id	bigint unsigned	NO	MUL	NULL	
+variant_attributes	product_attribute_id	bigint unsigned	NO	MUL	NULL	
+variant_attributes	product_attribute_value_id	bigint unsigned	NO	MUL	NULL	
+variant_attributes	created_at	timestamp	YES		NULL	
+variant_attributes	updated_at	timestamp	YES		NULL	

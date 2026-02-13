@@ -37,11 +37,11 @@
 	{{-- Quick Links --}}
 	<section class="mb-12">
 		<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-			@foreach ($homeCatalogs as $catalog)
-				<a href="{{ route('catalog', ['catalog_id' => $catalog->id]) }}"
+			@foreach ($homeCategories as $category)
+				<a href="{{ route('catalog', ['category_id' => $category->id]) }}"
 					class="group bg-white rounded-xl p-6 text-center shadow-sm border border-gray-100 hover:shadow-lg hover:border-primary/30 transition-all duration-300">
-					<span class="text-4xl block mb-3 group-hover:scale-110 transition">🧸</span>
-					<h3 class="font-bold text-gray-800 group-hover:text-primary transition">{{ $catalog->name }}</h3>
+					<span class="text-4xl block mb-3 group-hover:scale-110 transition">{{ $category->icon ?? '🧸' }}</span>
+					<h3 class="font-bold text-gray-800 group-hover:text-primary transition">{{ $category->name }}</h3>
 					<p class="text-sm text-gray-500 mt-1">Shop Now</p>
 				</a>
 			@endforeach
@@ -49,19 +49,19 @@
 	</section>
 
 	{{-- Featured Products by Category --}}
-	@foreach ($featuredByCatalog as $catalogName => $products)
+	@foreach ($featuredByCategory as $categoryName => $products)
 		@if ($products->isNotEmpty())
 			<section class="mb-12">
 				<div class="flex items-center justify-between mb-6">
 					<div>
-						<h2 class="text-2xl font-bold text-gray-900">{{ $catalogName }}</h2>
+						<h2 class="text-2xl font-bold text-gray-900">{{ $categoryName }}</h2>
 						<p class="text-gray-500 mt-1">Handpicked just for you</p>
 					</div>
-					 @php
-						$catalog = $homeCatalogs->firstWhere('name', $catalogName);
+					@php
+						$cat = $homeCategories->firstWhere('name', $categoryName);
 					@endphp
-					@if ($catalog)
-						<a href="{{ route('catalog', ['catalog_id' => $catalog->id]) }}"
+					@if ($cat)
+						<a href="{{ route('catalog', ['category_id' => $cat->id]) }}"
 							class="text-primary font-medium hover:text-primary-dark flex items-center gap-1">
 							View All
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,14 +112,14 @@
 								</div>
 							</a>
 							<div class="p-4">
-								@if ($product->catalog)
+								@if ($product->category)
 									<span
-										class="inline-block px-2 py-1 rounded-full bg-light text-primary text-xs font-semibold mb-2">{{ $product->catalog->name }}</span>
+										class="inline-block px-2 py-1 rounded-full bg-light text-primary text-xs font-semibold mb-2">{{ $product->category->name }}</span>
 								@endif
 								<a href="{{ route('products.show', $product->slug) }}"
 									class="font-semibold text-gray-800 hover:text-primary line-clamp-2 group-hover:text-primary transition">{{ $product->name }}</a>
 								<div class="flex items-center justify-between mt-3">
-									<span class="text-lg font-bold text-primary-dark">${{ number_format($product->price / 100, 2) }}</span>
+									<span class="text-lg font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
 									<div class="flex items-center gap-1 text-yellow-400 text-sm">
 										<svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
 											<path

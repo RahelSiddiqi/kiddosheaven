@@ -1,0 +1,15 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+TABLE_NAME	TABLE_ROWS
+inventory_items	0
+inventory_movements	37
+order_items	16
+orders	8
+partners	10
+product_attribute_values	7
+product_attributes	18
+product_variants	0
+products	16
+purchase_batches	25
+settings	9
+variant_attributes	0
+ERROR 1064 (42000) at line 3: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'key IN ('inventory_costing_method','tax_rate','currency')' at line 1

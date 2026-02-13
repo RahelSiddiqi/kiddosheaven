@@ -1,0 +1,9 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+COLUMN_NAME	COLUMN_TYPE
+unit_price	decimal(10,2)
+unit_cost	decimal(10,2)
+total_price	decimal(10,2)
+COLUMN_NAME	COLUMN_TYPE
+subtotal	decimal(10,2)
+total_amount	decimal(10,2)
+ERROR 1054 (42S22) at line 1: Unknown column 'TABLE_NAME' in 'where clause'

@@ -1,0 +1,12 @@
+admin.coupons.users
+admin.flash-sales.create
+admin.flash-sales.destroy
+admin.flash-sales.edit
+admin.flash-sales.index
+admin.flash-sales.show
+admin.flash-sales.store
+admin.flash-sales.update
+admin.orders.bulkUpdateStatus
+admin.orders.updateStatus
+admin.reports.batch-stock.export
+admin.reviews.bulkApprove

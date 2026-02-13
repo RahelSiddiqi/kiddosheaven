@@ -37,6 +37,14 @@ class Partner extends Model
     const STATUS_SUSPENDED = 'suspended';
 
     /**
+     * Get the purchase batches for this partner.
+     */
+    public function purchaseBatches()
+    {
+        return $this->hasMany(PurchaseBatch::class);
+    }
+
+    /**
      * Get the expenses for this partner.
      */
     public function expenses()

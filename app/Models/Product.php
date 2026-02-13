@@ -11,7 +11,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'slug',
-        'catalog_id',
+        'category_id',
         'product_type', // simple, variable, digital
         'delivery_type', // instant, schedule, frozen
         'barcode',
@@ -32,9 +32,14 @@ class Product extends Model
         'height',
         'short_description',
         'description',
+        'features',
+        'care_instructions',
+        'ingredients',
+        'safety_warning',
         'images',
         'primary_image',
         'is_featured',
+        'is_active',
         'tags',
         'status',
         'brand_id',
@@ -42,7 +47,6 @@ class Product extends Model
         'meta_description',
         'video_url',
         'custom_attributes',
-        'variants',
         'halal_certified',
         'organic_certified',
         'return_policy',
@@ -54,11 +58,16 @@ class Product extends Model
         'images' => 'array',
         'tags' => 'array',
         'is_featured' => 'boolean',
+        'is_active' => 'boolean',
         'custom_attributes' => 'array',
-        'variants' => 'array',
         'halal_certified' => 'boolean',
         'organic_certified' => 'boolean',
         'low_stock_alert' => 'integer',
+        'price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
+        'discount_price' => 'decimal:2',
+        'vat_rate' => 'decimal:2',
+        'wholesale_price' => 'decimal:2',
     ];
 
     public function brand()
@@ -66,9 +75,41 @@ class Product extends Model
         return $this->belongsTo(Brand::class);
     }
 
-    public function catalog()
+    public function category()
     {
-        return $this->belongsTo(Catalog::class);
+        return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Get all variants for this product.
+     */
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    /**
+     * Get the default variant.
+     */
+    public function defaultVariant()
+    {
+        return $this->hasOne(ProductVariant::class)->where('is_default', true);
+    }
+
+    /**
+     * Get only active variants.
+     */
+    public function activeVariants()
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_active', true);
+    }
+
+    /**
+     * Get inventory items for this product.
+     */
+    public function inventoryItems()
+    {
+        return $this->hasMany(InventoryItem::class);
     }
 
     /**
@@ -152,9 +193,8 @@ class Product extends Model
      */
     public function activeBatches()
     {
-        return $this->purchaseBatches()->where('quantity_remaining', '>', 0)
-            ->where('status', '!=', 'expired')
-            ->where('status', '!=', 'damaged');
+        return $this->purchaseBatches()->where('remaining_quantity', '>', 0)
+            ->whereNotIn('status', ['expired', 'damaged']);
     }
 
     /**
@@ -162,7 +202,7 @@ class Product extends Model
      */
     public function getTotalStockAttribute(): int
     {
-        return $this->purchaseBatches()->sum('quantity_remaining');
+        return $this->purchaseBatches()->sum('remaining_quantity');
     }
 
     /**
@@ -171,9 +211,9 @@ class Product extends Model
     public function getStockValuationAttribute(): float
     {
         return $this->purchaseBatches()
-            ->where('quantity_remaining', '>', 0)
+            ->where('remaining_quantity', '>', 0)
             ->get()
-            ->sum(fn($batch) => $batch->quantity_remaining * $batch->unit_cost);
+            ->sum(fn($batch) => $batch->remaining_quantity * $batch->unit_cost);
     }
 
     /**
@@ -185,8 +225,8 @@ class Product extends Model
         if ($batches->isEmpty()) {
             return $this->cost_price ?? 0;
         }
-        $totalCost = $batches->sum(fn($b) => $b->quantity_remaining * $b->unit_cost);
-        $totalQty = $batches->sum('quantity_remaining');
+        $totalCost = $batches->sum(fn($b) => $b->remaining_quantity * $b->unit_cost);
+        $totalQty = $batches->sum('remaining_quantity');
         return $totalQty > 0 ? $totalCost / $totalQty : 0;
     }
 

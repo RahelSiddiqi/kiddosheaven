@@ -26,76 +26,19 @@
 				</div>
 
 				<!-- Delete Confirmation Modal -->
-				<x-admin.ui.delete-modal
-					modalId="deleteReviewModal"
-					title="Delete Review"
-					message="Are you sure you want to delete this review? This action cannot be undone."
-				/>
+				<x-admin.ui.delete-modal modalId="deleteReviewModal" title="Delete Review"
+					message="Are you sure you want to delete this review? This action cannot be undone." />
 
 				<!-- Stats Cards -->
-				<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/30">
-								<svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Reviews</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-yellow-100 dark:bg-yellow-900/30">
-								<svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</p>
-								<p class="text-xl font-semibold text-yellow-600 dark:text-yellow-400">{{ $stats['pending'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/30">
-								<svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Approved</p>
-								<p class="text-xl font-semibold text-green-600 dark:text-green-400">{{ $stats['approved'] }}</p>
-							</div>
-						</div>
-					</div>
-					<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-						<div class="flex items-center gap-4">
-							<div class="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/30">
-								<svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-								</svg>
-							</div>
-							<div>
-								<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Avg Rating</p>
-								<p class="text-xl font-semibold text-gray-900 dark:text-white">{{ number_format($stats['avg_rating'], 1) }}</p>
-							</div>
-						</div>
-					</div>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+					<x-admin.ui.stat-card title="Total Reviews" :value="$stats['total']" icon="star" color="blue" />
+					<x-admin.ui.stat-card title="Pending" :value="$stats['pending']" icon="clock" color="yellow" />
+					<x-admin.ui.stat-card title="Approved" :value="$stats['approved']" icon="check" color="green" />
+					<x-admin.ui.stat-card title="Avg Rating" :value="number_format($stats['avg_rating'], 1)" icon="star" color="purple" />
 				</div>
 
 				<!-- Bulk Actions -->
-				<form id="bulkActionForm" action="{{ route('admin.reviews.bulkApprove') }}" method="POST"
+				<form id="bulkActionForm" action="{{ route('admin.reviews.bulk-approve') }}" method="POST"
 					class="flex items-center gap-3 mb-4">
 					@csrf
 					<span class="text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -116,7 +59,7 @@
 					</button>
 				</form>
 
-				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
+				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
 					<!-- Header -->
 					<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 						<div>
@@ -126,8 +69,8 @@
 							<form @submit.prevent="searchReviews()">
 								<div class="relative">
 									<button type="button" @click="searchReviews()" class="absolute -translate-y-1/2 left-4 top-1/2">
-										<svg class="fill-gray-500 dark:fill-gray-400" width="20" height="20" viewBox="0 0 20 20"
-											fill="none" xmlns="http://www.w3.org/2000/svg">
+										<svg class="fill-gray-500 dark:fill-gray-400" width="20" height="20" viewBox="0 0 20 20" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
 											<path fill-rule="evenodd" clip-rule="evenodd"
 												d="M3.04199 9.37381C3.04199 5.87712 5.87735 3.04218 9.37533 3.04218C12.8733 3.04218 15.7087 5.87712 15.7087 9.37381C15.7087 12.8705 12.8733 15.7055 9.37533 15.7055C5.87735 15.7055 3.04199 12.8705 3.04199 9.37381ZM9.37533 1.54218C5.04926 1.54218 1.54199 5.04835 1.54199 9.37381C1.54199 13.6993 5.04926 17.2055 9.37533 17.2055C11.2676 17.2055 13.0032 16.5346 14.3572 15.4178L17.1773 18.2381C17.4702 18.531 17.945 18.5311 18.2379 18.2382C18.5308 17.9453 18.5309 17.4704 18.238 17.1775L15.4182 14.3575C16.5367 13.0035 17.2087 11.2671 17.2087 9.37381C17.2087 5.04835 13.7014 1.54218 9.37533 1.54218Z"
 												fill="" />
@@ -246,8 +189,7 @@
 													@endif
 													<button
 														@click="$dispatch('open-delete-modal', { url: '/admin/reviews/{{ $review->id }}', id: {{ $review->id }}, name: '{{ addslashes($review->title ?? 'Review') }}' })"
-														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-														title="Delete">
+														class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Delete">
 														<x-icons.delete />
 													</button>
 												</div>

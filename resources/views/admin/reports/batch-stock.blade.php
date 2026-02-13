@@ -26,7 +26,7 @@
 							</select>
 						</form>
 						@if ($report)
-							<a href="{{ route('admin.reports.batch-stock.export', ['product_id' => request('product_id')]) }}"
+							<a href="{{ route('admin.reports.batch-stock-export', ['product_id' => request('product_id')]) }}"
 								class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3">
 								<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none"
 									xmlns="http://www.w3.org/2000/svg">

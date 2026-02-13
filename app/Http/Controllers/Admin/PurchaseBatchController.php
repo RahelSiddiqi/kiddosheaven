@@ -5,11 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseBatch;
 use App\Models\Product;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseBatchController extends Controller
 {
+    protected InventoryService $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
     public function index(Request $request)
     {
         $query = PurchaseBatch::with('product');
@@ -32,6 +39,18 @@ class PurchaseBatchController extends Controller
         return view('admin.purchase-batches.index', compact('batches', 'products'));
     }
 
+    public function show(PurchaseBatch $purchaseBatch)
+    {
+        $purchaseBatch->load(['product', 'variant', 'partner', 'movements.product']);
+
+        // Calculate stats
+        $quantitySold = $purchaseBatch->quantity_received - $purchaseBatch->remaining_quantity;
+        $soldValue = $quantitySold * $purchaseBatch->unit_cost;
+        $remainingValue = $purchaseBatch->remaining_quantity * $purchaseBatch->unit_cost;
+
+        return view('admin.purchase-batches.show', compact('purchaseBatch', 'quantitySold', 'soldValue', 'remainingValue'));
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -46,16 +65,20 @@ class PurchaseBatchController extends Controller
 
         DB::beginTransaction();
         try {
-            $batch = PurchaseBatch::create([
-                'product_id' => $validated['product_id'],
-                'batch_number' => $validated['batch_number'],
-                'unit_cost' => $validated['unit_cost'],
-                'quantity_received' => $validated['quantity'],
-                'remaining_quantity' => $validated['quantity'],
-                'supplier' => $validated['supplier'] ?? null,
-                'expiry_date' => $validated['expiry_date'] ?? null,
-                'notes' => $validated['notes'] ?? null,
-            ]);
+            $product = Product::findOrFail($validated['product_id']);
+
+            // Let InventoryService handle batch creation, movement logging, and counter sync
+            $batch = $this->inventoryService->addStock(
+                product:  $product,
+                quantity: $validated['quantity'],
+                unitCost: $validated['unit_cost'],
+                details:  [
+                    'batch_number' => $validated['batch_number'],
+                    'supplier'     => $validated['supplier'] ?? null,
+                    'expiry_date'  => $validated['expiry_date'] ?? null,
+                    'notes'        => $validated['notes'] ?? null,
+                ],
+            );
 
             DB::commit();
             return redirect()->route('admin.purchase-batches.index')

@@ -1,0 +1,8 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+col	DATA_TYPE	COLUMN_TYPE
+products.price	decimal	decimal(10,2)
+order_items.unit_price	int	int unsigned
+order_items.total_price	int	int unsigned
+orders.total_amount	int	int unsigned
+order_items.unit_cost	decimal	decimal(10,2)
+purchase_batches.unit_cost	decimal	decimal(10,2)

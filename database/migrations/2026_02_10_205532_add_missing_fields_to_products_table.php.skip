@@ -1,0 +1,71 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            // Product type and delivery type
+            $table->enum('product_type', ['simple', 'variable', 'digital'])->default('simple')->after('slug');
+            $table->enum('delivery_type', ['instant', 'schedule', 'frozen'])->default('instant')->after('product_type');
+
+            // Barcode
+            $table->string('barcode')->nullable()->after('sku');
+
+            // Pricing fields
+            $table->decimal('cost_price', 10, 2)->nullable()->after('price');
+            $table->enum('discount_type', ['percentage', 'fixed'])->nullable()->after('discount_price');
+            $table->decimal('vat_rate', 5, 2)->default(0)->after('discount_type');
+            $table->decimal('wholesale_price', 10, 2)->nullable()->after('vat_rate');
+            $table->decimal('profit_margin', 5, 2)->nullable()->after('wholesale_price');
+
+            // Stock management
+            $table->integer('low_stock_alert')->nullable()->after('stock_quantity');
+            $table->enum('stock_status', ['in_stock', 'out_of_stock', 'on_backorder'])->default('in_stock')->after('low_stock_alert');
+
+            // Product variants
+            $table->json('variants')->nullable()->after('custom_attributes');
+
+            // Certifications and policies
+            $table->boolean('halal_certified')->default(false)->after('variants');
+            $table->boolean('organic_certified')->default(false)->after('halal_certified');
+            $table->text('return_policy')->nullable()->after('organic_certified');
+            $table->text('warranty')->nullable()->after('return_policy');
+            $table->string('manufacturer')->nullable()->after('warranty');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropColumn([
+                'product_type',
+                'delivery_type',
+                'barcode',
+                'cost_price',
+                'discount_type',
+                'vat_rate',
+                'wholesale_price',
+                'profit_margin',
+                'low_stock_alert',
+                'stock_status',
+                'variants',
+                'halal_certified',
+                'organic_certified',
+                'return_policy',
+                'warranty',
+                'manufacturer',
+            ]);
+        });
+    }
+};

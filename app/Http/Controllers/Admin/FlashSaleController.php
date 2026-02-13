@@ -24,7 +24,15 @@ class FlashSaleController extends Controller
 
         $flashSales = $query->latest()->paginate(10);
 
-        return view('admin.flash-sales.index', compact('flashSales'));
+        $now = now();
+        $stats = [
+            'total' => FlashSale::count(),
+            'active' => FlashSale::where('status', 'active')->where('start_time', '<=', $now)->where('end_time', '>=', $now)->count(),
+            'scheduled' => FlashSale::where('start_time', '>', $now)->count(),
+            'ended' => FlashSale::where('end_time', '<', $now)->count(),
+        ];
+
+        return view('admin.flash-sales.index', compact('flashSales', 'stats'));
     }
 
     public function create()

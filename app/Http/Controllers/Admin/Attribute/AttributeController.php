@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin\Attribute;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductAttribute;
-use App\Models\Catalog;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -17,11 +17,11 @@ class AttributeController extends Controller
     {
         $attributes = ProductAttribute::with(['values' => function($query) {
                 $query->orderBy('sort_order');
-            }, 'catalogs'])
+            }, 'categories'])
             ->orderBy('sort_order')
             ->get();
 
-        $catalogs = Catalog::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -30,7 +30,17 @@ class AttributeController extends Controller
             ]);
         }
 
-        return view('admin.attributes.index', compact('attributes', 'catalogs'));
+        return view('admin.attributes.index', compact('attributes', 'categories'));
+    }
+
+    /**
+     * Show the form for creating a new attribute.
+     */
+    public function create()
+    {
+        $categories = Category::orderBy('name')->get();
+
+        return view('admin.attributes.create', compact('categories'));
     }
 
     /**
@@ -90,9 +100,9 @@ class AttributeController extends Controller
     public function edit(ProductAttribute $attribute)
     {
         $attribute->load('values');
-        $catalogs = Catalog::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
 
-        return view('admin.attributes.edit', compact('attribute', 'catalogs'));
+        return view('admin.attributes.edit', compact('attribute', 'categories'));
     }
 
     /**

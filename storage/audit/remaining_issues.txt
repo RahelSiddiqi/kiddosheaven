@@ -1,0 +1,48 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: inventory_items
+Create Table: CREATE TABLE `inventory_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `product_variant_id` bigint unsigned DEFAULT NULL,
+  `purchase_batch_id` bigint unsigned NOT NULL,
+  `quantity_on_hand` int NOT NULL DEFAULT '0',
+  `quantity_reserved` int NOT NULL DEFAULT '0',
+  `quantity_available` int GENERATED ALWAYS AS ((`quantity_on_hand` - `quantity_reserved`)) VIRTUAL,
+  `location` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'main',
+  `bin_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `aisle` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `shelf` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `unit_cost` decimal(10,2) NOT NULL,
+  `total_value` decimal(10,2) GENERATED ALWAYS AS ((`quantity_on_hand` * `unit_cost`)) VIRTUAL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `inventory_items_product_id_foreign` (`product_id`),
+  KEY `inventory_items_product_variant_id_location_index` (`product_variant_id`,`location`),
+  KEY `inventory_items_purchase_batch_id_index` (`purchase_batch_id`),
+  KEY `inventory_items_quantity_on_hand_index` (`quantity_on_hand`),
+  KEY `inventory_items_location_bin_number_index` (`location`,`bin_number`),
+  CONSTRAINT `inventory_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventory_items_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventory_items_purchase_batch_id_foreign` FOREIGN KEY (`purchase_batch_id`) REFERENCES `purchase_batches` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+*************************** 1. row ***************************
+       Table: variant_attributes
+Create Table: CREATE TABLE `variant_attributes` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_variant_id` bigint unsigned NOT NULL,
+  `product_attribute_id` bigint unsigned NOT NULL,
+  `product_attribute_value_id` bigint unsigned NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `variant_attr_unique` (`product_variant_id`,`product_attribute_id`),
+  KEY `variant_attributes_product_attribute_value_id_foreign` (`product_attribute_value_id`),
+  KEY `attr_value_idx` (`product_attribute_id`,`product_attribute_value_id`),
+  CONSTRAINT `variant_attributes_product_attribute_id_foreign` FOREIGN KEY (`product_attribute_id`) REFERENCES `product_attributes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `variant_attributes_product_attribute_value_id_foreign` FOREIGN KEY (`product_attribute_value_id`) REFERENCES `product_attribute_values` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `variant_attributes_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+cnt
+0

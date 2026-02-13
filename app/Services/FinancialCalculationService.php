@@ -18,33 +18,43 @@ class FinancialCalculationService
 {
     /**
      * Calculate product-wise profit.
+     *
+     * Revenue comes from order_items (unit_price × quantity).
+     * COGS comes from inventory_movements (unit_cost × ABS(quantity)).
      */
     public function calculateProductProfit(Product $product, Carbon $startDate, Carbon $endDate): array
     {
+        // COGS from inventory movements
         $sales = InventoryMovement::where('product_id', $product->id)
             ->where('movement_type', 'sale')
-            ->whereBetween('movement_date', [$startDate, $endDate])
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
-        $totalRevenue = $sales->sum(fn($sale) => $sale->selling_price * abs($sale->quantity));
-        $totalCost = $sales->sum('total_cost');
+        $totalCost = $sales->sum(fn($sale) => ($sale->unit_cost ?? 0) * abs($sale->quantity));
+        $unitsSold = $sales->sum(fn($sale) => abs($sale->quantity));
+
+        // Revenue from order_items for this product in the period
+        $totalRevenue = \App\Models\OrderItem::where('product_id', $product->id)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('SUM(unit_price * quantity) as revenue')
+            ->value('revenue') ?? 0;
 
         return [
             'product' => $product,
-            'total_revenue' => $totalRevenue,
+            'total_revenue' => (float) $totalRevenue,
             'total_cost' => $totalCost,
             'gross_profit' => $totalRevenue - $totalCost,
             'profit_margin' => $totalRevenue > 0 ? (($totalRevenue - $totalCost) / $totalRevenue) * 100 : 0,
-            'units_sold' => $sales->sum(fn($sale) => abs($sale->quantity)),
+            'units_sold' => $unitsSold,
         ];
     }
 
     /**
      * Calculate category-wise profit.
      */
-    public function calculateCategoryProfit(int $catalogId, Carbon $startDate, Carbon $endDate): array
+    public function calculateCategoryProfit(int $categoryId, Carbon $startDate, Carbon $endDate): array
     {
-        $products = Product::where('catalog_id', $catalogId)->get();
+        $products = Product::where('category_id', $categoryId)->get();
         $totals = [
             'revenue' => 0,
             'cost' => 0,
@@ -70,24 +80,21 @@ class FinancialCalculationService
      */
     public function calculateBatchProfit(PurchaseBatch $batch, Carbon $startDate, Carbon $endDate): array
     {
-        $sales = InventoryMovement::where('purchase_batch_id', $batch->id)
+        $sales = InventoryMovement::where('batch_id', $batch->id)
             ->where('movement_type', 'sale')
-            ->whereBetween('movement_date', [$startDate, $endDate])
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
         $soldQty = $sales->sum(fn($sale) => abs($sale->quantity));
-        $totalRevenue = $sales->sum(fn($sale) => $sale->selling_price * abs($sale->quantity));
         $totalCost = $soldQty * $batch->unit_cost;
 
-        $remainingValuation = $batch->quantity_remaining * $batch->unit_cost;
+        $remainingValuation = $batch->remaining_quantity * $batch->unit_cost;
 
         return [
             'batch' => $batch,
             'sold_quantity' => $soldQty,
-            'remaining_quantity' => $batch->quantity_remaining,
-            'revenue' => $totalRevenue,
+            'remaining_quantity' => $batch->remaining_quantity,
             'cost' => $totalCost,
-            'gross_profit' => $totalRevenue - $totalCost,
             'remaining_valuation' => $remainingValuation,
         ];
     }
@@ -102,15 +109,26 @@ class FinancialCalculationService
             ->whereBetween('expense_date', [$startDate, $endDate])
             ->sum('amount');
 
-        $sales = InventoryMovement::whereHas('product', function ($query) use ($partner) {
-                $query->where('partner_id', $partner->id);
-            })
+        // Products linked to this partner via purchase_batches
+        $partnerProductIds = PurchaseBatch::where('partner_id', $partner->id)
+            ->distinct()
+            ->pluck('product_id');
+
+        // COGS: only from batches belonging to this partner
+        $partnerBatchIds = PurchaseBatch::where('partner_id', $partner->id)->pluck('id');
+
+        $sales = InventoryMovement::whereIn('batch_id', $partnerBatchIds)
             ->where('movement_type', 'sale')
-            ->whereBetween('movement_date', [$startDate, $endDate])
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
-        $totalSalesRevenue = $sales->sum(fn($sale) => $sale->selling_price * abs($sale->quantity));
-        $totalSalesCost = $sales->sum('total_cost');
+        $totalSalesCost = $sales->sum(fn($sale) => ($sale->unit_cost ?? 0) * abs($sale->quantity));
+
+        // Revenue from order_items linked to partner's batches
+        $totalSalesRevenue = (float) (\App\Models\OrderItem::whereIn('purchase_batch_id', $partnerBatchIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('SUM(unit_price * quantity) as revenue')
+            ->value('revenue') ?? 0);
 
         return [
             'partner' => $partner,
@@ -159,9 +177,9 @@ class FinancialCalculationService
     public function calculateStockValuation(Product $product): float
     {
         return PurchaseBatch::where('product_id', $product->id)
-            ->where('quantity_remaining', '>', 0)
+            ->where('remaining_quantity', '>', 0)
             ->get()
-            ->sum(fn($batch) => $batch->quantity_remaining * $batch->unit_cost);
+            ->sum(fn($batch) => $batch->remaining_quantity * $batch->unit_cost);
     }
 
     /**
@@ -169,7 +187,7 @@ class FinancialCalculationService
      */
     public function getStockValuationReport(Carbon $startDate, Carbon $endDate): array
     {
-        $products = Product::with('catalog')->get();
+        $products = Product::with('category')->get();
 
         $report = [
             'period' => ['start' => $startDate, 'end' => $endDate],
@@ -202,15 +220,16 @@ class FinancialCalculationService
      */
     public function calculateNetProfit(Carbon $startDate, Carbon $endDate): array
     {
-        // Revenue from sales
-        $salesRevenue = InventoryMovement::where('movement_type', 'sale')
-            ->whereBetween('movement_date', [$startDate, $endDate])
-            ->sum(DB::raw('selling_price * ABS(quantity)'));
+        // Revenue from order_items (the actual selling prices)
+        $salesRevenue = (float) (\App\Models\OrderItem::whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('SUM(unit_price * quantity) as revenue')
+            ->value('revenue') ?? 0);
 
-        // Cost of goods sold
-        $cogs = InventoryMovement::where('movement_type', 'sale')
-            ->whereBetween('movement_date', [$startDate, $endDate])
-            ->sum('total_cost');
+        // Cost of goods sold from inventory movements
+        $cogs = (float) InventoryMovement::where('movement_type', 'sale')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('SUM(unit_cost * ABS(quantity)) as total_cogs')
+            ->value('total_cogs') ?? 0;
 
         // Gross profit
         $grossProfit = $salesRevenue - $cogs;
@@ -241,6 +260,33 @@ class FinancialCalculationService
             'partner_distributions' => $partnerShares,
             'net_profit_after_distributions' => $netProfitAfterDistributions,
             'profit_margin' => $salesRevenue > 0 ? ($netProfit / $salesRevenue) * 100 : 0,
+        ];
+    }
+
+    /**
+     * Generate a comprehensive financial report for a date range.
+     * Called by ReportController::financial().
+     */
+    public function generateReport(Carbon $startDate, Carbon $endDate): array
+    {
+        $netProfit = $this->calculateNetProfit($startDate, $endDate);
+        $stockValuation = $this->getStockValuationReport($startDate, $endDate);
+
+        // Top products by profit
+        $topProducts = \App\Models\OrderItem::whereBetween('created_at', [$startDate, $endDate])
+            ->select('product_id')
+            ->selectRaw('SUM(unit_price * quantity) as revenue')
+            ->selectRaw('SUM(COALESCE(unit_cost, 0) * quantity) as cost')
+            ->selectRaw('SUM((unit_price - COALESCE(unit_cost, 0)) * quantity) as profit')
+            ->groupBy('product_id')
+            ->orderByDesc('profit')
+            ->limit(10)
+            ->get();
+
+        return [
+            'summary' => $netProfit,
+            'stock_valuation' => $stockValuation,
+            'top_products' => $topProducts,
         ];
     }
 }

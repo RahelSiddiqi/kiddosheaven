@@ -5,24 +5,21 @@
 @section('content')
 	<div class="grid grid-cols-12 gap-4 md:gap-6">
 		<div class="col-span-12">
+			<x-admin.ui.entity-header title="Products Report" :breadcrumbs="[
+			    ['label' => 'Dashboard', 'url' => route('admin.dashboard')],
+			    ['label' => 'Reports', 'url' => route('admin.reports.index')],
+			    ['label' => 'Products'],
+			]" />
+
 			<!-- Stats Cards -->
 			<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Products</p>
-					<p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ number_format($totalProducts) }}</p>
-				</div>
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Products</p>
-					<p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{{ number_format($activeProducts) }}</p>
-				</div>
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Low Stock</p>
-					<p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{{ number_format($lowStockProducts) }}</p>
-				</div>
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Out of Stock</p>
-					<p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ number_format($outOfStockProducts) }}</p>
-				</div>
+				<x-admin.ui.stat-card label="Total Products" :value="number_format($totalProducts)" icon="package" color="blue"
+					url="{{ route('admin.products.index') }}" />
+				<x-admin.ui.stat-card label="Active Products" :value="number_format($activeProducts)" icon="check" color="green" />
+				<x-admin.ui.stat-card label="Low Stock" :value="number_format($lowStockProducts)" icon="alert" color="yellow"
+					url="{{ route('admin.inventory.index', ['filter' => 'low']) }}" />
+				<x-admin.ui.stat-card label="Out of Stock" :value="number_format($outOfStockProducts)" icon="alert" color="red"
+					url="{{ route('admin.inventory.index', ['filter' => 'out']) }}" />
 			</div>
 
 			<!-- Filter Form -->
@@ -34,9 +31,9 @@
 						<select name="category" id="category"
 							class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
 							<option value="">All Categories</option>
-							@foreach (\App\Models\Catalog::all() as $catalog)
-								<option value="{{ $catalog->id }}" {{ request('category') == $catalog->id ? 'selected' : '' }}>
-									{{ $catalog->name }}
+							@foreach (\App\Models\Category::all() as $category)
+								<option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+									{{ $category->name }}
 								</option>
 							@endforeach
 						</select>
@@ -109,7 +106,8 @@
 								</thead>
 								<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 									@foreach ($products as $product)
-										<tr>
+										<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+											onclick="window.location='{{ route('admin.products.show', $product) }}'">
 											<td class="py-4">
 												<div class="flex items-center gap-3">
 													@if ($product->image)
@@ -124,7 +122,7 @@
 														</div>
 													@endif
 													<div>
-														<a href="{{ route('admin.products.show', $product) }}"
+														<a href="{{ route('admin.products.show', $product) }}" @click.stop
 															class="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600">
 															{{ $product->name }}
 														</a>
@@ -133,19 +131,20 @@
 												</div>
 											</td>
 											<td class="py-4 whitespace-nowrap">
-												<span class="text-sm text-gray-600 dark:text-gray-400">{{ $product->catalog->name ?? 'N/A' }}</span>
+												<span class="text-sm text-gray-600 dark:text-gray-400">{{ $product->category->name ?? 'N/A' }}</span>
 											</td>
 											<td class="py-4 whitespace-nowrap">
 												<span
 													class="text-sm font-semibold text-gray-900 dark:text-white">৳{{ number_format($product->price, 2) }}</span>
 											</td>
 											<td class="py-4 whitespace-nowrap">
-												@if ($product->stock <= 0)
+												@if ($product->stock_quantity <= 0)
 													<span class="text-sm font-medium text-red-600 dark:text-red-400">Out of Stock</span>
-												@elseif ($product->stock <= 10)
-													<span class="text-sm font-medium text-yellow-600 dark:text-yellow-400">{{ $product->stock }}</span>
+												@elseif ($product->stock_quantity <= 10)
+													<span
+														class="text-sm font-medium text-yellow-600 dark:text-yellow-400">{{ $product->stock_quantity }}</span>
 												@else
-													<span class="text-sm font-medium text-green-600 dark:text-green-400">{{ $product->stock }}</span>
+													<span class="text-sm font-medium text-green-600 dark:text-green-400">{{ $product->stock_quantity }}</span>
 												@endif
 											</td>
 											<td class="py-4 whitespace-nowrap">

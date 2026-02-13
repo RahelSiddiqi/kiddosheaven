@@ -1,0 +1,22 @@
+No syntax errors detected in app/Models/OrderItem.php
+No syntax errors detected in app/Http/Controllers/Admin/OrderController.php
+No syntax errors detected in database/migrations/2026_02_11_140000_fix_tax_amount_to_decimal.php
+
+   INFO  Running migrations.  
+
+  2026_02_11_140000_fix_tax_amount_to_decimal ................................................... 257.04ms DONE
+
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                        0.16s  
+
+   PASS  Tests\Feature\FifoInventoryTest
+  ✓ fifo lifecycle                                                       0.05s  
+  ✓ insufficient stock throws exception                                  0.03s  
+
+  Tests:    4 passed (41 assertions)
+  Duration: 0.30s
+

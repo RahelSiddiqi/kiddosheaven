@@ -8,14 +8,14 @@
 
 		<div class="grid grid-cols-12 gap-4 md:gap-6">
 			<div class="col-span-12">
-				<form action="{{ route('admin.flash-sales.update', $flashSale) }}" method="POST" id="flashSaleForm">
+				<form action="{{ route('admin.marketing.flash-sales.update', $flashSale) }}" method="POST" id="flashSaleForm">
 					@csrf
 					@method('PUT')
 
 					<!-- Header -->
 					<div class="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between">
 						<div>
-							<a href="{{ route('admin.flash-sales.index') }}"
+							<a href="{{ route('admin.marketing.flash-sales.index') }}"
 								class="inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mb-1">
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -26,7 +26,7 @@
 							<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Update your flash sale details</p>
 						</div>
 						<div class="flex gap-3">
-							<a href="{{ route('admin.flash-sales.index') }}"
+							<a href="{{ route('admin.marketing.flash-sales.index') }}"
 								class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/3">
 								Cancel
 							</a>

@@ -1,0 +1,47 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+*************************** 1. row ***************************
+       Table: purchase_batches
+Create Table: CREATE TABLE `purchase_batches` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `batch_number` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `product_variant_id` bigint unsigned DEFAULT NULL,
+  `partner_id` bigint unsigned DEFAULT NULL,
+  `unit_cost` decimal(10,2) NOT NULL,
+  `quantity_received` int NOT NULL,
+  `remaining_quantity` int NOT NULL DEFAULT '0',
+  `quantity_reserved` int NOT NULL DEFAULT '0',
+  `status` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `supplier` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `supplier_invoice_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `purchase_date` date DEFAULT NULL,
+  `manufacture_date` date DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `purchase_batches_batch_number_unique` (`batch_number`),
+  KEY `purchase_batches_product_id_remaining_quantity_index` (`product_id`,`remaining_quantity`),
+  KEY `purchase_batches_product_id_purchase_date_index` (`product_id`,`purchase_date`),
+  KEY `purchase_batches_batch_number_index` (`batch_number`),
+  KEY `purchase_batches_expiry_date_index` (`expiry_date`),
+  KEY `variant_stock_idx` (`product_variant_id`,`remaining_quantity`),
+  KEY `purchase_batches_status_index` (`status`),
+  KEY `purchase_batches_partner_id_foreign` (`partner_id`),
+  CONSTRAINT `purchase_batches_partner_id_foreign` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `purchase_batches_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `purchase_batches_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_remaining_lte_received` CHECK ((`remaining_quantity` <= `quantity_received`)),
+  CONSTRAINT `chk_remaining_qty_non_negative` CHECK ((`remaining_quantity` >= 0)),
+  CONSTRAINT `chk_reserved_lte_remaining` CHECK ((`quantity_reserved` <= `remaining_quantity`)),
+  CONSTRAINT `chk_reserved_non_negative` CHECK ((`quantity_reserved` >= 0))
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Tables_in_kiddosheaven (%partner%)
+partner_calculations
+partner_payments
+partners
+Tables_in_kiddosheaven (%expense%)
+expense_categories
+expenses

@@ -75,13 +75,33 @@ class PartnerCalculationController extends Controller
             return back()->with('error', 'A calculation already exists for this period.');
         }
 
-        // Calculate earnings based on partner type
-        $orders = Order::where('partner_id', $validated['partner_id'])
+        // Calculate earnings based on partner's supplied batches
+        // Partners supply via purchase_batches. Total sales = value of items
+        // sold from batches this partner supplied in the period.
+        $batches = \App\Models\PurchaseBatch::where('partner_id', $validated['partner_id'])
             ->whereBetween('created_at', [$validated['period_start'], $validated['period_end']])
-            ->where('status', 'completed')
             ->get();
 
-        $totalSales = $orders->sum('total');
+        $totalSales = 0;
+        $totalOrderIds = collect();
+        foreach ($batches as $batch) {
+            // Sum the revenue from order_items linked to this batch
+            $batchRevenue = \App\Models\OrderItem::where('purchase_batch_id', $batch->id)
+                ->sum('total_price');
+            $totalSales += $batchRevenue;
+
+            // Also collect orders linked via inventory_movements for multi-batch sales
+            $movementRevenue = \App\Models\InventoryMovement::where('batch_id', $batch->id)
+                ->where('movement_type', 'sale')
+                ->get();
+            foreach ($movementRevenue as $mv) {
+                if ($mv->reference_type === \App\Models\Order::class && $mv->reference_id) {
+                    $totalOrderIds->push($mv->reference_id);
+                }
+            }
+        }
+
+        $uniqueOrderCount = $totalOrderIds->unique()->count();
         $commissionRate = $partner->commission_rate ?? 10;
         $commissionAmount = $totalSales * ($commissionRate / 100);
 
@@ -90,7 +110,7 @@ class PartnerCalculationController extends Controller
             'period_start' => $validated['period_start'],
             'period_end' => $validated['period_end'],
             'calculation_type' => $validated['calculation_type'],
-            'total_orders' => $orders->count(),
+            'total_orders' => $uniqueOrderCount,
             'total_sales' => $totalSales,
             'commission_rate' => $commissionRate,
             'commission_amount' => $commissionAmount,
@@ -106,12 +126,13 @@ class PartnerCalculationController extends Controller
     {
         $calculation->load(['partner', 'payments']);
 
-        $orders = Order::where('partner_id', $calculation->partner_id)
+        // Get the batches this partner supplied in the calculation period
+        $batches = \App\Models\PurchaseBatch::where('partner_id', $calculation->partner_id)
             ->whereBetween('created_at', [$calculation->period_start, $calculation->period_end])
-            ->where('status', 'completed')
+            ->with('product')
             ->get();
 
-        return view('admin.partner-calculations.show', compact('calculation', 'orders'));
+        return view('admin.partner-calculations.show', compact('calculation', 'batches'));
     }
 
     public function approve(PartnerCalculation $calculation)
@@ -175,12 +196,23 @@ class PartnerCalculationController extends Controller
                 ->exists();
 
             if (!$exists) {
-                $orders = Order::where('partner_id', $partner->id)
+                // Calculate via partner's supplied batches
+                $batches = \App\Models\PurchaseBatch::where('partner_id', $partner->id)
                     ->whereBetween('created_at', [$periodStart, $periodEnd])
-                    ->where('status', 'completed')
                     ->get();
 
-                $totalSales = $orders->sum('total');
+                $totalSales = 0;
+                $orderIds = collect();
+                foreach ($batches as $batch) {
+                    $totalSales += \App\Models\OrderItem::where('purchase_batch_id', $batch->id)
+                        ->sum('total_price');
+                    $mvOrders = \App\Models\InventoryMovement::where('batch_id', $batch->id)
+                        ->where('movement_type', 'sale')
+                        ->where('reference_type', \App\Models\Order::class)
+                        ->pluck('reference_id');
+                    $orderIds = $orderIds->merge($mvOrders);
+                }
+
                 $commissionRate = $partner->commission_rate ?? 10;
 
                 PartnerCalculation::create([
@@ -188,7 +220,7 @@ class PartnerCalculationController extends Controller
                     'period_start' => $periodStart,
                     'period_end' => $periodEnd,
                     'calculation_type' => 'monthly',
-                    'total_orders' => $orders->count(),
+                    'total_orders' => $orderIds->unique()->count(),
                     'total_sales' => $totalSales,
                     'commission_rate' => $commissionRate,
                     'commission_amount' => $totalSales * ($commissionRate / 100),

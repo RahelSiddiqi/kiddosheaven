@@ -1,0 +1,9 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+chk	cnt
+order_items with NULL unit_cost	0
+chk	cnt
+sale movements without batch_id	0
+chk	cnt
+order_items with NULL purchase_batch_id	16
+chk	cnt
+orders without order_number	0

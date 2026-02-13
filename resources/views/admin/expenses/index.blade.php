@@ -28,63 +28,10 @@
 				</div>
 
 				<!-- Stats Cards -->
-				<div class="grid grid-cols-12 gap-4 md:gap-6 mb-6">
-					<div class="col-span-12 lg:col-span-4">
-						<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-							<div class="flex items-center justify-between">
-								<div>
-									<span class="text-sm text-gray-500 dark:text-gray-400">Total Expenses</span>
-									<h4 class="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
-										{{ number_format($expenses->where('status', 'approved')->sum('amount'), 2) }}
-									</h4>
-								</div>
-								<div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-500/15 flex items-center justify-center">
-									<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-											d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-									</svg>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div class="col-span-12 lg:col-span-4">
-						<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-							<div class="flex items-center justify-between">
-								<div>
-									<span class="text-sm text-gray-500 dark:text-gray-400">Pending Approval</span>
-									<h4 class="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
-										{{ number_format($expenses->where('status', 'pending')->sum('amount'), 2) }}
-									</h4>
-								</div>
-								<div class="w-12 h-12 rounded-xl bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center">
-									<svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-											d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-									</svg>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div class="col-span-12 lg:col-span-4">
-						<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-							<div class="flex items-center justify-between">
-								<div>
-									<span class="text-sm text-gray-500 dark:text-gray-400">This Month</span>
-									<h4 class="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
-										{{ number_format($expenses->filter(function ($e) {return $e->status === 'approved' && $e->expense_date->month === now()->month;})->sum('amount'),2) }}
-									</h4>
-								</div>
-								<div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-500/15 flex items-center justify-center">
-									<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-											d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-									</svg>
-								</div>
-							</div>
-						</div>
-					</div>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+					<x-admin.ui.stat-card title="Total Expenses" :value="'৳ ' . number_format($expenses->where('status', 'approved')->sum('amount'), 2)" icon="currency" color="red" />
+					<x-admin.ui.stat-card title="Pending Approval" :value="'৳ ' . number_format($expenses->where('status', 'pending')->sum('amount'), 2)" icon="cart" color="yellow" />
+					<x-admin.ui.stat-card title="This Month" :value="'৳ ' . number_format($expenses->filter(function ($e) {return $e->status === 'approved' && $e->expense_date->month === now()->month;})->sum('amount'), 2)" icon="profit" color="blue" />
 				</div>
 
 				<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/3">
@@ -110,9 +57,9 @@
 								</div>
 							</form>
 							<button @click="openCreateModal()"
-								class="h-10.5 inline-flex items-center justify-center rounded-lg border border-blue-500 bg-blue-500 px-6 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-blue-600">
+								class="h-10.5 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
 								<svg class="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none">
-									<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+									<path d="M10 4.16667V15.8333M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"
 										stroke-linejoin="round" />
 								</svg>
 								Add Expense
@@ -248,8 +195,8 @@
 													<form action="{{ route('admin.expenses.approve', $expense) }}" method="POST" class="inline">
 														@csrf
 														<button type="submit"
-														class="p-1.5 text-gray-400 hover:text-green-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-													title="Approve">
+															class="p-1.5 text-gray-400 hover:text-green-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+															title="Approve">
 															<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 															</svg>

@@ -5,20 +5,19 @@
 @section('content')
 	<div class="grid grid-cols-12 gap-4 md:gap-6">
 		<div class="col-span-12">
+			<x-admin.ui.entity-header title="Expense Report" :breadcrumbs="[
+			    ['label' => 'Dashboard', 'url' => route('admin.dashboard')],
+			    ['label' => 'Reports', 'url' => route('admin.reports.index')],
+			    ['label' => 'Expenses'],
+			]" />
+
 			<!-- Stats Cards -->
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Approved</p>
-					<p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">৳{{ number_format($totalAmount, 2) }}</p>
-				</div>
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Approval</p>
-					<p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">৳{{ number_format($pendingAmount, 2) }}</p>
-				</div>
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Expenses</p>
-					<p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ $expenses->count() }}</p>
-				</div>
+				<x-admin.ui.stat-card label="Total Approved" value="৳{{ number_format($totalAmount, 2) }}" icon="dollar"
+					color="green" />
+				<x-admin.ui.stat-card label="Pending Approval" value="৳{{ number_format($pendingAmount, 2) }}" icon="alert"
+					color="yellow" />
+				<x-admin.ui.stat-card label="Total Expenses" :value="$expenses->count()" icon="package" color="blue" />
 			</div>
 
 			<!-- Filter Form -->

@@ -4,6 +4,7 @@ namespace App\Services\Order;
 
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Services\InventoryService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Collection;
@@ -13,13 +14,16 @@ class OrderService
 {
     protected OrderRepositoryInterface $orderRepository;
     protected ProductRepositoryInterface $productRepository;
+    protected InventoryService $inventoryService;
 
     public function __construct(
         OrderRepositoryInterface $orderRepository,
-        ProductRepositoryInterface $productRepository
+        ProductRepositoryInterface $productRepository,
+        InventoryService $inventoryService
     ) {
         $this->orderRepository = $orderRepository;
         $this->productRepository = $productRepository;
+        $this->inventoryService = $inventoryService;
     }
 
     /**
@@ -138,16 +142,38 @@ class OrderService
         try {
             DB::beginTransaction();
 
-            $order = $this->orderRepository->update($id, $data);
+            $order = $this->orderRepository->findOrFail($id);
 
-            // Update items if provided
+            // If items are being replaced, FIRST restore old stock, THEN deduct new
             if (isset($data['items']) && is_array($data['items'])) {
-                // Delete existing items
+                // ── Step 1: Restore stock from the OLD items ───────
+                foreach ($order->items as $item) {
+                    $batchesUsed = $this->resolveConsumedBatches($order->id, $item);
+                    if (!empty($batchesUsed)) {
+                        $this->inventoryService->restoreStock(
+                            productId:     $item->product_id,
+                            usedBatches:   $batchesUsed,
+                            variantId:     $item->product_variant_id,
+                            referenceType: \App\Models\Order::class,
+                            referenceId:   $order->id,
+                        );
+                    }
+                    $this->productRepository->updateStock($item->product_id, $item->quantity, 'increment');
+                }
+
+                // ── Step 2: Delete old items ──────────────────────
                 $order->items()->delete();
-                // Create new items
+
+                // ── Step 3: Update order data ─────────────────────
+                $order = $this->orderRepository->update($id, $data);
+
+                // ── Step 4: Create new items (triggers FIFO deduction) ──
                 $this->createOrderItems($order, $data['items']);
-                // Recalculate totals
+
+                // ── Step 5: Recalculate totals ────────────────────
                 $this->recalculateTotals($order);
+            } else {
+                $order = $this->orderRepository->update($id, $data);
             }
 
             DB::commit();
@@ -185,7 +211,7 @@ class OrderService
     }
 
     /**
-     * Cancel order
+     * Cancel order — restores stock to original batches via InventoryService.
      *
      * @param int $orderId
      * @return bool
@@ -197,8 +223,21 @@ class OrderService
 
             $order = $this->orderRepository->findOrFail($orderId);
 
-            // Restore stock for cancelled order
             foreach ($order->items as $item) {
+                // Build the usedBatches structure from the order_item's
+                // stored COGS data so InventoryService can reverse it.
+                // For multi-batch sales we restore via movements.
+                $batchesUsed = $this->resolveConsumedBatches($order->id, $item);
+
+                $this->inventoryService->restoreStock(
+                    productId:     $item->product_id,
+                    usedBatches:   $batchesUsed,
+                    variantId:     $item->product_variant_id,
+                    referenceType: \App\Models\Order::class,
+                    referenceId:   $order->id,
+                );
+
+                // Re-sync the denormalised counter
                 $this->productRepository->updateStock(
                     $item->product_id,
                     $item->quantity,
@@ -216,6 +255,41 @@ class OrderService
             Log::error('Order cancellation failed: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Resolve which batches were consumed for an order item.
+     * Looks at inventory_movements for the exact batch→quantity mapping.
+     * Falls back to the single purchase_batch_id on the order_item.
+     */
+    protected function resolveConsumedBatches(int $orderId, \App\Models\OrderItem $item): array
+    {
+        // Inventory movements logged during the original sale
+        $movements = \App\Models\InventoryMovement::where('product_id', $item->product_id)
+            ->where('reference_type', \App\Models\Order::class)
+            ->where('reference_id', $orderId)
+            ->where('movement_type', \App\Models\InventoryMovement::TYPE_SALE)
+            ->get();
+
+        if ($movements->isNotEmpty()) {
+            return $movements->map(fn($m) => [
+                'batch_id'  => $m->batch_id,
+                'quantity'  => abs($m->quantity),
+                'unit_cost' => (float) $m->unit_cost,
+            ])->toArray();
+        }
+
+        // Fallback: single batch link on the order_item
+        if ($item->purchase_batch_id && $item->unit_cost) {
+            return [[
+                'batch_id'  => $item->purchase_batch_id,
+                'quantity'  => $item->quantity,
+                'unit_cost' => (float) $item->unit_cost,
+            ]];
+        }
+
+        // No batch data at all (legacy order) — can only restore product counter
+        return [];
     }
 
     /**
@@ -325,7 +399,7 @@ class OrderService
     }
 
     /**
-     * Create order items
+     * Create order items — wired to FIFO batch deduction.
      *
      * @param \App\Models\Order $order
      * @param array $items
@@ -334,17 +408,47 @@ class OrderService
     protected function createOrderItems(\App\Models\Order $order, array $items): void
     {
         foreach ($items as $item) {
+            $productId = $item['product_id'];
+            $variantId = $item['product_variant_id'] ?? null;
+            $quantity  = $item['quantity'];
+            $unitPrice = $item['price'] ?? $item['unit_price'] ?? 0;
+
+            // ── FIFO deduction ─────────────────────────────
+            // This consumes from the oldest batches and returns
+            // which batches were used and at what cost.
+            $usedBatches = $this->inventoryService->deductStock(
+                productId:     $productId,
+                quantity:      $quantity,
+                variantId:     $variantId,
+                referenceType: \App\Models\Order::class,
+                referenceId:   $order->id,
+            );
+
+            // Calculate weighted-average COGS for this line item
+            $unitCost = $this->inventoryService->weightedAverageCost($usedBatches);
+
+            // If only one batch was consumed, link it directly.
+            // For multi-batch sales the link goes to the first batch (the
+            // full trail lives in inventory_movements).
+            $batchId = count($usedBatches) === 1
+                ? $usedBatches[0]['batch_id']
+                : ($usedBatches[0]['batch_id'] ?? null);
+
+            // ── Create order_item with COGS data ───────────
             $order->items()->create([
-                'product_id' => $item['product_id'],
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-                'subtotal' => $item['price'] * $item['quantity'],
+                'product_id'         => $productId,
+                'product_variant_id' => $variantId,
+                'quantity'           => $quantity,
+                'unit_price'         => $unitPrice,
+                'unit_cost'          => $unitCost,
+                'purchase_batch_id'  => $batchId,
+                'total_price'        => $unitPrice * $quantity,
             ]);
 
-            // Decrease stock
+            // ── Sync the denormalised stock counter ────────
             $this->productRepository->updateStock(
-                $item['product_id'],
-                $item['quantity'],
+                $productId,
+                $quantity,
                 'decrement'
             );
         }
@@ -358,7 +462,7 @@ class OrderService
      */
     protected function recalculateTotals(\App\Models\Order $order): void
     {
-        $subtotal = $order->items->sum('subtotal');
+        $subtotal = $order->items->sum('total_price');
         $taxRate = 0; // Configure tax rate
         $tax = $subtotal * ($taxRate / 100);
 
@@ -370,7 +474,10 @@ class OrderService
     }
 
     /**
-     * Handle stock adjustment based on status change
+     * Handle stock adjustment based on status change.
+     *
+     * Stock is already deducted at order creation via FIFO.
+     * This method handles special transitions (e.g. cancellation via status).
      *
      * @param int $orderId
      * @param string $status
@@ -378,15 +485,28 @@ class OrderService
      */
     protected function handleStatusStockAdjustment(int $orderId, string $status): void
     {
-        $order = $this->orderRepository->findOrFail($orderId);
+        // Stock is deducted at creation time. If we transition to 'cancelled'
+        // through updateStatus() instead of cancel(), handle the restoration.
+        if ($status === 'cancelled') {
+            $order = $this->orderRepository->findOrFail($orderId);
 
-        // If order is completed, ensure stock is decremented
-        if ($status === 'completed' && $order->status !== 'completed') {
             foreach ($order->items as $item) {
+                $batchesUsed = $this->resolveConsumedBatches($order->id, $item);
+
+                if (!empty($batchesUsed)) {
+                    $this->inventoryService->restoreStock(
+                        productId:     $item->product_id,
+                        usedBatches:   $batchesUsed,
+                        variantId:     $item->product_variant_id,
+                        referenceType: \App\Models\Order::class,
+                        referenceId:   $order->id,
+                    );
+                }
+
                 $this->productRepository->updateStock(
                     $item->product_id,
                     $item->quantity,
-                    'decrement'
+                    'increment'
                 );
             }
         }

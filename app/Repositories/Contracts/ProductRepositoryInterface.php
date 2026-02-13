@@ -8,7 +8,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 interface ProductRepositoryInterface extends RepositoryInterface
 {
     /**
-     * Get products with catalog and brand
+     * Get products with category and brand
      *
      * @return Collection
      */
@@ -38,13 +38,9 @@ interface ProductRepositoryInterface extends RepositoryInterface
     public function getActiveProducts(): Collection;
 
     /**
-     * Get products by catalog
-     *
-     * @param int $catalogId
-     * @param int $perPage
-     * @return LengthAwarePaginator
+     * Get products by category
      */
-    public function getByCatalog(int $catalogId, int $perPage = 20): LengthAwarePaginator;
+    public function getByCategory(int $categoryId, int $perPage = 20): LengthAwarePaginator;
 
     /**
      * Get products by brand

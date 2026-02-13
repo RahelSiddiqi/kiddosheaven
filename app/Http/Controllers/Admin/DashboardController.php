@@ -21,13 +21,13 @@ class DashboardController extends Controller
         $lastMonthEnd = now()->subMonth()->endOfMonth();
 
         // Revenue stats
-        $totalRevenue = Order::sum('total_amount') / 100;
-        $revenueToday = Order::where('created_at', '>=', $today)->sum('total_amount') / 100;
-        $revenueThisWeek = Order::where('created_at', '>=', $thisWeekStart)->sum('total_amount') / 100;
-        $revenueThisMonth = Order::where('created_at', '>=', $thisMonthStart)->sum('total_amount') / 100;
+        $totalRevenue = Order::sum('total_amount');
+        $revenueToday = Order::where('created_at', '>=', $today)->sum('total_amount');
+        $revenueThisWeek = Order::where('created_at', '>=', $thisWeekStart)->sum('total_amount');
+        $revenueThisMonth = Order::where('created_at', '>=', $thisMonthStart)->sum('total_amount');
 
         // Revenue last month (for comparison)
-        $revenueLastMonth = Order::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->sum('total_amount') / 100;
+        $revenueLastMonth = Order::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->sum('total_amount');
         $revenueGrowth = $revenueLastMonth > 0
             ? (($revenueThisMonth - $revenueLastMonth) / $revenueLastMonth) * 100
             : 0;
@@ -121,7 +121,7 @@ class DashboardController extends Controller
             $labels[] = $date->format('M d');
 
             $revenue = Order::whereDate('created_at', $date->toDateString())
-                ->sum('total_amount') / 100;
+                ->sum('total_amount');
             $revenueData[] = $revenue;
 
             $ordersData[] = Order::whereDate('created_at', $date->toDateString())->count();

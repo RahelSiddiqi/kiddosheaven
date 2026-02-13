@@ -13,26 +13,21 @@ class InventoryMovement extends Model
     protected $fillable = [
         'movement_number',
         'product_id',
-        'purchase_batch_id',
+        'product_variant_id',
+        'batch_id',
         'inventory_item_id',
         'movement_type',
         'quantity',
         'unit_cost',
-        'total_cost',
-        'selling_price',
         'reference_type',
         'reference_id',
-        'partner_id',
+        'user_id',
         'notes',
-        'movement_date',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_cost' => 'decimal:2',
-        'total_cost' => 'decimal:2',
-        'selling_price' => 'decimal:2',
-        'movement_date' => 'datetime',
     ];
 
     const TYPE_PURCHASE = 'purchase';
@@ -70,7 +65,7 @@ class InventoryMovement extends Model
      */
     public function purchaseBatch(): BelongsTo
     {
-        return $this->belongsTo(PurchaseBatch::class, 'purchase_batch_id');
+        return $this->belongsTo(PurchaseBatch::class, 'batch_id');
     }
 
     /**
@@ -82,11 +77,19 @@ class InventoryMovement extends Model
     }
 
     /**
-     * Get the partner for this movement.
+     * Get the user who created this movement.
      */
-    public function partner(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Partner::class, 'partner_id');
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the variant for this movement.
+     */
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     /**
@@ -107,15 +110,30 @@ class InventoryMovement extends Model
 
     /**
      * Calculate profit/loss for this movement (if sale).
+     * Revenue is derived from the linked order's order_items.
      */
     public function getProfitAttribute(): ?float
     {
         if ($this->movement_type !== self::TYPE_SALE) {
             return null;
         }
+
         $cost = $this->unit_cost ?? 0;
-        $revenue = $this->selling_price ?? 0;
-        return ($revenue - $cost) * abs($this->quantity);
+        $qty  = abs($this->quantity);
+
+        // Try to find the selling price from the linked order_item
+        if ($this->reference_type === Order::class && $this->reference_id) {
+            $orderItem = OrderItem::where('order_id', $this->reference_id)
+                ->where('product_id', $this->product_id)
+                ->first();
+
+            if ($orderItem) {
+                return ($orderItem->unit_price - $cost) * $qty;
+            }
+        }
+
+        // Fallback: only COGS is known, profit cannot be determined
+        return null;
     }
 
     /**
@@ -156,6 +174,6 @@ class InventoryMovement extends Model
      */
     public function scopeDateRange($query, $startDate, $endDate)
     {
-        return $query->whereBetween('movement_date', [$startDate, $endDate]);
+        return $query->whereBetween('created_at', [$startDate, $endDate]);
     }
 }

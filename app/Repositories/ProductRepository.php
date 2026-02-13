@@ -26,11 +26,11 @@ class ProductRepository extends BaseRepository
     }
 
     /**
-     * Get products by catalog
+     * Get products by category
      */
-    public function getByCatalog(int $catalogId, int $limit = 20): Collection
+    public function getByCategory(int $categoryId, int $limit = 20): Collection
     {
-        return $this->model->where('catalog_id', $catalogId)
+        return $this->model->where('category_id', $categoryId)
             ->where('status', 'active')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
@@ -114,7 +114,7 @@ class ProductRepository extends BaseRepository
     public function getForHome(int $limit = 8): Collection
     {
         return $this->model->where('status', 'active')
-            ->with('catalog')
+            ->with('category')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();

@@ -18,13 +18,11 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     }
 
     /**
-     * Get products with catalog and brand
-     *
-     * @return Collection
+     * Get products with category and brand
      */
     public function allWithRelations(): Collection
     {
-        return $this->model->with(['catalog', 'brand'])->get();
+        return $this->model->with(['category', 'brand'])->get();
     }
 
     /**
@@ -65,18 +63,14 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     }
 
     /**
-     * Get products by catalog
-     *
-     * @param int $catalogId
-     * @param int $perPage
-     * @return LengthAwarePaginator
+     * Get products by category
      */
-    public function getByCatalog(int $catalogId, int $perPage = 20): LengthAwarePaginator
+    public function getByCategory(int $categoryId, int $perPage = 20): LengthAwarePaginator
     {
         return $this->model
-            ->where('catalog_id', $catalogId)
+            ->where('category_id', $categoryId)
             ->where('status', 'active')
-            ->with(['catalog', 'brand'])
+            ->with(['category', 'brand'])
             ->paginate($perPage);
     }
 
@@ -107,7 +101,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 $query->whereNull('low_stock_alert')
                     ->where('stock_quantity', '<=', 10);
             })
-            ->with(['catalog', 'brand'])
+            ->with(['category', 'brand'])
             ->get();
     }
 
@@ -128,7 +122,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                     ->orWhere('sku', 'like', "%{$query}%");
             })
             ->where('status', 'active')
-            ->with(['catalog', 'brand'])
+            ->with(['category', 'brand'])
             ->paginate($perPage);
     }
 
@@ -167,11 +161,11 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
      */
     public function getWithFilters(array $filters, int $perPage = 20): LengthAwarePaginator
     {
-        $query = $this->model->query()->where('status', 'active');
+        $query = $this->model->query();
 
-        // Catalog filter
-        if (!empty($filters['catalog_id'])) {
-            $query->where('catalog_id', $filters['catalog_id']);
+        // Category filter
+        if (!empty($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
         }
 
         // Brand filter
@@ -191,17 +185,19 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['search']}%")
-                    ->orWhere('description', 'like', "%{$filters['search']}%");
+                    ->orWhere('description', 'like', "%{$filters['search']}%")
+                    ->orWhere('sku', 'like', "%{$filters['search']}%");
             });
         }
 
-        // Featured products
-        if (isset($filters['is_featured'])) {
-            $query->where('is_featured', $filters['is_featured']);
+        // Featured products (handle both 'featured' and 'is_featured' keys)
+        $featured = $filters['featured'] ?? $filters['is_featured'] ?? null;
+        if ($featured !== null && $featured !== '') {
+            $query->where('is_featured', (bool) $featured);
         }
 
         // Stock status
-        if (isset($filters['in_stock'])) {
+        if (isset($filters['in_stock']) && $filters['in_stock'] !== null && $filters['in_stock'] !== '') {
             if ($filters['in_stock']) {
                 $query->where('stock_quantity', '>', 0);
             } else {
@@ -209,11 +205,21 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             }
         }
 
-        // Sorting
-        $sortBy = $filters['sort_by'] ?? 'created_at';
-        $sortOrder = $filters['sort_order'] ?? 'desc';
-        $query->orderBy($sortBy, $sortOrder);
+        // Sorting (handle both 'sort' shortcut and 'sort_by'/'sort_order' explicit)
+        $sort = $filters['sort'] ?? 'latest';
+        match ($sort) {
+            'latest' => $query->orderBy('created_at', 'desc'),
+            'oldest' => $query->orderBy('created_at', 'asc'),
+            'price_asc' => $query->orderBy('price', 'asc'),
+            'price_desc' => $query->orderBy('price', 'desc'),
+            'name_asc' => $query->orderBy('name', 'asc'),
+            'name_desc' => $query->orderBy('name', 'desc'),
+            default => $query->orderBy(
+                $filters['sort_by'] ?? 'created_at',
+                $filters['sort_order'] ?? 'desc'
+            ),
+        };
 
-        return $query->with(['catalog', 'brand'])->paginate($perPage);
+        return $query->with(['category', 'brand', 'variants'])->paginate($perPage);
     }
 }

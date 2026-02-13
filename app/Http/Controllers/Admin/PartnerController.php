@@ -11,7 +11,7 @@ class PartnerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Partner::withCount('products');
+        $query = Partner::withCount('purchaseBatches');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -70,7 +70,7 @@ class PartnerController extends Controller
 
     public function show(Partner $partner)
     {
-        $partner->load(['products', 'purchaseOrders', 'expenses']);
+        $partner->load(['purchaseBatches', 'expenses', 'payments']);
 
         return view('admin.partners.show', compact('partner'));
     }

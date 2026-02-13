@@ -4,19 +4,28 @@ namespace App\Http\Controllers\Admin\Product;
 
 use App\Http\Controllers\Controller;
 use App\Services\Product\ProductService;
+use App\Services\VariantGeneratorService;
 use App\Http\Requests\Admin\Product\StoreProductRequest;
 use App\Http\Requests\Admin\Product\UpdateProductRequest;
-use App\Models\Catalog;
+use App\Models\Category;
 use App\Models\Brand;
+use App\Services\CategoryService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     protected ProductService $productService;
+    protected VariantGeneratorService $variantService;
+    protected CategoryService $categoryService;
 
-    public function __construct(ProductService $productService)
-    {
+    public function __construct(
+        ProductService $productService,
+        VariantGeneratorService $variantService,
+        CategoryService $categoryService
+    ) {
         $this->productService = $productService;
+        $this->variantService = $variantService;
+        $this->categoryService = $categoryService;
     }
 
     /**
@@ -25,7 +34,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $filters = [
-            'catalog_id' => $request->catalog_id,
+            'category_id' => $request->category_id,
             'brand_id' => $request->brand_id,
             'search' => $request->search,
             'in_stock' => $request->in_stock,
@@ -42,10 +51,10 @@ class ProductController extends Controller
             ]);
         }
 
-        $catalogs = Catalog::orderBy('name')->get();
+        $categories = $this->categoryService->getHierarchicalList();
         $brands = Brand::orderBy('name')->get();
 
-        return view('admin.products.index', compact('products', 'catalogs', 'brands'));
+        return view('admin.products.index', compact('products', 'categories', 'brands'));
     }
 
     /**
@@ -53,10 +62,10 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $catalogs = Catalog::orderBy('name')->get();
+        $categories = $this->categoryService->getHierarchicalList();
         $brands = Brand::orderBy('name')->get();
 
-        return view('admin.products.create', compact('catalogs', 'brands'));
+        return view('admin.products.create', compact('categories', 'brands'));
     }
 
     /**
@@ -100,7 +109,28 @@ class ProductController extends Controller
             abort(404);
         }
 
-        return view('admin.products.show', compact('product'));
+        $product->load([
+            'variants.variantAttributes.attributeValue',
+            'variants.variantAttributes.attribute',
+            'category',
+            'brand',
+        ]);
+
+        // Get all attributes with their values for variant generator
+        $variantAttributes = \App\Models\ProductAttribute::with('values')->get()->map(function ($attr) {
+            return [
+                'id' => $attr->id,
+                'name' => $attr->name,
+                'values' => $attr->values->map(function ($val) {
+                    return [
+                        'id' => $val->id,
+                        'value' => $val->value,
+                    ];
+                }),
+            ];
+        });
+
+        return view('admin.products.show', compact('product', 'variantAttributes'));
     }
 
     /**
@@ -114,10 +144,11 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $catalogs = Catalog::orderBy('name')->get();
+        $product->load(['variants.variantAttributes']);
+        $categories = $this->categoryService->getHierarchicalList();
         $brands = Brand::orderBy('name')->get();
 
-        return view('admin.products.edit', compact('product', 'catalogs', 'brands'));
+        return view('admin.products.edit', compact('product', 'categories', 'brands'));
     }
 
     /**
@@ -229,15 +260,39 @@ class ProductController extends Controller
     }
 
     /**
-     * Get attributes by catalog (for AJAX).
+     * Get variant attributes by category (for AJAX).
      */
-    public function getAttributesByCatalog($catalogId)
+    public function getVariantAttributes($categoryId)
     {
-        $catalog = Catalog::with('attributes.values')->findOrFail($catalogId);
+        try {
+            $category = Category::with(['attributes' => function ($query) {
+                $query->where('use_for_variants', true)
+                      ->with('values')
+                      ->orderBy('sort_order');
+            }])->findOrFail($categoryId);
+
+            return response()->json([
+                'success' => true,
+                'attributes' => $category->attributes,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load attributes: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get attributes by category (for AJAX).
+     */
+    public function getAttributesByCategory($categoryId)
+    {
+        $category = Category::with('attributes.values')->findOrFail($categoryId);
 
         return response()->json([
             'success' => true,
-            'attributes' => $catalog->attributes,
+            'attributes' => $category->attributes,
         ]);
     }
 }

@@ -1,0 +1,3 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+CONSTRAINT_NAME	CHECK_CLAUSE
+chk_movement_type	(`movement_type` in (_utf8mb4\\'purchase\\',_utf8mb4\\'sale\\',_utf8mb4\\'return\\',_utf8mb4\\'adjustment\\',_utf8mb4\\'transfer\\',_utf8mb4\\'damage\\',_utf8mb4\\'expire\\',_utf8mb4\\'expired\\'))

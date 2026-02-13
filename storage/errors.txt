@@ -1,0 +1,19 @@
+
+=== /admin/partners ===
+Call to undefined method App\Models\Partner::products() 
+=== /admin/marketing/flash-sales ===
+Undefined variable $stats (View: /var/www/kiddosheaven/resources/views/admin/flash-sales/index.blade.php) 
+=== /admin/reviews ===
+Undefined variable $stats (View: /var/www/kiddosheaven/resources/views/admin/reviews/index.blade.php) 
+=== /admin/loyalty ===
+Call to undefined method App\Http\Controllers\Admin\LoyaltyController::index() 
+=== /admin/inventory ===
+count(): Argument #1 ($value) must be of type Countable|array, Illuminate\View\ComponentSlot given (View: /var/www/kiddosheaven/resources/views/components/admin/ui/entity-header.blade.php) (View: /var/www/kiddosheaven/resources/views/components/admin/ui/entity-header.blade.php) 
+=== /admin/pricing-templates ===
+SQLSTATE[42S22]: Column not found: 1054 Unknown column 'pricing_templates.deleted_at' in 'where clause' (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: kiddosheaven, SQL: select `pricing_templates`.*, (select count(*) from `categories` inner join `category_pricing_template` on `categories`.`id` = `category_pricing_template`.`category_id` where `pricing_templates`.`id` = `category_pricing_template`.`pricing_template_id`) as `categories_count` from `pricing_templates` where `pricing_templates`.`deleted_at` is null order by `is_global` desc, `name` asc) 
+=== /admin/cms/pages ===
+View [admin.cms.index] not found. 
+=== /admin/settings ===
+Call to undefined method App\Http\Controllers\Admin\SettingController::edit() 
+=== /admin/reports/inventory ===
+Undefined variable $totalValue (View: /var/www/kiddosheaven/resources/views/admin/reports/inventory.blade.php) 

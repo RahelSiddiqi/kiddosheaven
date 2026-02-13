@@ -95,13 +95,10 @@ class PermissionController extends Controller
     {
         $controllers = [
             'DashboardController',
-            'CatalogController',
-            'Catalog\CatalogTypeController',
-            'Catalog\CatalogTypeAttributeController',
+            'CategoryController',
             'Product\ProductController',
             'Attribute\AttributeController',
             'Attribute\AttributeValueController',
-            'Attribute\CatalogAttributeController',
             'BrandController',
             'OrderController',
             'InventoryController',

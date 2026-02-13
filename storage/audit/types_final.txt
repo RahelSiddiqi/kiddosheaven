@@ -1,0 +1,9 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+COLUMN_NAME	COLUMN_TYPE
+subtotal	decimal(10,2)
+tax_amount	int unsigned
+total_amount	decimal(10,2)
+COLUMN_NAME	COLUMN_TYPE
+unit_price	decimal(10,2)
+unit_cost	decimal(10,2)
+total_price	decimal(10,2)

@@ -1,0 +1,14 @@
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                        0.14s  
+
+   PASS  Tests\Feature\FifoInventoryTest
+  ✓ fifo lifecycle                                                       0.05s  
+  ✓ insufficient stock throws exception                                  0.03s  
+
+  Tests:    4 passed (41 assertions)
+  Duration: 0.27s
+

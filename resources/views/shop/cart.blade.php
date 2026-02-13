@@ -231,18 +231,15 @@
 			<div class="mt-12">
 				<h3 class="font-bold text-gray-800 mb-6">Popular Categories</h3>
 				<div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-					<a href="{{ route('catalog', ['catalog_id' => 1]) }}"
-						class="p-4 rounded-xl bg-light hover:bg-primary/10 transition">
+					<a href="{{ route('catalog') }}" class="p-4 rounded-xl bg-light hover:bg-primary/10 transition">
 						<span class="text-3xl block mb-2">🧸</span>
 						<span class="font-medium text-gray-700">Stuffed Toys</span>
 					</a>
-					<a href="{{ route('catalog', ['catalog_id' => 2]) }}"
-						class="p-4 rounded-xl bg-light hover:bg-primary/10 transition">
+					<a href="{{ route('catalog') }}" class="p-4 rounded-xl bg-light hover:bg-primary/10 transition">
 						<span class="text-3xl block mb-2">🚗</span>
 						<span class="font-medium text-gray-700">Vehicles</span>
 					</a>
-					<a href="{{ route('catalog', ['catalog_id' => 3]) }}"
-						class="p-4 rounded-xl bg-light hover:bg-primary/10 transition">
+					<a href="{{ route('catalog') }}" class="p-4 rounded-xl bg-light hover:bg-primary/10 transition">
 						<span class="text-3xl block mb-2">🧩</span>
 						<span class="font-medium text-gray-700">Puzzles</span>
 					</a>

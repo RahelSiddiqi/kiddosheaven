@@ -1,0 +1,11 @@
+No syntax errors detected in app/Http/Controllers/Admin/InventoryController.php
+No syntax errors detected in app/Http/Controllers/Admin/LoyaltyController.php
+No syntax errors detected in app/Http/Controllers/Admin/PartnerController.php
+No syntax errors detected in app/Http/Controllers/Admin/ReviewController.php
+No syntax errors detected in app/Http/Controllers/Admin/CmsPageController.php
+No syntax errors detected in app/Http/Controllers/Admin/SettingController.php
+No syntax errors detected in app/Http/Controllers/Admin/PricingTemplateController.php
+No syntax errors detected in app/Http/Controllers/Admin/ReportController.php
+No syntax errors detected in app/Http/Controllers/Admin/OrderController.php
+No syntax errors detected in app/Http/Controllers/Admin/CouponController.php
+No syntax errors detected in app/Http/Controllers/Admin/FlashSaleController.php

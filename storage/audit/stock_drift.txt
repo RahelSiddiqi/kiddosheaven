@@ -1,0 +1,18 @@
+🔍 Dry-run mode — showing drift only
+  Product #1 'Wooden Train Set': counter=25, batches=0, drift=25
+  Product #2 'Stacking Rainbow': counter=30, batches=292, drift=-262
+  Product #3 'Cuddly Bear': counter=40, batches=125, drift=-85
+  Product #4 'Bunny Plush': counter=35, batches=158, drift=-123
+  Product #5 'Math Learning Set': counter=20, batches=172, drift=-152
+  Product #6 'Alphabet Puzzle': counter=45, batches=183, drift=-138
+  Product #7 'Mega Block Set': counter=15, batches=284, drift=-269
+  Product #8 'Colorful Blocks': counter=8, batches=273, drift=-265
+  Product #9 'Baby Activity Gym': counter=12, batches=269, drift=-257
+  Product #10 'RC Racing Car': counter=18, batches=48, drift=-30
+  Product #12 'Wooden Building Blocks Set': counter=50, batches=0, drift=50
+  Product #13 'Educational E-Book Bundle': counter=9999, batches=0, drift=9999
+  Product #14 'Kids Winter Jacket': counter=28, batches=0, drift=28
+  Product #15 'Baby Care Gift Set': counter=20, batches=0, drift=20
+
+Products drifted: 14/14
+Variants drifted: 0/0

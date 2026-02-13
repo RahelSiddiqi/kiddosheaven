@@ -25,7 +25,7 @@ return new class extends Migration
             $table->boolean('is_featured')->default(false);
             $table->enum('status', ['active', 'inactive'])->default('active')->index();
             $table->unsignedBigInteger('stock_quantity')->default(0);
-            $table->unsignedBigInteger('catalog_id')->nullable();
+            $table->unsignedBigInteger('category_id')->nullable();
             $table->unsignedBigInteger('brand_id')->nullable();
             $table->string('video_url')->nullable();
             $table->string('meta_title')->nullable();

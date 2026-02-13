@@ -3,18 +3,24 @@
 namespace App\Services\Product;
 
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Services\VariantGeneratorService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ProductService
 {
     protected ProductRepositoryInterface $productRepository;
+    protected VariantGeneratorService $variantService;
 
-    public function __construct(ProductRepositoryInterface $productRepository)
-    {
+    public function __construct(
+        ProductRepositoryInterface $productRepository,
+        VariantGeneratorService $variantService
+    ) {
         $this->productRepository = $productRepository;
+        $this->variantService = $variantService;
     }
 
     /**
@@ -68,28 +74,47 @@ class ProductService
      */
     public function create(array $data): \App\Models\Product
     {
-        // Generate slug
-        $data['slug'] = $this->generateUniqueSlug($data['name']);
+        return DB::transaction(function () use ($data) {
+            // Generate slug
+            $data['slug'] = $this->generateUniqueSlug($data['name']);
 
-        // Calculate profit margin if cost_price exists
-        if (isset($data['cost_price']) && isset($data['price'])) {
-            $data['profit_margin'] = $this->calculateProfitMargin(
-                $data['price'],
-                $data['cost_price']
-            );
-        }
+            // Handle product_type - default to simple if not set
+            if (!isset($data['product_type'])) {
+                $data['product_type'] = 'simple';
+            }
 
-        // Handle image uploads
-        if (isset($data['images']) && is_array($data['images'])) {
-            $data['images'] = $this->handleImageUploads($data['images']);
-        }
+            // Calculate profit margin if cost_price exists
+            if (isset($data['cost_price']) && isset($data['price'])) {
+                $data['profit_margin'] = $this->calculateProfitMargin(
+                    $data['price'],
+                    $data['cost_price']
+                );
+            }
 
-        // Handle tags
-        if (isset($data['tags']) && is_array($data['tags'])) {
-            $data['tags'] = array_filter($data['tags']);
-        }
+            // Handle image uploads
+            if (isset($data['images']) && is_array($data['images'])) {
+                $data['images'] = $this->handleImageUploads($data['images']);
+            }
 
-        return $this->productRepository->create($data);
+            // Handle tags
+            if (isset($data['tags']) && is_array($data['tags'])) {
+                $data['tags'] = array_filter($data['tags']);
+            }
+
+            // Extract variants data if present
+            $variantsData = $data['variants'] ?? [];
+            unset($data['variants']);
+
+            // Create the product
+            $product = $this->productRepository->create($data);
+
+            // Handle variants for variable products
+            if ($product->product_type === 'variable' && !empty($variantsData)) {
+                $this->createVariants($product, $variantsData);
+            }
+
+            return $product->fresh(['variants', 'category', 'brand']);
+        });
     }
 
     /**
@@ -101,36 +126,83 @@ class ProductService
      */
     public function update(int $id, array $data): \App\Models\Product
     {
-        // Update slug if name changed
-        if (isset($data['name'])) {
+        return DB::transaction(function () use ($id, $data) {
             $product = $this->productRepository->findOrFail($id);
-            if ($product->name !== $data['name']) {
+
+            // Update slug if name changed
+            if (isset($data['name']) && $product->name !== $data['name']) {
                 $data['slug'] = $this->generateUniqueSlug($data['name'], $id);
             }
-        }
 
-        // Recalculate profit margin if prices changed
-        if (isset($data['price']) || isset($data['cost_price'])) {
-            $product = $product ?? $this->productRepository->findOrFail($id);
+            // Recalculate profit margin if prices changed
             $price = $data['price'] ?? $product->price;
             $costPrice = $data['cost_price'] ?? $product->cost_price;
-
             if ($price > 0 && $costPrice > 0) {
                 $data['profit_margin'] = $this->calculateProfitMargin($price, $costPrice);
             }
-        }
 
-        // Handle new image uploads
-        if (isset($data['images']) && is_array($data['images'])) {
-            $data['images'] = $this->handleImageUploads($data['images']);
-        }
+            // ── Image handling ─────────────────────────
+            // 1. Extract new file uploads from data BEFORE any overwriting
+            $newFileUploads = [];
+            if (isset($data['images']) && is_array($data['images'])) {
+                foreach ($data['images'] as $img) {
+                    if (is_object($img) && method_exists($img, 'store')) {
+                        $newFileUploads[] = $img;
+                    }
+                }
+            }
 
-        // Handle tags
-        if (isset($data['tags']) && is_array($data['tags'])) {
-            $data['tags'] = array_filter($data['tags']);
-        }
+            // 2. Start with existing images
+            $finalImages = $product->images ?? [];
 
-        return $this->productRepository->update($id, $data);
+            // 3. Handle deletions
+            if (isset($data['delete_image']) && is_array($data['delete_image'])) {
+                foreach ($data['delete_image'] as $imageToDelete) {
+                    Storage::disk('public')->delete($imageToDelete);
+                    $finalImages = array_values(array_filter($finalImages, fn($img) => $img !== $imageToDelete));
+                }
+                // Reset primary image if it was deleted
+                if (in_array($product->primary_image, $data['delete_image'])) {
+                    $data['primary_image'] = !empty($finalImages) ? $finalImages[0] : null;
+                }
+            }
+            unset($data['delete_image']);
+
+            // 4. Handle new uploads (append to remaining images)
+            if (!empty($newFileUploads)) {
+                $newPaths = $this->handleImageUploads($newFileUploads);
+                $finalImages = array_merge($finalImages, $newPaths);
+            }
+
+            // 5. Only update images if we had deletions or new uploads
+            if (isset($data['delete_image']) || !empty($newFileUploads) || isset($data['images'])) {
+                $data['images'] = $finalImages;
+            }
+
+            // Handle primary_image
+            if (isset($data['primary_image'])) {
+                // Keep it as-is (it's a path string from the form)
+            }
+
+            // Handle tags
+            if (isset($data['tags']) && is_array($data['tags'])) {
+                $data['tags'] = array_values(array_filter($data['tags']));
+            }
+
+            // Extract variants data if present
+            $variantsData = $data['variants'] ?? [];
+            unset($data['variants']);
+
+            // Update the product
+            $updatedProduct = $this->productRepository->update($id, $data);
+
+            // Handle variants for variable products
+            if ($updatedProduct->product_type === 'variable' && !empty($variantsData)) {
+                $this->syncVariants($updatedProduct, $variantsData);
+            }
+
+            return $updatedProduct->fresh(['variants', 'category', 'brand']);
+        });
     }
 
     /**
@@ -165,15 +237,12 @@ class ProductService
     }
 
     /**
-     * Get products by catalog
-     *
-     * @param int $catalogId
-     * @param int $perPage
-     * @return LengthAwarePaginator
+    /**
+     * Get products by category
      */
-    public function getByCatalog(int $catalogId, int $perPage = 20): LengthAwarePaginator
+    public function getByCategory(int $categoryId, int $perPage = 20): LengthAwarePaginator
     {
-        return $this->productRepository->getByCatalog($catalogId, $perPage);
+        return $this->productRepository->getByCategory($categoryId, $perPage);
     }
 
     /**
@@ -296,5 +365,112 @@ class ProductService
         }
 
         return $uploadedPaths;
+    }
+
+    /**
+     * Create variants for a product
+     *
+     * @param \App\Models\Product $product
+     * @param array $variantsData
+     * @return void
+     */
+    protected function createVariants(\App\Models\Product $product, array $variantsData): void
+    {
+        foreach ($variantsData as $index => $variantData) {
+            // Create the variant
+            $variant = $product->variants()->create([
+                'sku' => $variantData['sku'] ?? null,
+                'price' => $variantData['price'] ?? $product->price,
+                'cost_price' => $variantData['cost_price'] ?? $product->cost_price,
+                'stock_quantity' => $variantData['stock_quantity'] ?? 0,
+                'barcode' => $variantData['barcode'] ?? null,
+                'weight' => $variantData['weight'] ?? null,
+                'is_default' => !empty($variantData['is_default']),
+                'is_active' => isset($variantData['is_active']) ? (bool) $variantData['is_active'] : true,
+            ]);
+
+            // Attach attribute values to the variant
+            if (!empty($variantData['attributes'])) {
+                foreach ($variantData['attributes'] as $attributeId => $valueId) {
+                    $variant->variantAttributes()->create([
+                        'product_attribute_id' => $attributeId,
+                        'product_attribute_value_id' => $valueId,
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Sync variants for an existing product (update/create/delete)
+     *
+     * @param \App\Models\Product $product
+     * @param array $variantsData
+     * @return void
+     */
+    protected function syncVariants(\App\Models\Product $product, array $variantsData): void
+    {
+        $existingIds = $product->variants()->pluck('id')->toArray();
+        $updatedIds = [];
+
+        foreach ($variantsData as $variantData) {
+            if (!empty($variantData['id']) && in_array($variantData['id'], $existingIds)) {
+                // Update existing variant
+                $variant = $product->variants()->find($variantData['id']);
+                $variant->update([
+                    'sku' => $variantData['sku'] ?? $variant->sku,
+                    'price' => $variantData['price'] ?? $variant->price,
+                    'cost_price' => $variantData['cost_price'] ?? $variant->cost_price,
+                    'stock_quantity' => $variantData['stock_quantity'] ?? $variant->stock_quantity,
+                    'barcode' => $variantData['barcode'] ?? $variant->barcode,
+                    'is_default' => !empty($variantData['is_default']),
+                    'is_active' => isset($variantData['is_active']) ? (bool) $variantData['is_active'] : true,
+                ]);
+
+                // Sync attributes
+                if (!empty($variantData['attributes'])) {
+                    $variant->variantAttributes()->delete();
+                    foreach ($variantData['attributes'] as $attributeId => $valueId) {
+                        $variant->variantAttributes()->create([
+                            'product_attribute_id' => $attributeId,
+                            'product_attribute_value_id' => $valueId,
+                        ]);
+                    }
+                }
+
+                $updatedIds[] = $variantData['id'];
+            } else {
+                // Create new variant
+                $variant = $product->variants()->create([
+                    'sku' => $variantData['sku'] ?? null,
+                    'price' => $variantData['price'] ?? $product->price,
+                    'cost_price' => $variantData['cost_price'] ?? $product->cost_price,
+                    'stock_quantity' => $variantData['stock_quantity'] ?? 0,
+                    'barcode' => $variantData['barcode'] ?? null,
+                    'is_default' => !empty($variantData['is_default']),
+                    'is_active' => isset($variantData['is_active']) ? (bool) $variantData['is_active'] : true,
+                ]);
+
+                if (!empty($variantData['attributes'])) {
+                    foreach ($variantData['attributes'] as $attributeId => $valueId) {
+                        $variant->variantAttributes()->create([
+                            'product_attribute_id' => $attributeId,
+                            'product_attribute_value_id' => $valueId,
+                        ]);
+                    }
+                }
+
+                $updatedIds[] = $variant->id;
+            }
+        }
+
+        // Delete variants that were removed
+        $toDelete = array_diff($existingIds, $updatedIds);
+        if (!empty($toDelete)) {
+            $product->variants()->whereIn('id', $toDelete)->each(function ($variant) {
+                $variant->variantAttributes()->delete();
+                $variant->delete();
+            });
+        }
     }
 }

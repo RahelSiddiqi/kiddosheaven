@@ -37,7 +37,7 @@ class ProductAttributeValueController extends Controller
 
         foreach ($request->attributes as $attr) {
             $attribute = ProductAttribute::find($attr['attribute_id']);
-            
+
             if (!$attribute) {
                 continue;
             }
@@ -136,34 +136,34 @@ class ProductAttributeValueController extends Controller
     }
 
     /**
-     * Bulk update attribute values from catalog attributes.
+     * Bulk update attribute values from category attributes.
      */
-    public function syncFromCatalog(Request $request, Product $product)
+    public function syncFromCategory(Request $request, Product $product)
     {
         $request->validate([
             'attributes' => 'required|array',
         ]);
 
-        $catalog = $product->catalog;
-        
-        if (!$catalog) {
+        $category = $product->category;
+
+        if (!$category) {
             return response()->json([
                 'success' => false,
-                'message' => 'Product has no catalog assigned',
+                'message' => 'Product has no category assigned',
             ], 400);
         }
 
-        $catalogAttributes = $catalog->attributes()->pluck('id')->toArray();
+        $categoryAttributes = $category->attributes()->pluck('id')->toArray();
         $attributeValues = [];
 
         foreach ($request->attributes as $attributeId => $value) {
-            // Only allow attributes from the product's catalog
-            if (!in_array($attributeId, $catalogAttributes)) {
+            // Only allow attributes from the product's category
+            if (!in_array($attributeId, $categoryAttributes)) {
                 continue;
             }
 
             $attribute = ProductAttribute::find($attributeId);
-            
+
             if (!$attribute || empty($value)) {
                 continue;
             }
@@ -181,7 +181,7 @@ class ProductAttributeValueController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Attributes synced from catalog successfully',
+            'message' => 'Attributes synced from category successfully',
             'attribute_values' => $attributeValues,
         ]);
     }

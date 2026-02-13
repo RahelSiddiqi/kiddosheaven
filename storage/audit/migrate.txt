@@ -1,0 +1,7 @@
+
+   INFO  Running migrations.  
+
+  2026_02_11_120000_add_missing_columns_to_orders_table ......................................... 579.45ms DONE
+  2026_02_11_120001_add_check_constraints_to_purchase_batches ......................................... 1s DONE
+  2026_02_11_120002_backfill_order_items_unit_cost ............................................... 11.31ms DONE
+

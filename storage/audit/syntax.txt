@@ -1,0 +1,8 @@
+No syntax errors detected in app/Http/Controllers/Admin/OrderController.php
+No syntax errors detected in app/Http/Controllers/Customer/OrderController.php
+No syntax errors detected in app/Services/Order/OrderService.php
+No syntax errors detected in app/Models/Order.php
+No syntax errors detected in app/Console/Commands/SyncStockCounters.php
+No syntax errors detected in database/migrations/2026_02_11_120000_add_missing_columns_to_orders_table.php
+No syntax errors detected in database/migrations/2026_02_11_120001_add_check_constraints_to_purchase_batches.php
+No syntax errors detected in database/migrations/2026_02_11_120002_backfill_order_items_unit_cost.php

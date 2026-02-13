@@ -1,0 +1,5 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+key	value
+currency	BDT
+inventory_costing_method	fifo
+tax_rate	0

@@ -1,0 +1,6 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+COLUMN_NAME
+status
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment	Visible	Expression
+orders	0	PRIMARY	1	id	A	8	NULL	NULL		BTREE			YES	NULL
+orders	1	orders_user_id_foreign	1	user_id	A	1	NULL	NULL	YES	BTREE			YES	NULL
