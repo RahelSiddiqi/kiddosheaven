@@ -99,6 +99,15 @@
 								</label>
 								<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">(Show in filters)</span>
 							</div>
+							<div class="flex items-center col-span-2">
+								<label class="flex items-center cursor-pointer">
+									<input type="checkbox" name="use_for_variants" value="1" {{ old('use_for_variants') ? 'checked' : '' }}
+										class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700 cursor-pointer">
+									<span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Use for variants</span>
+								</label>
+								<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">Needed to generate product variants (e.g., Color,
+									Size).</span>
+							</div>
 						</div>
 
 						<div class="flex justify-end gap-3">

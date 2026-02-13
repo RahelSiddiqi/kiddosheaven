@@ -113,6 +113,9 @@
 									class="px-4 py-3 font-medium text-gray-500 text-center text-theme-xs uppercase tracking-wider dark:text-gray-400">
 									Products</th>
 								<th scope="col"
+									class="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs uppercase tracking-wider dark:text-gray-400">
+									Attributes</th>
+								<th scope="col"
 									class="px-4 py-3 font-medium text-gray-500 text-center text-theme-xs uppercase tracking-wider dark:text-gray-400">
 									Status</th>
 								<th scope="col" class="px-5 sm:px-6 py-3 text-right"><span class="sr-only">Actions</span></th>
@@ -154,9 +157,25 @@
 									</td>
 									<td class="px-4 py-4 text-center">
 										<span class="inline-flex items-center justify-center min-w-6 h-6 px-2 text-xs font-medium rounded-full"
-											:class="(category.total_products || 0) > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400' :
+											:class="(category.total_products ?? category.products_count ?? category.product_count ?? category.productCount ??
+											    0) > 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400' :
 											    'bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500'"
-											x-text="category.total_products || 0"></span>
+											x-text="category.total_products ?? category.products_count ?? category.product_count ?? category.productCount ?? 0"></span>
+									</td>
+									<td class="px-4 py-4">
+										<div class="flex flex-wrap gap-1 justify-start">
+											<template x-for="attr in (category.attributes || []).slice(0, 6)" :key="attr.id">
+												<span class="px-2 py-0.5 rounded-full text-[11px] font-medium border"
+													:class="attr.use_for_variants ?
+													    'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-500/10 dark:text-purple-200 dark:border-purple-600/50' :
+													    'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'"
+													x-text="attr.name"></span>
+											</template>
+											<span x-show="(category.attributes || []).length === 0" class="text-[11px] text-gray-400">No
+												attributes</span>
+											<span x-show="(category.attributes || []).length > 6" class="text-[11px] text-gray-500"
+												x-text="'+' + ((category.attributes || []).length - 6) + ' more'"></span>
+										</div>
 									</td>
 									<td class="px-4 py-4 text-center">
 										<span x-show="category.is_active"
@@ -253,21 +272,35 @@
 										<div
 											class="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-500/10 flex items-center justify-center text-lg ring-1 ring-brand-500/20"
 											x-text="root.icon || '📁'"></div>
-										<div>
-											<div class="flex items-center gap-2">
-												<p class="text-sm font-semibold text-gray-800 dark:text-white/90" x-text="root.name"></p>
-												<span x-show="root.is_active"
-													class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500">Active</span>
-												<span x-show="!root.is_active"
-													class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">Inactive</span>
+										<div class="flex items-center gap-2">
+											<div>
+												<div class="flex items-center gap-2">
+													<p class="text-sm font-semibold text-gray-800 dark:text-white/90" x-text="root.name"></p>
+													<span x-show="root.is_active"
+														class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500">Active</span>
+													<span x-show="!root.is_active"
+														class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">Inactive</span>
+												</div>
+												<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+													<span
+														x-text="(root.total_products ?? root.products_count ?? root.product_count ?? root.productCount ?? 0) + ' products'"></span>
+													<span x-show="root.children && root.children.length > 0"
+														class="text-gray-300 dark:text-gray-600 mx-1">&middot;</span>
+													<span x-show="root.children && root.children.length > 0"
+														x-text="root.children.length + ' subcategories'"></span>
+												</p>
 											</div>
-											<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-												<span x-text="(root.total_products || 0) + ' products'"></span>
-												<span x-show="root.children && root.children.length > 0"
-													class="text-gray-300 dark:text-gray-600 mx-1">&middot;</span>
-												<span x-show="root.children && root.children.length > 0"
-													x-text="root.children.length + ' subcategories'"></span>
-											</p>
+											<div class="flex flex-wrap gap-1 mt-1">
+												<template x-for="attr in (root.attributes || []).slice(0, 3)" :key="attr.id">
+													<span class="px-2 py-0.5 rounded-full text-[11px] font-medium border"
+														:class="attr.use_for_variants ?
+														    'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-500/10 dark:text-purple-200 dark:border-purple-600/50' :
+														    'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'"
+														x-text="attr.name"></span>
+												</template>
+												<span x-show="(root.attributes || []).length > 3" class="text-[11px] text-gray-500"
+													x-text="'+' + ((root.attributes || []).length - 3) + ' more'"></span>
+											</div>
 										</div>
 									</div>
 									<div class="flex items-center gap-1" @click.stop>
@@ -350,21 +383,35 @@
 													<div
 														class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-sm ring-1 ring-blue-500/20"
 														x-text="child.icon || '📂'"></div>
-													<div>
-														<div class="flex items-center gap-2">
-															<p class="text-sm font-medium text-gray-700 dark:text-gray-300" x-text="child.name"></p>
-															<span x-show="child.is_active"
-																class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500">Active</span>
-															<span x-show="!child.is_active"
-																class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">Inactive</span>
+													<div class="flex items-center gap-4">
+														<div class="w-xl">
+															<div class="flex items-center gap-2">
+																<p class="text-sm font-medium text-gray-700 dark:text-gray-300" x-text="child.name"></p>
+																<span x-show="child.is_active"
+																	class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500">Active</span>
+																<span x-show="!child.is_active"
+																	class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">Inactive</span>
+															</div>
+															<p class="text-xs text-gray-400 dark:text-gray-500">
+																<span
+																	x-text="(child.total_products ?? child.products_count ?? child.product_count ?? child.productCount ?? 0) + ' products'"></span>
+																<span x-show="child.children && child.children.length > 0"
+																	class="text-gray-300 dark:text-gray-600 mx-1">&middot;</span>
+																<span x-show="child.children && child.children.length > 0"
+																	x-text="child.children.length + ' subcategories'"></span>
+															</p>
 														</div>
-														<p class="text-xs text-gray-400 dark:text-gray-500">
-															<span x-text="(child.total_products || 0) + ' products'"></span>
-															<span x-show="child.children && child.children.length > 0"
-																class="text-gray-300 dark:text-gray-600 mx-1">&middot;</span>
-															<span x-show="child.children && child.children.length > 0"
-																x-text="child.children.length + ' subcategories'"></span>
-														</p>
+														<div class="flex flex-wrap gap-1 mt-1 ml-6">
+															<template x-for="attr in (child.attributes || []).slice(0, 3)" :key="attr.id">
+																<span class="px-2 py-0.5 rounded-full text-[11px] font-medium border"
+																	:class="attr.use_for_variants ?
+																	    'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-500/10 dark:text-purple-200 dark:border-purple-600/50' :
+																	    'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'"
+																	x-text="attr.name"></span>
+															</template>
+															<span x-show="(child.attributes || []).length > 3" class="text-[11px] text-gray-500"
+																x-text="'+' + ((child.attributes || []).length - 3) + ' more'"></span>
+														</div>
 													</div>
 												</div>
 												<div class="flex items-center gap-1" @click.stop>
@@ -443,7 +490,19 @@
 																		class="px-1.5 py-0.5 text-[10px] leading-tight font-semibold rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">Inactive</span>
 																</div>
 																<p class="text-xs text-gray-400 dark:text-gray-500"
-																	x-text="(grandchild.total_products || 0) + ' products'"></p>
+																	x-text="(grandchild.total_products ?? grandchild.products_count ?? grandchild.product_count ?? grandchild.productCount ?? 0) + ' products'">
+																</p>
+																<div class="flex flex-wrap gap-1 mt-1">
+																	<template x-for="attr in (grandchild.attributes || []).slice(0, 3)" :key="attr.id">
+																		<span class="px-2 py-0.5 rounded-full text-[11px] font-medium border"
+																			:class="attr.use_for_variants ?
+																			    'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-500/10 dark:text-purple-200 dark:border-purple-600/50' :
+																			    'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'"
+																			x-text="attr.name"></span>
+																	</template>
+																	<span x-show="(grandchild.attributes || []).length > 3" class="text-[11px] text-gray-500"
+																		x-text="'+' + ((grandchild.attributes || []).length - 3) + ' more'"></span>
+																</div>
 															</div>
 														</div>
 														<div class="flex items-center gap-1" @click.stop>
@@ -674,6 +733,17 @@
 							} else {
 								this.destroySortables();
 							}
+						});
+
+						// Surface flash messages from the server (redirect from edit/create)
+						this.$nextTick(() => {
+							@if (session('success'))
+								this.toast(@json(session('success')), 'success');
+							@elseif (session('error'))
+								this.toast(@json(session('error')), 'error');
+							@elseif ($errors->any())
+								this.toast(@json(implode(' ', $errors->all())), 'error');
+							@endif
 						});
 					},
 

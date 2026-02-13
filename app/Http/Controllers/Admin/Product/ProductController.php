@@ -8,6 +8,7 @@ use App\Services\VariantGeneratorService;
 use App\Http\Requests\Admin\Product\StoreProductRequest;
 use App\Http\Requests\Admin\Product\UpdateProductRequest;
 use App\Models\Category;
+use App\Models\ProductAttribute;
 use App\Models\Brand;
 use App\Services\CategoryService;
 use Illuminate\Http\Request;
@@ -265,15 +266,19 @@ class ProductController extends Controller
     public function getVariantAttributes($categoryId)
     {
         try {
-            $category = Category::with(['attributes' => function ($query) {
-                $query->where('use_for_variants', true)
-                      ->with('values')
-                      ->orderBy('sort_order');
-            }])->findOrFail($categoryId);
+            $category = Category::with('parent')->findOrFail($categoryId);
+            $ids = collect([$category->id])->merge($category->ancestors()->pluck('id'))->unique()->values();
+
+            $attributes = ProductAttribute::whereHas('categories', function ($query) use ($ids) {
+                $query->whereIn('categories.id', $ids);
+            })
+                ->with('values')
+                ->orderBy('sort_order')
+                ->get();
 
             return response()->json([
                 'success' => true,
-                'attributes' => $category->attributes,
+                'attributes' => $attributes,
             ]);
         } catch (\Exception $e) {
             return response()->json([

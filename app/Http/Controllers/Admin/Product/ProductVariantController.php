@@ -40,7 +40,11 @@ class ProductVariantController extends Controller
             abort(404);
         }
 
-        $variant->load(['product', 'variantAttributes']);
+        $variant->load([
+            'product',
+            'variantAttributes.attribute',
+            'variantAttributes.attributeValue',
+        ]);
 
         return view('admin.products.variants.show', compact('product', 'variant'));
     }

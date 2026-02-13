@@ -15,6 +15,7 @@ class ProductAttribute extends Model
         'type',
         'is_required',
         'is_filterable',
+        'use_for_variants',
         'description',
         'sort_order',
     ];
@@ -22,6 +23,7 @@ class ProductAttribute extends Model
     protected $casts = [
         'is_required' => 'boolean',
         'is_filterable' => 'boolean',
+        'use_for_variants' => 'boolean',
     ];
 
     /**

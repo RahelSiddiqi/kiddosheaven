@@ -55,13 +55,41 @@ class CategoryService
      */
     public function getTree(bool $activeOnly = false): Collection
     {
-        $query = Category::with(['children' => function ($q) {
-            $q->withCount('products')->with(['children' => function ($q2) {
-                $q2->withCount('products')->with(['children' => function ($q3) {
-                    $q3->withCount('products');
-                }]);
-            }]);
-        }])->withCount('products')->roots();
+        $attributeLoader = function ($query) {
+            $query->select([
+                'product_attributes.id',
+                'product_attributes.name',
+                'product_attributes.type',
+                'product_attributes.slug',
+                'product_attributes.use_for_variants',
+            ])->withCount('values')->orderBy('category_attributes.sort_order');
+        };
+
+        $query = Category::with([
+            'attributes' => $attributeLoader,
+            'children' => function ($q) use ($attributeLoader) {
+                $q->withCount('products')
+                    ->with(['attributes' => $attributeLoader])
+                    ->with([
+                        'children' => function ($q2) use ($attributeLoader) {
+                            $q2->withCount('products')
+                                ->with(['attributes' => $attributeLoader])
+                                ->with([
+                                    'children' => function ($q3) use ($attributeLoader) {
+                                        $q3->withCount('products')
+                                            ->with(['attributes' => $attributeLoader]);
+                                    },
+                                ]);
+                        },
+                    ]);
+            },
+        ])->withCount([
+            'products',
+            'attributes',
+            'attributes as variant_attribute_count' => function ($q) {
+                $q->where('use_for_variants', true);
+            },
+        ])->roots();
 
         if ($activeOnly) {
             $query->active();

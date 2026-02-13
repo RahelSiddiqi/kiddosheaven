@@ -53,6 +53,7 @@ class AttributeController extends Controller
             'type' => 'required|in:text,select,multiselect,boolean,number,date',
             'is_required' => 'nullable|boolean',
             'is_filterable' => 'nullable|boolean',
+            'use_for_variants' => 'nullable|boolean',
             'description' => 'nullable|string|max:500',
         ]);
 
@@ -64,6 +65,7 @@ class AttributeController extends Controller
             'type' => $validated['type'],
             'is_required' => $validated['is_required'] ?? false,
             'is_filterable' => $validated['is_filterable'] ?? false,
+            'use_for_variants' => $validated['use_for_variants'] ?? false,
             'description' => $validated['description'] ?? null,
             'sort_order' => $maxOrder + 1,
         ]);
@@ -115,6 +117,7 @@ class AttributeController extends Controller
             'type' => 'required|in:text,select,multiselect,boolean,number,date',
             'is_required' => 'nullable|boolean',
             'is_filterable' => 'nullable|boolean',
+            'use_for_variants' => 'nullable|boolean',
             'description' => 'nullable|string|max:500',
         ]);
 
@@ -124,6 +127,7 @@ class AttributeController extends Controller
             'type' => $validated['type'],
             'is_required' => $validated['is_required'] ?? false,
             'is_filterable' => $validated['is_filterable'] ?? false,
+            'use_for_variants' => $validated['use_for_variants'] ?? false,
             'description' => $validated['description'] ?? null,
         ]);
 

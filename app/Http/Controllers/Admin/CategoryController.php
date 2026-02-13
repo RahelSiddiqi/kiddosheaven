@@ -64,11 +64,27 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
-        $category->load(['products', 'children']);
+        $category->load([
+            'products',
+            'children',
+            'attributes' => function ($query) {
+                $query->withCount('values')->orderBy('category_attributes.sort_order');
+            },
+            'attributes.values',
+        ]);
         $breadcrumbs = $this->categoryService->getBreadcrumbs($category);
         $totalProducts = $this->categoryService->getTotalProductCount($category);
 
-        return view('admin.categories.show', compact('category', 'breadcrumbs', 'totalProducts'));
+        $variantAttributes = $category->attributes->where('use_for_variants', true);
+        $otherAttributes = $category->attributes->where('use_for_variants', false);
+
+        return view('admin.categories.show', compact(
+            'category',
+            'breadcrumbs',
+            'totalProducts',
+            'variantAttributes',
+            'otherAttributes'
+        ));
     }
 
     /**
@@ -97,9 +113,19 @@ class CategoryController extends Controller
             'icon' => 'nullable|string|max:50',
             'show_on_home' => 'boolean',
             'is_active' => 'boolean',
+            'attribute_ids' => 'array',
+            'attribute_ids.*' => 'exists:product_attributes,id',
         ]);
 
+        // Only sync attributes when the request explicitly includes them so modal saves don't wipe existing links
+        $attributeIds = $request->has('attribute_ids') ? ($validated['attribute_ids'] ?? []) : null;
+        unset($validated['attribute_ids']);
+
         $this->categoryService->update($category, $validated);
+
+        if ($attributeIds !== null) {
+            $category->attributes()->sync($attributeIds);
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'category' => $category->fresh()]);

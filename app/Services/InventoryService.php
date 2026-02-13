@@ -239,7 +239,7 @@ class InventoryService
                 'product_id'              => $product->id,
                 'product_variant_id'      => $details['product_variant_id'] ?? null,
                 'partner_id'              => $details['partner_id'] ?? null,
-                'batch_number'            => $details['batch_number'] ?? null,
+                    'product_variant_id'      => $details['product_variant_id'] ?? null,
                 'unit_cost'               => $unitCost,
                 'quantity_received'       => $quantity,
                 'remaining_quantity'      => $quantity,
@@ -253,9 +253,12 @@ class InventoryService
             ]);
 
             InventoryMovement::create([
+
+                $variantId = $details['product_variant_id'] ?? null;
+
                 'product_id'         => $product->id,
                 'product_variant_id' => $details['product_variant_id'] ?? null,
-                'batch_id'           => $batch->id,
+                    'product_variant_id' => $variantId,
                 'movement_type'      => InventoryMovement::TYPE_PURCHASE,
                 'quantity'           => $quantity,
                 'unit_cost'          => $unitCost,
@@ -263,6 +266,15 @@ class InventoryService
                 'notes'              => "Purchase: {$quantity} units @ {$unitCost}",
             ]);
 
+
+                // Increment product and variant counters to keep summaries in sync
+                $product->increment('stock_quantity', $quantity);
+
+                if ($variantId) {
+                    if ($variant = ProductVariant::lockForUpdate()->find($variantId)) {
+                        $variant->increment('stock_quantity', $quantity);
+                    }
+                }
             // Sync the product-level stock counter
             $product->increment('stock_quantity', $quantity);
 

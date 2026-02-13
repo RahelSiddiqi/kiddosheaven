@@ -37,9 +37,11 @@
 				        $withValues++;
 				    }
 				}
+				$variantCount = $attributes->where('use_for_variants', true)->count();
 			@endphp
 			<x-admin.ui.stat-card title="Required Fields" :value="$attributes->where('is_required', true)->count()" icon="alert" color="red" />
 			<x-admin.ui.stat-card title="Filterable" :value="$attributes->where('is_filterable', true)->count()" icon="trending" color="purple" />
+			<x-admin.ui.stat-card title="Variant-Enabled" :value="$variantCount" icon="layers" color="indigo" />
 			<x-admin.ui.stat-card title="With Values" :value="$withValues" icon="box" color="orange" />
 		</div>
 
@@ -86,6 +88,12 @@
 											Filterable
 										</span>
 									@endif
+									@if ($attribute->use_for_variants)
+										<span
+											class="px-2 py-0.5 text-xs rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+											Variant
+										</span>
+									@endif
 								</div>
 								@if ($attribute->description)
 									<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $attribute->description }}</p>
@@ -104,7 +112,7 @@
 									</svg>
 								</button>
 								<button type="button"
-									@click="$dispatch('open-attr-modal', { id: {{ $attribute->id }}, name: '{{ addslashes($attribute->name) }}', type: '{{ $attribute->type }}', is_required: {{ $attribute->is_required ? 'true' : 'false' }}, is_filterable: {{ $attribute->is_filterable ? 'true' : 'false' }}, description: '{{ addslashes($attribute->description ?? '') }}' })"
+									@click="$dispatch('open-attr-modal', { id: {{ $attribute->id }}, name: '{{ addslashes($attribute->name) }}', type: '{{ $attribute->type }}', is_required: {{ $attribute->is_required ? 'true' : 'false' }}, is_filterable: {{ $attribute->is_filterable ? 'true' : 'false' }}, use_for_variants: {{ $attribute->use_for_variants ? 'true' : 'false' }}, description: '{{ addslashes($attribute->description ?? '') }}' })"
 									class="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
 									title="Edit Attribute">
 									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,7 +371,7 @@
 							 class="w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800"></textarea>
 						</div>
 
-						<div class="flex gap-6">
+						<div class="flex gap-6 flex-wrap">
 							<label class="relative inline-flex items-center cursor-pointer">
 								<input type="checkbox" x-model="formData.is_required" class="sr-only peer">
 								<div
@@ -377,6 +385,13 @@
 									class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-300 dark:peer-focus:ring-brand-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-brand-500">
 								</div>
 								<span class="ms-2 text-sm text-gray-700 dark:text-gray-300">Filterable</span>
+							</label>
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input type="checkbox" x-model="formData.use_for_variants" class="sr-only peer">
+								<div
+									class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-300 dark:peer-focus:ring-brand-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-500">
+								</div>
+								<span class="ms-2 text-sm text-gray-700 dark:text-gray-300">Use for variants</span>
 							</label>
 						</div>
 					</div>
@@ -465,7 +480,8 @@
 						type: 'text',
 						description: '',
 						is_required: false,
-						is_filterable: false
+						is_filterable: false,
+						use_for_variants: false
 					},
 
 					init() {
@@ -481,7 +497,8 @@
 								type: e.detail.type,
 								description: e.detail.description,
 								is_required: e.detail.is_required,
-								is_filterable: e.detail.is_filterable
+								is_filterable: e.detail.is_filterable,
+								use_for_variants: e.detail.use_for_variants
 							};
 							this.showModal = true;
 						});
@@ -511,7 +528,8 @@
 							type: 'text',
 							description: '',
 							is_required: false,
-							is_filterable: false
+							is_filterable: false,
+							use_for_variants: false
 						};
 					},
 

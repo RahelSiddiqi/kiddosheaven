@@ -47,7 +47,7 @@
 							<input type="text" id="name" name="name" value="{{ old('name') }}" required
 								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus-border-blue-800">
 						</div>
-						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 							<div>
 								<label for="category_id" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Category
 									*</label>
@@ -55,7 +55,8 @@
 									class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus-border-blue-800">
 									<option value="">Select category</option>
 									@foreach ($categories as $category)
-										<option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+										<option value="{{ $category->id }}"
+											{{ old('category_id', request('category_id')) == $category->id ? 'selected' : '' }}>
 											{{ $category->name }}</option>
 									@endforeach
 								</select>
@@ -69,6 +70,14 @@
 										<option value="{{ $brand->id }}" {{ old('brand_id') == $brand->id ? 'selected' : '' }}>{{ $brand->name }}
 										</option>
 									@endforeach
+								</select>
+							</div>
+							<div>
+								<label for="status" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Status</label>
+								<select id="status" name="status"
+									class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus-border-blue-800">
+									<option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
+									<option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
 								</select>
 							</div>
 						</div>
@@ -221,22 +230,6 @@
 			</div>
 
 			<div class="lg:col-span-4 space-y-4 md:space-y-6">
-				<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
-					<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-						<h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">Status</h2>
-					</div>
-					<div class="p-6 space-y-4">
-						<div>
-							<label for="status" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Status</label>
-							<select id="status" name="status"
-								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus-border-blue-800">
-								<option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
-								<option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-							</select>
-						</div>
-					</div>
-				</div>
-
 				<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
 					<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
 						<h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">Pricing (BDT)</h2>
@@ -448,29 +441,8 @@
 						</div>
 					</div>
 				</div>
-
-				<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
-					<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-						<div
-							class="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95">
-							<div
-								class="mx-auto max-w-(--breakpoint-2xl) px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
-								<div class="flex flex-wrap gap-2">
-									<a href="{{ route('admin.products.index') }}"
-										class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
-										Cancel
-									</a>
-									<button type="button" id="save-draft-btn"
-										class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
-										Save Draft
-									</button>
-									<button type="submit" id="publish-btn"
-										class="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-										Publish Product
-									</button>
-								</div>
-							</div>
-						</div>
+			</div>
+		</div>
 	</form>
 
 	@push('scripts')
@@ -553,6 +525,12 @@
 					const section = document.getElementById('variants-section');
 					const type = document.getElementById('product_type').value;
 					section.style.display = type === 'variable' ? '' : 'none';
+					if (type === 'variable') {
+						const categoryId = document.getElementById('category_id').value;
+						if (categoryId) {
+							loadVariantAttributes();
+						}
+					}
 				};
 
 				window.updateDefaultVariant = function() {

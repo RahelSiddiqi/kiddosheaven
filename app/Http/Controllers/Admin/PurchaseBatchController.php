@@ -55,7 +55,8 @@ class PurchaseBatchController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'batch_number' => 'required|string|unique:purchase_batches,batch_number',
+            'product_variant_id' => 'nullable|exists:product_variants,id',
+            'batch_number' => 'nullable|string|unique:purchase_batches,batch_number',
             'unit_cost' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:1',
             'supplier' => 'nullable|string|max:255',
@@ -63,9 +64,22 @@ class PurchaseBatchController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Ensure selected variant belongs to the same product
+        if (!empty($validated['product_variant_id'])) {
+            $variantProductId = \App\Models\ProductVariant::where('id', $validated['product_variant_id'])->value('product_id');
+            if ((int) $variantProductId !== (int) $validated['product_id']) {
+                return redirect()->back()
+                    ->with('error', 'Selected variant does not belong to the chosen product.')
+                    ->withInput();
+            }
+        }
+
         DB::beginTransaction();
         try {
             $product = Product::findOrFail($validated['product_id']);
+
+            // Allow auto-generated batch numbers if left blank
+            $batchNumber = $validated['batch_number'] ?? null;
 
             // Let InventoryService handle batch creation, movement logging, and counter sync
             $batch = $this->inventoryService->addStock(
@@ -73,7 +87,8 @@ class PurchaseBatchController extends Controller
                 quantity: $validated['quantity'],
                 unitCost: $validated['unit_cost'],
                 details:  [
-                    'batch_number' => $validated['batch_number'],
+                    'batch_number' => $batchNumber,
+                    'product_variant_id' => $validated['product_variant_id'] ?? null,
                     'supplier'     => $validated['supplier'] ?? null,
                     'expiry_date'  => $validated['expiry_date'] ?? null,
                     'notes'        => $validated['notes'] ?? null,

@@ -40,13 +40,25 @@ class InventoryMovementController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
+            'product_variant_id' => 'nullable|exists:product_variants,id',
             'movement_type' => 'required|in:purchase,sale,adjustment,return,transfer',
             'quantity' => 'required|integer|min:1',
             'batch_id' => 'nullable|exists:purchase_batches,id',
             'reference_type' => 'nullable|string|max:100',
             'reference_id' => 'nullable|integer',
+            'unit_cost' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
+
+        // Ensure variant belongs to product if provided
+        if (!empty($validated['product_variant_id'])) {
+            $variantProductId = \App\Models\ProductVariant::where('id', $validated['product_variant_id'])->value('product_id');
+            if ((int) $variantProductId !== (int) $validated['product_id']) {
+                return redirect()->back()
+                    ->with('error', 'Selected variant does not belong to the chosen product.')
+                    ->withInput();
+            }
+        }
 
         DB::beginTransaction();
         try {
@@ -73,8 +85,10 @@ class InventoryMovementController extends Controller
 
             $movement = InventoryMovement::create([
                 'product_id' => $validated['product_id'],
+                'product_variant_id' => $validated['product_variant_id'] ?? null,
                 'movement_type' => $validated['movement_type'],
                 'quantity' => $signedQty,
+                'unit_cost' => $validated['unit_cost'] ?? null,
                 'batch_id' => $validated['batch_id'] ?? null,
                 'reference_type' => $validated['reference_type'] ?? null,
                 'reference_id' => $validated['reference_id'] ?? null,
@@ -88,6 +102,18 @@ class InventoryMovementController extends Controller
                 $product->increment('stock_quantity', $signedQty);
             } else {
                 $product->decrement('stock_quantity', min(abs($signedQty), $product->stock_quantity));
+            }
+
+            // Sync variant counter if provided
+            if (!empty($validated['product_variant_id'])) {
+                $variant = \App\Models\ProductVariant::lockForUpdate()->find($validated['product_variant_id']);
+                if ($variant) {
+                    if ($signedQty > 0) {
+                        $variant->increment('stock_quantity', $signedQty);
+                    } else {
+                        $variant->decrement('stock_quantity', min(abs($signedQty), $variant->stock_quantity));
+                    }
+                }
             }
 
             DB::commit();
