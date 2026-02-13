@@ -62,6 +62,7 @@ class StoreProductRequest extends FormRequest
             // Media
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'primary_image' => ['nullable', 'string', 'max:500'],
             'video_url' => ['nullable', 'url', 'max:500'],
 
             // Tags
@@ -95,6 +96,9 @@ class StoreProductRequest extends FormRequest
             'variants.*.is_active' => ['nullable'],
             'variants.*.attributes' => ['nullable', 'array'],
             'variants.*.attributes.*' => ['nullable', 'integer'],
+
+            // Non-Variant Attributes
+            'non_variant_attributes' => ['nullable', 'string'],
         ];
     }
 

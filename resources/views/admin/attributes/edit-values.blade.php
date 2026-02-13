@@ -429,21 +429,28 @@
 
 				async submitBulkImport() {
 					if (!this.bulkValues.trim()) {
-						this.showToast('Please enter some values', 'error');
+						this.showToast('Please enter some values (one per line)', 'error');
+						return;
+					}
+					const values = this.bulkValues.split(/\r?\n/).map(function (v) { return v.trim(); }).filter(function (v) { return v.length > 0; });
+					if (values.length === 0) {
+						this.showToast('Please enter at least one non-empty value', 'error');
+						return;
+					}
+					if (values.length > 500) {
+						this.showToast('Maximum 500 values per import', 'error');
 						return;
 					}
 					this.bulkProcessing = true;
 					try {
-						const response = await fetch('{{ route('admin.attributes.values.store', $attribute) }}', {
+						const response = await fetch('{{ route('admin.attributes.values.store-bulk', $attribute) }}', {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',
 								'Accept': 'application/json',
 								'X-CSRF-TOKEN': '{{ csrf_token() }}'
 							},
-							body: JSON.stringify({
-								value: this.bulkValues
-							})
+							body: JSON.stringify({ values: values })
 						});
 						const data = await response.json();
 						if (data.success) {

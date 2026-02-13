@@ -73,6 +73,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::prefix('{attribute}/values')->name('values.')->group(function () {
             Route::get('edit', [AttributeValueController::class, 'edit'])->name('edit');
             Route::post('/', [AttributeValueController::class, 'store'])->name('store');
+            Route::post('bulk', [AttributeValueController::class, 'storeBulk'])->name('store-bulk');
             Route::put('{value}', [AttributeValueController::class, 'update'])->name('update');
             Route::delete('{value}', [AttributeValueController::class, 'destroy'])->name('destroy');
             Route::post('reorder', [AttributeValueController::class, 'reorder'])->name('reorder');
@@ -94,6 +95,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
         // Get variant attributes by category (AJAX helper)
         Route::get('variant-attributes/{category}', [ProductController::class, 'getVariantAttributes'])->name('variant-attributes');
+
+        // Get non-variant attributes by category (AJAX helper)
+        Route::get('non-variant-attributes/{category}', [ProductController::class, 'getNonVariantAttributes'])->name('non-variant-attributes');
 
         // Product-specific nested routes
         Route::prefix('{product}')->group(function () {

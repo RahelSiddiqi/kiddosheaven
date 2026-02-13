@@ -107,6 +107,33 @@
 					</form>
 				</div>
 			</div>
+
+			<!-- Used In Categories -->
+			<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] mt-6">
+				<div class="flex flex-col gap-4 p-5 border-b border-gray-200 dark:border-gray-700">
+					<div class="flex items-center justify-between">
+						<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Used In Categories</h3>
+						<span
+							class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400">
+							{{ $attribute->categories->count() }}
+						</span>
+					</div>
+				</div>
+				<div class="p-5">
+					@if ($attribute->categories->count() > 0)
+						<div class="flex flex-wrap gap-2">
+							@foreach ($attribute->categories as $category)
+								<a href="{{ route('admin.categories.show', $category->id) }}"
+									class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30 transition-colors">
+									{{ $category->name }}
+								</a>
+							@endforeach
+						</div>
+					@else
+						<p class="text-sm text-gray-500 dark:text-gray-400">Not used in any category</p>
+					@endif
+				</div>
+			</div>
 		</div>
 
 		<!-- Sidebar Info -->
@@ -129,7 +156,7 @@
 								@foreach ($attribute->values as $value)
 									<li class="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
 										<span class="text-sm text-gray-700 dark:text-gray-300">{{ $value->value }}</span>
-										<form action="{{ route('admin.attributes.values.destroy', $value->id) }}" method="POST" class="inline">
+										<form action="{{ route('admin.attributes.values.destroy', [$attribute->id, $value->id]) }}" method="POST" class="inline">
 											@csrf
 											@method('DELETE')
 											<button type="submit" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
@@ -161,38 +188,6 @@
 					</div>
 				</div>
 			@endif
-
-			<!-- Assigned Categories -->
-			<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-				<div class="flex flex-col gap-4 p-5 border-b border-gray-200 dark:border-gray-700">
-					<div class="flex items-center justify-between">
-						<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Used In Categories</h3>
-						<span
-							class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400">
-							{{ $attribute->categories->count() }}
-						</span>
-					</div>
-				</div>
-				<div class="p-5">
-					@if ($attribute->categories->count() > 0)
-						<ul class="space-y-2">
-							@foreach ($attribute->categories as $category)
-								<li class="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
-									<span class="text-sm text-gray-700 dark:text-gray-300">{{ $category->name }}</span>
-									<a href="{{ route('admin.categories.show', $category->id) }}"
-										class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
-										<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-										</svg>
-									</a>
-								</li>
-							@endforeach
-						</ul>
-					@else
-						<p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Not used in any category</p>
-					@endif
-				</div>
-			</div>
 		</div>
 	</div>
 @endsection

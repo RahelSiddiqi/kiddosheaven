@@ -3,8 +3,32 @@
 @section('title', 'Products — Kiddo\'s Heaven')
 
 @section('content')
-	<div class="grid grid-cols-12 gap-4 md:gap-6">
+	<div class="grid grid-cols-12 gap-4 md:gap-6" x-data="productsBulkAction()">
 		<div class="col-span-12">
+			{{-- Bulk action bar (shown when products selected) --}}
+			<div x-show="selectedIds.length > 0" x-cloak
+				class="mb-4 rounded-xl border border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-900/20 px-4 py-3 flex flex-wrap items-center gap-3">
+				<span class="text-sm font-medium text-gray-800 dark:text-white/90" x-text="selectedIds.length + ' selected'"></span>
+				<select x-model="bulkActionType"
+					class="h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 px-3">
+					<option value="">Choose action</option>
+					<option value="activate">Activate</option>
+					<option value="deactivate">Deactivate</option>
+					<option value="feature">Feature</option>
+					<option value="unfeature">Unfeature</option>
+					<option value="delete">Delete</option>
+				</select>
+				<button type="button" @click="applyBulkAction()" :disabled="!bulkActionType || applying"
+					class="h-9 px-4 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+					<span x-show="!applying">Apply</span>
+					<span x-show="applying">Applying...</span>
+				</button>
+				<button type="button" @click="selectedIds = []; $refs.selectAll && ($refs.selectAll.checked = false)"
+					class="h-9 px-4 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+					Clear
+				</button>
+			</div>
+
 			<div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
 				<!-- Header -->
 				<div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -37,6 +61,10 @@
 							<table class="min-w-full">
 								<thead>
 									<tr class="border-gray-200 border-y dark:border-gray-700">
+										<th scope="col" class="px-4 py-3 w-10">
+											<input type="checkbox" x-ref="selectAll" @change="toggleSelectAll($event.target.checked)"
+												class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
+										</th>
 										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
 											Image</th>
 										<th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
@@ -65,6 +93,12 @@
 								<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 									@foreach ($products as $product)
 										<tr>
+											<td class="py-4 whitespace-nowrap w-10">
+												<input type="checkbox" value="{{ $product->id }}"
+													@change="toggleProduct({{ $product->id }}, $event.target.checked)"
+													:checked="selectedIds.includes({{ $product->id }})"
+													class="product-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
+											</td>
 											<td class="py-4 whitespace-nowrap">
 												@php
 													$img = $product->primary_image ?? ($product->images[0] ?? null);
@@ -201,4 +235,58 @@
 		</div>
 	</div>
 
+	<script>
+		function productsBulkAction() {
+			return {
+				selectedIds: [],
+				bulkActionType: '',
+				applying: false,
+				bulkActionUrl: '{{ route('admin.products.bulk-action') }}',
+				csrfToken: '{{ csrf_token() }}',
+
+				toggleProduct(id, checked) {
+					id = parseInt(id, 10);
+					if (checked) {
+						if (!this.selectedIds.includes(id)) this.selectedIds.push(id);
+					} else {
+						this.selectedIds = this.selectedIds.filter(function (x) { return x !== id; });
+					}
+				},
+
+				toggleSelectAll(checked) {
+					if (checked) {
+						this.selectedIds = Array.from(document.querySelectorAll('.product-checkbox')).map(function (cb) { return parseInt(cb.value, 10); });
+					} else {
+						this.selectedIds = [];
+					}
+				},
+
+				applyBulkAction() {
+					if (!this.bulkActionType || this.selectedIds.length === 0) return;
+					if (this.bulkActionType === 'delete' && !confirm('Delete ' + this.selectedIds.length + ' product(s)? This cannot be undone.')) return;
+
+					this.applying = true;
+					fetch(this.bulkActionUrl, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'Accept': 'application/json',
+							'X-CSRF-TOKEN': this.csrfToken
+						},
+						body: JSON.stringify({ action: this.bulkActionType, ids: this.selectedIds })
+					})
+						.then(function (r) { return r.json(); })
+						.then(function (data) {
+							if (data.success) {
+								window.location.reload();
+							} else {
+								alert(data.message || 'Action failed');
+							}
+						})
+						.catch(function () { alert('Request failed'); })
+						.finally(function () { this.applying = false; }.bind(this));
+				}
+			};
+		}
+	</script>
 @endsection

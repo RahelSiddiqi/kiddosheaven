@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Partner;
 use App\Models\Expense;
+use App\Models\InventoryMovement;
 use App\Services\FinancialCalculationService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -33,7 +34,10 @@ class ReportController extends Controller
 
         $stats['net_total'] = $stats['total_investments'] - $stats['total_expenses'] - $stats['total_partner_payouts'];
 
-        return view('admin.reports.index', compact('stats'));
+        $startDate = request('start_date') ? Carbon::parse(request('start_date')) : Carbon::now()->startOfMonth();
+        $endDate = request('end_date') ? Carbon::parse(request('end_date')) : Carbon::now()->endOfMonth();
+
+        return view('admin.reports.index', compact('stats', 'startDate', 'endDate'));
     }
 
     public function dashboard()
@@ -373,5 +377,32 @@ class ReportController extends Controller
         return view('admin.reports.category-profit', compact(
             'report', 'startDate', 'endDate', 'categories', 'selectedCategory'
         ));
+    }
+
+    /**
+     * Cost history report: purchase and movement history with unit costs over time.
+     */
+    public function costHistory(Request $request)
+    {
+        $startDate = $request->filled('start_date')
+            ? Carbon::parse($request->start_date)->startOfDay()
+            : Carbon::now()->subMonths(3)->startOfDay();
+        $endDate = $request->filled('end_date')
+            ? Carbon::parse($request->end_date)->endOfDay()
+            : Carbon::now()->endOfDay();
+
+        $query = InventoryMovement::with(['product', 'batch'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('unit_cost')
+            ->orderByDesc('created_at');
+
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        $movements = $query->paginate(25)->withQueryString();
+        $products = Product::orderBy('name')->get(['id', 'name']);
+
+        return view('admin.reports.cost-history', compact('movements', 'products', 'startDate', 'endDate'));
     }
 }

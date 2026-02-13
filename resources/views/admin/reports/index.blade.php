@@ -47,6 +47,10 @@
 							class="px-4 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reports.profit-loss') ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
 							P&L
 						</a>
+						<a href="{{ route('admin.reports.cost-history') }}"
+							class="px-4 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reports.cost-history') ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+							Cost History
+						</a>
 					</div>
 				</div>
 

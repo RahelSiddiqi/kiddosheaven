@@ -79,23 +79,20 @@
 						</div>
 					</div>
 
-					{{-- Preview --}}
+					{{-- Preview: select which combinations to create (e.g. Small+Red, Small+Green only, not full matrix) --}}
 					<div x-show="variantsPreview.length > 0"
 						class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-						<h4 class="font-medium text-blue-900 dark:text-blue-100 mb-2">
-							Preview: <span x-text="variantsPreview.length"></span> variants will be created
+						<h4 class="font-medium text-blue-900 dark:text-blue-100 mb-1">
+							<span x-text="selectedCombinationCount"></span> of <span x-text="variantsPreview.length"></span> combinations will be created
 						</h4>
-						<div class="max-h-32 overflow-y-auto">
-							<div class="flex flex-wrap gap-2">
-								<template x-for="variant in variantsPreview.slice(0, 20)" :key="variant">
-									<span
-										class="inline-block px-2 py-1 text-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded border border-blue-300 dark:border-blue-700"
-										x-text="variant"></span>
-								</template>
-								<span x-show="variantsPreview.length > 20" class="text-xs text-gray-500">
-									+ <span x-text="variantsPreview.length - 20"></span> more...
-								</span>
-							</div>
+						<p class="text-xs text-blue-700 dark:text-blue-300 mb-2">Uncheck any combination you don’t want (e.g. only Small: Red/Green/Blue, Medium: Red, Large: Blue/Yellow).</p>
+						<div class="max-h-40 overflow-y-auto space-y-1">
+							<template x-for="(combo, idx) in variantsPreview" :key="idx">
+								<label class="flex items-center gap-2 cursor-pointer hover:bg-blue-100/50 dark:hover:bg-blue-900/30 px-2 py-1 rounded">
+									<input type="checkbox" x-model="combo.selected" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+									<span class="text-sm text-gray-800 dark:text-gray-200" x-text="combo.label"></span>
+								</label>
+							</template>
 						</div>
 					</div>
 				</div>
@@ -105,7 +102,7 @@
 					class="px-6 py-4 bg-gray-50 dark:bg-gray-900/30 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
 					<div class="text-sm text-gray-600 dark:text-gray-400">
 						<span x-show="variantsPreview.length > 0">
-							<span x-text="variantsPreview.length"></span> variant<span x-show="variantsPreview.length !== 1">s</span> will be
+							<span x-text="selectedCombinationCount"></span> variant<span x-show="selectedCombinationCount !== 1">s</span> will be
 							created
 						</span>
 						<span x-show="variantsPreview.length === 0">
@@ -117,7 +114,7 @@
 							class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600">
 							Cancel
 						</button>
-						<button @click="generateVariants()" type="button" :disabled="variantsPreview.length === 0 || generating"
+						<button @click="generateVariants()" type="button" :disabled="selectedCombinationCount === 0 || generating"
 							:class="variantsPreview.length === 0 || generating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'"
 							class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg transition-colors">
 							<span x-show="!generating">Generate Variants</span>
@@ -184,8 +181,9 @@
 			updatePreview() {
 				const selectedData = this.selectedAttributes
 					.map(attr => ({
+						id: attr.id,
 						name: attr.name,
-						values: attr.values.filter(v => v.selected).map(v => v.value)
+						values: attr.values.filter(v => v.selected).map(v => ({ id: v.id, value: v.value }))
 					}))
 					.filter(attr => attr.values.length > 0);
 
@@ -194,27 +192,38 @@
 					return;
 				}
 
-				// Generate combinations
-				this.variantsPreview = this.generateCombinations(selectedData);
+				// Generate combinations with labels and value_ids for custom selection
+				this.variantsPreview = this.generateCombinationsWithIds(selectedData);
 			},
 
-			generateCombinations(attributes, index = 0, current = []) {
+			generateCombinationsWithIds(attributes, index = 0, current = [], currentIds = []) {
 				if (index >= attributes.length) {
-					return [current.join(' / ')];
+					return [{ label: current.join(' / '), valueIds: [...currentIds], selected: true }];
 				}
 
 				const results = [];
 				const currentAttr = attributes[index];
 
 				for (const value of currentAttr.values) {
-					results.push(...this.generateCombinations(attributes, index + 1, [...current, value]));
+					results.push(...this.generateCombinationsWithIds(attributes, index + 1, [...current, value.value], [...currentIds, value.id]));
 				}
 
 				return results;
 			},
 
+			get selectedCombinationCount() {
+				if (!Array.isArray(this.variantsPreview) || this.variantsPreview.length === 0) return 0;
+				return this.variantsPreview.filter(c => c.selected).length;
+			},
+
 			async generateVariants() {
-				if (this.variantsPreview.length === 0) return;
+				if (!Array.isArray(this.variantsPreview) || this.variantsPreview.length === 0) return;
+
+				const selected = this.variantsPreview.filter(c => c.selected);
+				if (selected.length === 0) {
+					alert('Please select at least one combination to create.');
+					return;
+				}
 
 				this.generating = true;
 
@@ -226,6 +235,12 @@
 					}))
 					.filter(attr => attr.value_ids.length > 0);
 
+				const body = { attributes: attributesData };
+				// If user deselected some combinations, send only the selected ones
+				if (selected.length < this.variantsPreview.length) {
+					body.custom_combinations = selected.map(c => c.valueIds);
+				}
+
 				try {
 					const response = await fetch(`/admin/products/${this.productId}/variants/generate`, {
 						method: 'POST',
@@ -233,9 +248,7 @@
 							'Content-Type': 'application/json',
 							'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
 						},
-						body: JSON.stringify({
-							attributes: attributesData
-						})
+						body: JSON.stringify(body)
 					});
 
 					const data = await response.json();

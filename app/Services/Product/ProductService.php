@@ -105,8 +105,20 @@ class ProductService
             $variantsData = $data['variants'] ?? [];
             unset($data['variants']);
 
+            // Extract non-variant attributes if present
+            $nonVariantAttrs = [];
+            if (isset($data['non_variant_attributes'])) {
+                $nonVariantAttrs = json_decode($data['non_variant_attributes'], true) ?? [];
+                unset($data['non_variant_attributes']);
+            }
+
             // Create the product
             $product = $this->productRepository->create($data);
+
+            // Attach non-variant attributes
+            if (!empty($nonVariantAttrs)) {
+                $this->attachNonVariantAttributes($product, $nonVariantAttrs);
+            }
 
             // Handle variants for variable products
             if ($product->product_type === 'variable' && !empty($variantsData)) {
@@ -193,8 +205,33 @@ class ProductService
             $variantsData = $data['variants'] ?? [];
             unset($data['variants']);
 
+            // Extract non-variant attributes if present
+            $nonVariantAttrs = [];
+            if (isset($data['non_variant_attributes'])) {
+                $nonVariantAttrs = json_decode($data['non_variant_attributes'], true) ?? [];
+                unset($data['non_variant_attributes']);
+            }
+
             // Update the product
             $updatedProduct = $this->productRepository->update($id, $data);
+
+            // Sync non-variant attributes
+            if (!empty($nonVariantAttrs)) {
+                // Delete existing non-variant attributes
+                $variantAttrIds = $updatedProduct->variants()
+                    ->with('variantAttributes')
+                    ->get()
+                    ->flatMap(fn($v) => $v->variantAttributes->pluck('product_attribute_id'))
+                    ->unique()
+                    ->toArray();
+
+                $updatedProduct->attributeValues()
+                    ->whereNotIn('product_attribute_id', $variantAttrIds)
+                    ->delete();
+
+                // Attach new non-variant attributes
+                $this->attachNonVariantAttributes($updatedProduct, $nonVariantAttrs);
+            }
 
             // Handle variants for variable products
             if ($updatedProduct->product_type === 'variable' && !empty($variantsData)) {
@@ -471,6 +508,25 @@ class ProductService
                 $variant->variantAttributes()->delete();
                 $variant->delete();
             });
+        }
+    }
+
+    /**
+     * Attach non-variant attributes to a product
+     *
+     * @param \App\Models\Product $product
+     * @param array $attributes
+     * @return void
+     */
+    protected function attachNonVariantAttributes(\App\Models\Product $product, array $attributes): void
+    {
+        foreach ($attributes as $attr) {
+            if (!empty($attr['attribute_id']) && !empty($attr['value'])) {
+                $product->attributeValues()->create([
+                    'product_attribute_id' => $attr['attribute_id'],
+                    'value' => $attr['value'],
+                ]);
+            }
         }
     }
 }

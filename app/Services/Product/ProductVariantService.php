@@ -13,13 +13,15 @@ use Illuminate\Support\Facades\DB;
 class ProductVariantService
 {
     /**
-     * Generate variants from attribute combinations
+     * Generate variants from attribute combinations.
+     * If custom_combinations is provided, only those combinations are created (e.g. Small+Red, Small+Green, Medium+Red only).
      *
      * @param Product $product
      * @param array $attributeData Format: [['attribute_id' => 1, 'value_ids' => [1,2,3]], ...]
+     * @param array $customCombinations Optional. Array of value_id arrays in attribute order, e.g. [[1,10],[1,11],[2,10]] for only those combinations.
      * @return array
      */
-    public function generateVariants(Product $product, array $attributeData): array
+    public function generateVariants(Product $product, array $attributeData, array $customCombinations = []): array
     {
         DB::beginTransaction();
 
@@ -27,8 +29,22 @@ class ProductVariantService
             // Get attribute details with values
             $attributes = $this->prepareAttributeData($attributeData);
 
-            // Generate all combinations
-            $combinations = $this->createCombinations($attributes);
+            $combinations = [];
+            if (!empty($customCombinations)) {
+                // Build combination records from custom list (each row is [value_id1, value_id2, ...] in attribute order)
+                foreach ($customCombinations as $valueIds) {
+                    if (count($valueIds) !== count($attributes)) {
+                        continue;
+                    }
+                    $combo = $this->buildCombinationFromValueIds($attributes, $valueIds);
+                    if ($combo) {
+                        $combinations[] = $combo;
+                    }
+                }
+            } else {
+                // Generate all combinations (Cartesian product)
+                $combinations = $this->createCombinations($attributes);
+            }
 
             $createdVariants = [];
             $skippedVariants = [];
@@ -67,6 +83,41 @@ class ProductVariantService
                 'error' => $e->getMessage()
             ];
         }
+    }
+
+    /**
+     * Build one combination record from ordered value IDs (same order as $attributes).
+     *
+     * @param array $attributes Prepared attribute data from prepareAttributeData
+     * @param array $valueIds [value_id_for_attr_1, value_id_for_attr_2, ...]
+     * @return array|null Combination array with 'name', 'value_ids', 'attributes'; null if invalid
+     */
+    protected function buildCombinationFromValueIds(array $attributes, array $valueIds): ?array
+    {
+        $attrs = [];
+        $names = [];
+        foreach ($attributes as $index => $attr) {
+            $valueId = $valueIds[$index] ?? null;
+            if ($valueId === null) {
+                return null;
+            }
+            $value = collect($attr['values'])->firstWhere('id', $valueId);
+            if (!$value) {
+                return null;
+            }
+            $attrs[] = [
+                'attribute_id' => $attr['id'],
+                'attribute_name' => $attr['name'],
+                'value_id' => (int) $value['id'],
+                'value' => $value['value']
+            ];
+            $names[] = $value['value'];
+        }
+        return [
+            'name' => implode(' / ', $names),
+            'value_ids' => array_column($attrs, 'value_id'),
+            'attributes' => $attrs
+        ];
     }
 
     /**

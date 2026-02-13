@@ -56,6 +56,42 @@ class AttributeValueController extends Controller
     }
 
     /**
+     * Store multiple attribute values at once (e.g. one per line from bulk import).
+     */
+    public function storeBulk(Request $request, ProductAttribute $attribute)
+    {
+        $request->validate([
+            'values' => 'required|array|min:1|max:500',
+            'values.*' => 'required|string|max:255',
+        ]);
+
+        $maxOrder = $attribute->values()->max('sort_order') ?? 0;
+        $created = [];
+
+        foreach ($request->values as $index => $valueText) {
+            $valueText = trim($valueText);
+            if ($valueText === '') {
+                continue;
+            }
+            $value = $attribute->values()->create([
+                'value' => $valueText,
+                'sort_order' => $maxOrder + $index + 1,
+            ]);
+            $created[] = $value;
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => count($created) . ' value(s) added successfully',
+                'values' => $created,
+            ]);
+        }
+
+        return back()->with('success', count($created) . ' value(s) added successfully');
+    }
+
+    /**
      * Update an attribute value.
      */
     public function update(Request $request, $attribute, $value)
@@ -92,6 +128,17 @@ class AttributeValueController extends Controller
     {
         $attributeValue = ProductAttributeValue::findOrFail($value);
 
+        $usageCount = $attributeValue->variantAttributes()->count();
+        if ($usageCount > 0) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot delete value. It's used in {$usageCount} product variant(s). Remove from variants first.",
+                ], 422);
+            }
+            return back()->with('error', "Cannot delete value. It's used in {$usageCount} product variant(s). Remove from variants first.");
+        }
+
         $attributeValue->delete();
 
         if (request()->ajax() || request()->wantsJson()) {
@@ -115,7 +162,7 @@ class AttributeValueController extends Controller
 
         foreach ($request->order as $index => $valueId) {
             ProductAttributeValue::where('id', $valueId)
-                ->where('attribute_id', $attribute->id)
+                ->where('product_attribute_id', $attribute->id)
                 ->update(['sort_order' => $index + 1]);
         }
 

@@ -64,6 +64,14 @@ class ProductController extends Controller
     public function create()
     {
         $categories = $this->categoryService->getHierarchicalList();
+
+        // Add variant count to each category
+        $categories = $categories->map(function ($category) {
+            $variantCount = \App\Models\ProductVariant::whereIn('product_id', $category->products()->pluck('id'))->count();
+            $category->variant_count = $variantCount;
+            return $category;
+        });
+
         $brands = Brand::orderBy('name')->get();
 
         return view('admin.products.create', compact('categories', 'brands'));
@@ -147,6 +155,14 @@ class ProductController extends Controller
 
         $product->load(['variants.variantAttributes']);
         $categories = $this->categoryService->getHierarchicalList();
+
+        // Add variant count to each category
+        $categories = $categories->map(function ($category) {
+            $variantCount = \App\Models\ProductVariant::whereIn('product_id', $category->products()->pluck('id'))->count();
+            $category->variant_count = $variantCount;
+            return $category;
+        });
+
         $brands = Brand::orderBy('name')->get();
 
         return view('admin.products.edit', compact('product', 'categories', 'brands'));
@@ -272,6 +288,7 @@ class ProductController extends Controller
             $attributes = ProductAttribute::whereHas('categories', function ($query) use ($ids) {
                 $query->whereIn('categories.id', $ids);
             })
+                ->where('use_for_variants', true)
                 ->with('values')
                 ->orderBy('sort_order')
                 ->get();
@@ -289,7 +306,36 @@ class ProductController extends Controller
     }
 
     /**
-     * Get attributes by category (for AJAX).
+     * Get variant attributes by category (for AJAX).
+     */
+    public function getNonVariantAttributes($categoryId)
+    {
+        try {
+            $category = Category::with('parent')->findOrFail($categoryId);
+            $ids = collect([$category->id])->merge($category->ancestors()->pluck('id'))->unique()->values();
+
+            $attributes = ProductAttribute::whereHas('categories', function ($query) use ($ids) {
+                $query->whereIn('categories.id', $ids);
+            })
+                ->where('use_for_variants', false)
+                ->with('values')
+                ->orderBy('sort_order')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'attributes' => $attributes,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load attributes: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all attributes by category (for AJAX).
      */
     public function getAttributesByCategory($categoryId)
     {

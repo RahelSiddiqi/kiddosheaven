@@ -164,9 +164,14 @@ class ProductVariantController extends Controller
             'attributes.*.attribute_id' => 'required|integer|exists:product_attributes,id',
             'attributes.*.value_ids' => 'required|array|min:1',
             'attributes.*.value_ids.*' => 'required|integer|exists:product_attribute_values,id',
+            'custom_combinations' => 'nullable|array',
+            'custom_combinations.*' => 'array',
+            'custom_combinations.*.*' => 'integer|exists:product_attribute_values,id',
         ]);
 
-        $result = $this->variantService->generateVariants($product, $request->attributes);
+        $attributes = $request->input('attributes');
+        $customCombinations = $request->input('custom_combinations', []);
+        $result = $this->variantService->generateVariants($product, $attributes, $customCombinations);
 
         if (!$result['success']) {
             return response()->json([

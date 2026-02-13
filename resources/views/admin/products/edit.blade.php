@@ -80,7 +80,7 @@
 									@foreach ($categories as $category)
 										<option value="{{ $category->id }}"
 											{{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
-											{{ $category->name }}</option>
+											{{ $category->name }} ({{ $category->variant_count ?? 0 }} variants)</option>
 									@endforeach
 								</select>
 								@error('category_id')
@@ -242,6 +242,28 @@
 								placeholder="https://youtube.com/watch?v=..."
 								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">
 						</div>
+					</div>
+				</div>
+
+				<!-- Product Details (Non-Variant Attributes) Section -->
+				<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+					<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+						<h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">Product Details</h2>
+						<button type="button" onclick="loadNonVariantAttributes()"
+							class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800/50">
+							<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+							</svg>
+							Load Details
+						</button>
+					</div>
+					<div class="p-6">
+						<div id="non-variant-attributes-container">
+							<p class="text-sm text-gray-500 dark:text-gray-400">Click "Load Details" to update product details like Material, Age Range, Gender, etc.</p>
+							<div id="non-variant-attribute-fields" class="mt-4"></div>
+						</div>
+						<input type="hidden" id="non_variant_attributes" name="non_variant_attributes">
 					</div>
 				</div>
 
@@ -633,6 +655,13 @@
 	@push('scripts')
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
+				// Collect non-variant attributes before form submission
+				const productForm = document.getElementById('product-form');
+				productForm.addEventListener('submit', function(e) {
+					const nonVariantAttrs = collectNonVariantAttributes();
+					document.getElementById('non_variant_attributes').value = JSON.stringify(nonVariantAttrs);
+				});
+
 				window.addTagInput = function(containerId) {
 					const container = document.getElementById(containerId);
 					if (!container) return;
@@ -759,6 +788,88 @@
 							console.error('Failed to load attributes:', err);
 							alert('Failed to load variant attributes');
 						});
+				};
+
+				// ========== Load Non-Variant Attributes (AJAX) ==========
+				window.loadNonVariantAttributes = function() {
+					const categoryId = document.getElementById('category_id').value;
+					if (!categoryId) {
+						alert('Please select a category first');
+						return;
+					}
+
+					fetch(`/admin/products/non-variant-attributes/${categoryId}`)
+						.then(r => r.json())
+						.then(data => {
+							if (data.success && data.attributes.length > 0) {
+								renderNonVariantAttributeFields(data.attributes);
+							} else {
+								document.getElementById('non-variant-attribute-fields').innerHTML =
+									'<p class="text-sm text-orange-500">No product details available for this category.</p>';
+							}
+						})
+						.catch(err => {
+							console.error('Failed to load attributes:', err);
+							alert('Failed to load product details');
+						});
+				};
+
+				function renderNonVariantAttributeFields(attributes) {
+					const container = document.getElementById('non-variant-attribute-fields');
+					let html = '<div class="grid grid-cols-3 gap-4">';
+					attributes.forEach(attr => {
+						html += `<div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">${attr.name}</label>`;
+
+						if (attr.type === 'select' || attr.type === 'multiselect') {
+							html += `<select class="non-variant-attr non-variant-select w-full h-10 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}">
+								<option value="">Select ${attr.name}</option>`;
+							(attr.values || []).forEach(val => {
+								html += `<option value="${val.id}">${val.value}</option>`;
+							});
+							html += `</select>`;
+						} else if (attr.type === 'text') {
+							html += `<input type="text" class="non-variant-attr w-full h-10 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}" placeholder="Enter ${attr.name}">`;
+						} else if (attr.type === 'number') {
+							html += `<input type="number" class="non-variant-attr w-full h-10 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}" placeholder="Enter ${attr.name}">`;
+						} else if (attr.type === 'boolean') {
+							html += `<input type="checkbox" class="non-variant-attr w-4 h-4 rounded border-gray-300 text-blue-600" data-attr-id="${attr.id}" data-attr-name="${attr.name}">`;
+						}
+						html += `</div>`;
+					});
+					html += '</div>';
+					container.innerHTML = html;
+
+					// Initialize Choices.js for searchable selects
+					setTimeout(() => {
+						document.querySelectorAll('.non-variant-select').forEach(select => {
+							if (!select.dataset.choicesInitialized) {
+								new Choices(select, {
+									searchEnabled: true,
+									shouldSort: false,
+									itemSelectText: ''
+								});
+								select.dataset.choicesInitialized = 'true';
+							}
+						});
+					}, 100);
+				}
+
+				window.collectNonVariantAttributes = function() {
+					const attributes = [];
+					document.querySelectorAll('.non-variant-attr').forEach(field => {
+						const attrId = field.dataset.attrId;
+						const attrName = field.dataset.attrName;
+						const value = field.type === 'checkbox' ? field.checked : field.value;
+
+						if (value) {
+							attributes.push({
+								attribute_id: attrId,
+								value: value
+							});
+						}
+					});
+					return attributes;
 				};
 
 				function renderVariantAttributeCheckboxes(attributes) {
@@ -903,12 +1014,16 @@
 					.forEach(id => {
 						const el = document.getElementById(id);
 						if (el && !el.dataset.enhanced) {
-							new Choices(el, {
-								searchEnabled: true,
-								shouldSort: false,
-								itemSelectText: ''
-							});
-							el.dataset.enhanced = 'true';
+							try {
+								new Choices(el, {
+									searchEnabled: true,
+									shouldSort: false,
+									itemSelectText: ''
+								});
+								el.dataset.enhanced = 'true';
+							} catch (e) {
+								console.error('Failed to initialize Choices for ' + id, e);
+							}
 						}
 					});
 					return true;
@@ -916,38 +1031,51 @@
 
 				const enhanceRichText = () => {
 					if (!window.tinymce || !tinymce.init) return false;
-					const existingEditors = (tinymce.EditorManager && tinymce.EditorManager.editors) || tinymce
-						.editors;
-					if (Array.isArray(existingEditors) && existingEditors.length) return true;
-					const isDark = document.documentElement.classList.contains('dark');
-					tinymce.init({
-						selector: 'textarea.rich-text',
-						menubar: false,
-						height: 220,
-						statusbar: false,
-						plugins: 'lists link',
-						toolbar: 'undo redo | bold italic underline | bullist numlist | link removeformat',
-						skin: isDark ? 'oxide-dark' : 'oxide',
-						content_css: isDark ? 'dark' : 'default',
-						content_style: isDark ?
-							'body { background-color: #0f172a; color: #e5e7eb; }' :
-							'body { background-color: #ffffff; color: #111827; }'
-					});
-					return true;
+					try {
+						const existingEditors = (tinymce.EditorManager && tinymce.EditorManager.editors) || [];
+						if (Array.isArray(existingEditors) && existingEditors.length) return true;
+						const isDark = document.documentElement.classList.contains('dark');
+						tinymce.init({
+							selector: 'textarea.rich-text',
+							menubar: false,
+							height: 220,
+							statusbar: false,
+							plugins: 'lists link',
+							toolbar: 'undo redo | bold italic underline | bullist numlist | link removeformat',
+							skin: isDark ? 'oxide-dark' : 'oxide',
+							content_css: isDark ? 'dark' : 'default',
+							content_style: isDark ?
+								'body { background-color: #0f172a; color: #e5e7eb; }' :
+								'body { background-color: #ffffff; color: #111827; }'
+						});
+						return true;
+					} catch (e) {
+						console.error('Failed to initialize TinyMCE', e);
+						return false;
+					}
 				};
 
 				const tryEnhance = () => {
 					const selectsOk = enhanceSelects();
 					const editorsOk = enhanceRichText();
 					if (!selectsOk || !editorsOk) {
-						setTimeout(tryEnhance, 150);
+						setTimeout(tryEnhance, 200);
+					}
+				};
+
+				// Ensure scripts are loaded before trying to enhance
+				const scriptLoadWait = () => {
+					if (window.Choices && window.tinymce) {
+						tryEnhance();
+					} else {
+						setTimeout(scriptLoadWait, 100);
 					}
 				};
 
 				if (document.readyState === 'complete') {
-					tryEnhance();
+					scriptLoadWait();
 				} else {
-					window.addEventListener('load', tryEnhance, {
+					window.addEventListener('load', scriptLoadWait, {
 						once: true
 					});
 				}

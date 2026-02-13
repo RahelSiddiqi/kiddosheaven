@@ -21,6 +21,8 @@ class ProductAttributeValue extends Model
         'product_id',
         'product_attribute_id',
         'value',
+        'display_value',
+        'color_code',
         'price_modifier',
         'sort_order',
     ];
@@ -39,5 +41,13 @@ class ProductAttributeValue extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get variant attributes that use this value (for "used in variants" check).
+     */
+    public function variantAttributes()
+    {
+        return $this->hasMany(VariantAttribute::class, 'product_attribute_value_id');
     }
 }

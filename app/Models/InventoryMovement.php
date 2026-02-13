@@ -69,6 +69,14 @@ class InventoryMovement extends Model
     }
 
     /**
+     * Alias for purchaseBatch (used by cost history report view).
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->purchaseBatch();
+    }
+
+    /**
      * Get the inventory item for this movement.
      */
     public function inventoryItem(): BelongsTo
