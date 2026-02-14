@@ -4,8 +4,8 @@
 
 @section('content')
 	{{-- Page Header --}}
-	<div class="mb-8">
-		<h1 class="text-3xl font-bold text-gray-900">Checkout</h1>
+	<div class="mb-6 md:mb-8">
+		<h1 class="text-2xl md:text-3xl font-bold text-gray-900">Checkout</h1>
 		<p class="text-gray-500 mt-1">Complete your order</p>
 	</div>
 
@@ -18,25 +18,26 @@
 	@endphp
 
 	@if ($itemCount > 0)
-		<div class="grid lg:grid-cols-3 gap-8">
+		<div class="grid md:grid-cols-3 gap-6 md:gap-8">
 			{{-- Checkout Form --}}
-			<div class="lg:col-span-2 space-y-6">
+			<div class="md:col-span-2 space-y-4 md:space-y-6">
 				{{-- Contact Information --}}
-				<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-					<h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-						<span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">1</span>
+				<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+					<h2 class="text-lg md:text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+						<span
+							class="w-7 md:w-8 h-7 md:h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">1</span>
 						Contact Information
 					</h2>
-					<div class="grid md:grid-cols-2 gap-4">
-						<div class="md:col-span-2">
+					<div class="grid sm:grid-cols-2 gap-3 md:gap-4">
+						<div class="sm:col-span-2">
 							<label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
 							<input type="email" placeholder="your@email.com"
-								class="w-full rounded-lg border border-gray-200 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+								class="w-full rounded-lg border border-gray-200 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base min-h-[52px]">
 						</div>
-						<div class="md:col-span-2">
+						<div class="sm:col-span-2">
 							<label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
 							<input type="tel" placeholder="+880 1XXXXXXXXX"
-								class="w-full rounded-lg border border-gray-200 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+								class="w-full rounded-lg border border-gray-200 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base min-h-[52px]">
 						</div>
 					</div>
 				</div>
@@ -133,8 +134,8 @@
 			</div>
 
 			{{-- Order Summary --}}
-			<div class="lg:col-span-1">
-				<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
+			<div class="md:col-span-1">
+				<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 sticky top-24">
 					<h2 class="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
 
 					{{-- Cart Items --}}

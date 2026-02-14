@@ -39,78 +39,23 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Better touch targets for mobile */
-@media (max-width: 768px) {
-    /* Larger touch targets */
-    button, 
-    a.btn,
-    .btn,
-    [role="button"] {
-        min-height: 44px;
-        min-width: 44px;
-        padding: 12px 16px;
-    }
-    
-    /* Form elements */
-    input, 
-    select, 
-    textarea {
-        min-height: 44px;
-        font-size: 16px; /* Prevents zoom on iOS */
-    }
-    
-    /* Better spacing */
-    .container {
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-    
-    /* Stack grids */
-    .grid-cols-1, 
-    .grid-cols-2, 
-    .grid-cols-3, 
-    .grid-cols-4,
-    .grid-cols-5,
-    .grid-cols-6 {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Full width buttons on mobile */
-    button, 
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    /* Mobile navigation improvements */
-    nav {
-        position: sticky;
-        top: 0;
-        z-index: 50;
-    }
-    
-    /* Better table scrolling */
-    .table-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    /* Mobile card improvements */
-    .card {
-        margin-bottom: 12px;
-    }
-    
-    /* Better modal/drawer */
-    .modal, 
-    .drawer {
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-}
+/* ========================================
+   MOBILE-FIRST BASE STYLES
+   ======================================== */
 
-/* Smooth scrolling */
+/* Base styles - Mobile First */
 html {
     scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS zoom on input focus */
+@media (max-width: 768px) {
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
 }
 
 /* Hide scrollbar but keep functionality */
@@ -149,13 +94,16 @@ img[loading="lazy"].loaded {
     outline-offset: 2px;
 }
 
-/* Button styles */
+/* ========================================
+   BUTTON STYLES
+   ======================================== */
+
 .btn-primary {
     background-color: var(--color-primary);
     color: #fff;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
     cursor: pointer;
     transition: background 0.2s;
     display: inline-flex;
@@ -163,18 +111,24 @@ img[loading="lazy"].loaded {
     justify-content: center;
     gap: 0.5rem;
     font-weight: 500;
+    min-height: 48px;
+    touch-action: manipulation;
 }
 
 .btn-primary:hover {
     background-color: var(--color-primary-dark);
 }
 
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
 .btn-secondary {
     background-color: transparent;
     color: var(--color-primary);
     border: 2px solid var(--color-primary);
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.6875rem 1.5rem;
+    border-radius: 0.5rem;
     cursor: pointer;
     transition: all 0.2s;
     display: inline-flex;
@@ -182,6 +136,8 @@ img[loading="lazy"].loaded {
     justify-content: center;
     gap: 0.5rem;
     font-weight: 500;
+    min-height: 48px;
+    touch-action: manipulation;
 }
 
 .btn-secondary:hover {
@@ -193,7 +149,10 @@ img[loading="lazy"].loaded {
     color: var(--color-accent);
 }
 
-/* Badge */
+/* ========================================
+   BADGE STYLES
+   ======================================== */
+
 .badge {
     display: inline-flex;
     align-items: center;
@@ -218,14 +177,21 @@ img[loading="lazy"].loaded {
     color: white;
 }
 
-/* Form inputs */
+/* ========================================
+   FORM INPUTS - Mobile Optimized
+   ======================================== */
+
 .form-input {
     width: 100%;
-    padding: 12px;
+    padding: 14px 16px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     font-size: 16px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+    min-height: 52px;
+    touch-action: manipulation;
 }
 
 .form-input:focus {
@@ -234,7 +200,10 @@ img[loading="lazy"].loaded {
     outline: none;
 }
 
-/* Card */
+/* ========================================
+   CARD STYLES
+   ======================================== */
+
 .card {
     background: white;
     border-radius: 12px;
@@ -242,7 +211,10 @@ img[loading="lazy"].loaded {
     overflow: hidden;
 }
 
-/* Price */
+/* ========================================
+   PRICE STYLES
+   ======================================== */
+
 .price {
     font-weight: 700;
     color: var(--color-primary);
@@ -263,18 +235,25 @@ img[loading="lazy"].loaded {
     color: #fbbf24;
 }
 
-/* Animations */
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { 
+    from {
         opacity: 0;
         transform: translateY(20px);
     }
-    to { 
+    to {
         opacity: 1;
         transform: translateY(0);
     }
@@ -288,7 +267,10 @@ img[loading="lazy"].loaded {
     animation: slideUp 0.3s ease-out;
 }
 
-/* Skeleton loading */
+/* ========================================
+   SKELETON LOADING
+   ======================================== */
+
 .skeleton {
     background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
     background-size: 200% 100%;
@@ -296,26 +278,48 @@ img[loading="lazy"].loaded {
 }
 
 @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
-/* Toast notifications */
+/* ========================================
+   TOAST NOTIFICATIONS
+   ======================================== */
+
 .toast {
     position: fixed;
     bottom: 20px;
-    right: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 100;
-    padding: 12px 20px;
+    padding: 14px 24px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     animation: slideUp 0.3s ease-out;
+    max-width: calc(100% - 32px);
 }
 
-/* Quantity selector */
+.toast.success {
+    background-color: #10b981;
+    color: white;
+}
+
+.toast.error {
+    background-color: #ef4444;
+    color: white;
+}
+
+/* ========================================
+   QUANTITY SELECTOR
+   ======================================== */
+
 .qty-btn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -323,16 +327,353 @@ img[loading="lazy"].loaded {
     background: white;
     cursor: pointer;
     transition: all 0.2s;
+    touch-action: manipulation;
 }
 
 .qty-btn:hover {
     background: #f9fafb;
 }
 
+.qty-btn:active {
+    background: #f3f4f6;
+}
+
 .qty-input {
-    width: 50px;
+    width: 48px;
+    height: 44px;
     text-align: center;
     border: 1px solid #e5e7eb;
     border-left: none;
     border-right: none;
+    font-size: 16px;
+}
+
+/* ========================================
+   MOBILE NAVIGATION IMPROVEMENTS
+   ======================================== */
+
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    padding: 8px 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 12px;
+    gap: 4px;
+    min-width: 64px;
+    min-height: 48px;
+}
+
+.mobile-nav-item.active {
+    color: var(--color-primary);
+}
+
+.mobile-nav-item svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* ========================================
+   MOBILE FILTER DRAWER
+   ======================================== */
+
+.filter-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 320px;
+    background: white;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+.filter-drawer.open {
+    transform: translateX(0);
+}
+
+.filter-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 55;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.3s,
+        visibility 0.3s;
+}
+
+.filter-drawer-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ========================================
+   RESPONSIVE BREAKPOINTS - Mobile First
+   ======================================== */
+
+/* Small tablets and above (640px+) */
+@media (min-width: 640px) {
+    .btn-primary,
+    .btn-secondary {
+        padding: 0.625rem 1.25rem;
+    }
+
+    .form-input {
+        padding: 12px 16px;
+        min-height: 48px;
+    }
+
+    .toast {
+        left: auto;
+        right: 20px;
+        transform: none;
+    }
+}
+
+/* Tablets (768px+) */
+@media (min-width: 768px) {
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .qty-input {
+        width: 50px;
+        height: 40px;
+    }
+}
+
+/* Desktops (1024px+) */
+@media (min-width: 1024px) {
+    /* Larger screens get different layouts */
+    .lg\:grid-cols-4 {
+        display: grid;
+    }
+}
+
+/* ========================================
+   TOUCH-FRIENDLY IMPROVEMENTS
+   ======================================== */
+
+/* Ensure all interactive elements have adequate touch targets */
+button,
+a.btn,
+.btn,
+[role="button"],
+a {
+    touch-action: manipulation;
+}
+
+/* Larger touch targets for small screens */
+@media (max-width: 480px) {
+    button,
+    .btn,
+    [role="button"] {
+        min-height: 48px;
+        padding: 14px 20px;
+    }
+
+    /* Larger checkboxes and radio buttons */
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* ========================================
+   PRODUCT CARD IMPROVEMENTS
+   ======================================== */
+
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+.product-card:active {
+    transform: scale(0.98);
+}
+
+.product-card-image {
+    aspect-ratio: 4/3;
+    object-fit: cover;
+}
+
+@media (min-width: 640px) {
+    .product-card-image {
+        aspect-ratio: 1;
+    }
+}
+
+/* ========================================
+   HERO SECTION MOBILE
+   ======================================== */
+
+.hero-section {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    .hero-section {
+        padding: 4rem 2rem;
+        text-align: left;
+    }
+}
+
+/* ========================================
+   TABLE RESPONSIVE WRAPPER
+   ======================================== */
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -1rem;
+    padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+    .table-responsive {
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* ========================================
+   MOBILE STACK LAYOUTS
+   ======================================== */
+
+/* Mobile-first: stack by default, side-by-side on larger screens */
+.mobile-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .mobile-stack {
+        flex-direction: row;
+    }
+}
+
+/* Full-width on mobile, constrained on desktop */
+.mobile-full {
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .mobile-full {
+        width: auto;
+    }
+}
+
+/* ========================================
+   IMPROVED MOBILE FORMS
+   ======================================== */
+
+@media (max-width: 640px) {
+    .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .form-row > * {
+        width: 100%;
+    }
+}
+
+/* ========================================
+   MOBILE BREADCRUMB FIX
+   ======================================== */
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.breadcrumb-item:not(:last-child)::after {
+    content: "/";
+    color: #9ca3af;
+}
+
+.breadcrumb-item a {
+    color: #6b7280;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumb-item.active {
+    color: #374151;
+    font-weight: 500;
+}
+
+/* ========================================
+   STICKY MOBILE BOTTOM BAR
+   ======================================== */
+
+.sticky-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 12px;
+    z-index: 40;
+}
+
+.sticky-bottom-bar > * {
+    flex: 1;
+}
+
+/* Hide on larger screens */
+@media (min-width: 768px) {
+    .sticky-bottom-bar {
+        position: static;
+        padding: 0;
+        border: none;
+    }
+
+    .sticky-bottom-bar > * {
+        flex: 0;
+    }
 }

@@ -133,7 +133,7 @@ class Product extends Model
      */
     public function approvedReviews()
     {
-        return $this->hasMany(Review::class)->where('status', 'approved');
+        return $this->hasMany(Review::class)->where('is_approved', true);
     }
 
     /**
@@ -244,6 +244,14 @@ class Product extends Model
     public function inventoryMovements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class);
+    }
+
+    /**
+     * Get the primary image path.
+     */
+    public function getImagePathAttribute(): ?string
+    {
+        return $this->primary_image ?? ($this->images[0] ?? null);
     }
 
     /**

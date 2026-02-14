@@ -48,21 +48,209 @@
 		</div>
 	</section>
 
+	{{-- Flash Sales --}}
+	@if ($flashSales && $flashSales->products->isNotEmpty())
+		<section class="mb-8 md:mb-12">
+			<div class="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-4 md:p-6 text-white mb-4">
+				<div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+					<div>
+						<div class="flex items-center gap-2 mb-2">
+							<span class="text-2xl md:text-3xl">⚡</span>
+							<h2 class="text-xl md:text-2xl font-bold">{{ $flashSales->name }}</h2>
+						</div>
+						<p class="text-white/90 text-sm md:text-base">{{ $flashSales->description }}</p>
+					</div>
+					<div class="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+						<span class="font-bold text-sm md:text-base">Ends {{ $flashSales->ends_at->diffForHumans() }}</span>
+					</div>
+				</div>
+			</div>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+				@foreach ($flashSales->products->take(8) as $product)
+					<article
+						class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-red-300 transition-all duration-300">
+						<a href="{{ route('products.show', $product->slug) }}">
+							<div class="relative aspect-4/3 bg-gray-100 overflow-hidden">
+								@php
+									$img = $product->primary_image ?? ($product->images[0] ?? null);
+								@endphp
+								@if ($img)
+									<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+										class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+								@else
+									<div class="w-full h-full flex items-center justify-center">
+										<span class="text-3xl md:text-4xl">🧸</span>
+									</div>
+								@endif
+								<div class="absolute top-2 left-2">
+									<span class="px-2 py-1 rounded-full bg-red-500 text-white text-xs font-bold shadow">
+										-{{ $flashSales->discount_percentage }}%
+									</span>
+								</div>
+							</div>
+						</a>
+						<div class="p-3 md:p-4">
+							<a href="{{ route('products.show', $product->slug) }}"
+								class="font-semibold text-sm md:text-base text-gray-800 hover:text-primary line-clamp-2">{{ $product->name }}</a>
+							<div class="flex items-center gap-2 mt-2">
+								<span
+									class="text-base md:text-lg font-bold text-red-600">৳{{ number_format($product->price * (1 - $flashSales->discount_percentage / 100), 2) }}</span>
+								<span class="text-xs md:text-sm text-gray-400 line-through">৳{{ number_format($product->price, 2) }}</span>
+							</div>
+						</div>
+					</article>
+				@endforeach
+			</div>
+		</section>
+	@endif
+
+	{{-- New Arrivals --}}
+	@if ($newArrivals->isNotEmpty())
+		<section class="mb-8 md:mb-12">
+			<div class="flex items-center justify-between mb-4 md:mb-6">
+				<div>
+					<h2 class="text-xl md:text-2xl font-bold text-gray-900">🆕 New Arrivals</h2>
+					<p class="text-gray-500 mt-1 text-sm md:text-base">Fresh toys just for you</p>
+				</div>
+				<a href="{{ route('catalog', ['sort' => 'newest']) }}"
+					class="text-primary font-medium hover:text-primary-dark flex items-center gap-1 text-sm md:text-base">
+					View All
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+					</svg>
+				</a>
+			</div>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+				@foreach ($newArrivals as $product)
+					<article
+						class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+						<a href="{{ route('products.show', $product->slug) }}">
+							<div class="relative aspect-4/3 bg-gray-100 overflow-hidden">
+								@php
+									$img = $product->primary_image ?? ($product->images[0] ?? null);
+								@endphp
+								@if ($img)
+									<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+										class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+								@else
+									<div class="w-full h-full flex items-center justify-center">
+										<span class="text-3xl md:text-4xl">🧸</span>
+									</div>
+								@endif
+								<div class="absolute top-2 left-2">
+									<span class="px-2 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow">New</span>
+								</div>
+							</div>
+						</a>
+						<div class="p-3 md:p-4">
+							@if ($product->category)
+								<span
+									class="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-primary text-[10px] md:text-xs font-semibold mb-1 md:mb-2">{{ $product->category->name }}</span>
+							@endif
+							<a href="{{ route('products.show', $product->slug) }}"
+								class="font-semibold text-sm md:text-base text-gray-800 hover:text-primary line-clamp-2">{{ $product->name }}</a>
+							<div class="flex items-center justify-between mt-2">
+								<span class="text-base md:text-lg font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
+								@if ($product->review_count > 0)
+									<div class="flex items-center gap-1 text-yellow-400 text-xs">
+										<svg class="w-3 md:w-4 h-3 md:h-4 fill-current" viewBox="0 0 20 20">
+											<path
+												d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+										</svg>
+										<span class="text-gray-600">{{ number_format($product->average_rating, 1) }}</span>
+									</div>
+								@endif
+							</div>
+						</div>
+					</article>
+				@endforeach
+			</div>
+		</section>
+	@endif
+
+	{{-- Best Sellers --}}
+	@if ($bestSellers->isNotEmpty())
+		<section class="mb-8 md:mb-12">
+			<div class="flex items-center justify-between mb-4 md:mb-6">
+				<div>
+					<h2 class="text-xl md:text-2xl font-bold text-gray-900">🔥 Best Sellers</h2>
+					<p class="text-gray-500 mt-1 text-sm md:text-base">Most loved by parents</p>
+				</div>
+				<a href="{{ route('catalog', ['sort' => 'popular']) }}"
+					class="text-primary font-medium hover:text-primary-dark flex items-center gap-1 text-sm md:text-base">
+					View All
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+					</svg>
+				</a>
+			</div>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+				@foreach ($bestSellers as $product)
+					<article
+						class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+						<a href="{{ route('products.show', $product->slug) }}">
+							<div class="relative aspect-4/3 bg-gray-100 overflow-hidden">
+								@php
+									$img = $product->primary_image ?? ($product->images[0] ?? null);
+								@endphp
+								@if ($img)
+									<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+										class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+								@else
+									<div class="w-full h-full flex items-center justify-center">
+										<span class="text-3xl md:text-4xl">🧸</span>
+									</div>
+								@endif
+								<div class="absolute top-2 left-2">
+									<span class="px-2 py-1 rounded-full bg-orange-500 text-white text-xs font-bold shadow">🔥 Hot</span>
+								</div>
+							</div>
+						</a>
+						<div class="p-3 md:p-4">
+							@if ($product->category)
+								<span
+									class="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-primary text-[10px] md:text-xs font-semibold mb-1 md:mb-2">{{ $product->category->name }}</span>
+							@endif
+							<a href="{{ route('products.show', $product->slug) }}"
+								class="font-semibold text-sm md:text-base text-gray-800 hover:text-primary line-clamp-2">{{ $product->name }}</a>
+							<div class="flex items-center justify-between mt-2">
+								<span class="text-base md:text-lg font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
+								@if ($product->review_count > 0)
+									<div class="flex items-center gap-1 text-yellow-400 text-xs">
+										<svg class="w-3 md:w-4 h-3 md:h-4 fill-current" viewBox="0 0 20 20">
+											<path
+												d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+										</svg>
+										<span class="text-gray-600">{{ number_format($product->average_rating, 1) }}</span>
+									</div>
+								@endif
+							</div>
+						</div>
+					</article>
+				@endforeach
+			</div>
+		</section>
+	@endif
+
 	{{-- Featured Products by Category --}}
 	@foreach ($featuredByCategory as $categoryName => $products)
 		@if ($products->isNotEmpty())
-			<section class="mb-12">
-				<div class="flex items-center justify-between mb-6">
+			<section class="mb-8 md:mb-12">
+				<div class="flex items-center justify-between mb-4 md:mb-6">
 					<div>
-						<h2 class="text-2xl font-bold text-gray-900">{{ $categoryName }}</h2>
-						<p class="text-gray-500 mt-1">Handpicked just for you</p>
+						<h2 class="text-xl md:text-2xl font-bold text-gray-900">{{ $categoryName }}</h2>
+						<p class="text-gray-500 mt-1 text-sm md:text-base">Handpicked just for you</p>
 					</div>
 					@php
 						$cat = $homeCategories->firstWhere('name', $categoryName);
 					@endphp
 					@if ($cat)
 						<a href="{{ route('catalog', ['category_id' => $cat->id]) }}"
-							class="text-primary font-medium hover:text-primary-dark flex items-center gap-1">
+							class="text-primary font-medium hover:text-primary-dark flex items-center gap-1 text-sm md:text-base">
 							View All
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -70,7 +258,7 @@
 						</a>
 					@endif
 				</div>
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
 					@foreach ($products as $product)
 						<article
 							class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300">
@@ -84,49 +272,40 @@
 											class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
 									@else
 										<div class="w-full h-full flex items-center justify-center">
-											<span class="text-4xl">🧸</span>
+											<span class="text-3xl md:text-4xl">🧸</span>
 										</div>
 									@endif
 									{{-- Badges --}}
-									<div class="absolute top-3 left-3 flex flex-col gap-2">
+									<div class="absolute top-2 left-2 flex flex-col gap-1.5">
 										@if ($product->is_featured)
-											<span class="px-2 py-1 rounded-full bg-yellow-400 text-white text-xs font-bold shadow">★</span>
+											<span
+												class="px-2 py-0.5 rounded-full bg-yellow-400 text-white text-[10px] md:text-xs font-bold shadow">★</span>
 										@endif
 										@if ($product->created_at && $product->created_at->diffInDays() < 7)
-											<span class="px-2 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow">New</span>
+											<span
+												class="px-2 py-0.5 rounded-full bg-green-500 text-white text-[10px] md:text-xs font-bold shadow">New</span>
 										@endif
-									</div>
-									{{-- Quick Add --}}
-									<div
-										class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition duration-300 translate-y-2 group-hover:translate-y-0">
-										<form action="{{ route('cart.add', $product->slug) }}" method="post">
-											@csrf
-											<button type="submit"
-												class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:bg-primary-dark hover:scale-110 transition">
-												<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-												</svg>
-											</button>
-										</form>
 									</div>
 								</div>
 							</a>
-							<div class="p-4">
+							<div class="p-3 md:p-4">
 								@if ($product->category)
 									<span
-										class="inline-block px-2 py-1 rounded-full bg-light text-primary text-xs font-semibold mb-2">{{ $product->category->name }}</span>
+										class="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-primary text-[10px] md:text-xs font-semibold mb-1 md:mb-2">{{ $product->category->name }}</span>
 								@endif
 								<a href="{{ route('products.show', $product->slug) }}"
-									class="font-semibold text-gray-800 hover:text-primary line-clamp-2 group-hover:text-primary transition">{{ $product->name }}</a>
-								<div class="flex items-center justify-between mt-3">
-									<span class="text-lg font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
-									<div class="flex items-center gap-1 text-yellow-400 text-sm">
-										<svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
-											<path
-												d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-										</svg>
-										<span class="text-gray-400 text-xs">4.5</span>
-									</div>
+									class="font-semibold text-sm md:text-base text-gray-800 hover:text-primary line-clamp-2">{{ $product->name }}</a>
+								<div class="flex items-center justify-between mt-2">
+									<span class="text-base md:text-lg font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
+									@if ($product->review_count > 0)
+										<div class="flex items-center gap-1 text-yellow-400 text-xs">
+											<svg class="w-3 md:w-4 h-3 md:h-4 fill-current" viewBox="0 0 20 20">
+												<path
+													d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+											</svg>
+											<span class="text-gray-600">{{ number_format($product->average_rating, 1) }}</span>
+										</div>
+									@endif
 								</div>
 							</div>
 						</article>
@@ -135,6 +314,71 @@
 			</section>
 		@endif
 	@endforeach
+
+	{{-- All Featured Products (if no category-specific featured) --}}
+	@if (empty($featuredByCategory) && $allFeatured->isNotEmpty())
+		<section class="mb-8 md:mb-12">
+			<div class="flex items-center justify-between mb-4 md:mb-6">
+				<div>
+					<h2 class="text-xl md:text-2xl font-bold text-gray-900">⭐ Featured Products</h2>
+					<p class="text-gray-500 mt-1 text-sm md:text-base">Our top picks for you</p>
+				</div>
+				<a href="{{ route('catalog', ['featured' => '1']) }}"
+					class="text-primary font-medium hover:text-primary-dark flex items-center gap-1 text-sm md:text-base">
+					View All
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+					</svg>
+				</a>
+			</div>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+				@foreach ($allFeatured as $product)
+					<article
+						class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+						<a href="{{ route('products.show', $product->slug) }}">
+							<div class="relative aspect-4/3 bg-gray-100 overflow-hidden">
+								@php
+									$img = $product->primary_image ?? ($product->images[0] ?? null);
+								@endphp
+								@if ($img)
+									<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+										class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+								@else
+									<div class="w-full h-full flex items-center justify-center">
+										<span class="text-3xl md:text-4xl">🧸</span>
+									</div>
+								@endif
+								<div class="absolute top-2 left-2">
+									<span class="px-2 py-0.5 rounded-full bg-yellow-400 text-white text-[10px] md:text-xs font-bold shadow">★
+										Featured</span>
+								</div>
+							</div>
+						</a>
+						<div class="p-3 md:p-4">
+							@if ($product->category)
+								<span
+									class="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-primary text-[10px] md:text-xs font-semibold mb-1 md:mb-2">{{ $product->category->name }}</span>
+							@endif
+							<a href="{{ route('products.show', $product->slug) }}"
+								class="font-semibold text-sm md:text-base text-gray-800 hover:text-primary line-clamp-2">{{ $product->name }}</a>
+							<div class="flex items-center justify-between mt-2">
+								<span class="text-base md:text-lg font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
+								@if ($product->review_count > 0)
+									<div class="flex items-center gap-1 text-yellow-400 text-xs">
+										<svg class="w-3 md:w-4 h-3 md:h-4 fill-current" viewBox="0 0 20 20">
+											<path
+												d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+										</svg>
+										<span class="text-gray-600">{{ number_format($product->average_rating, 1) }}</span>
+									</div>
+								@endif
+							</div>
+						</div>
+					</article>
+				@endforeach
+			</div>
+		</section>
+	@endif
 
 	{{-- Newsletter --}}
 	<section class="mb-12">

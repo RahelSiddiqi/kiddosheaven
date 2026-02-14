@@ -19,7 +19,7 @@
 	@endphp
 
 	@if ($itemCount > 0)
-		<div class="flex flex-col xl:flex-row gap-8">
+		<div class="flex flex-col lg:flex-row gap-6 md:gap-8">
 			{{-- Cart Items --}}
 			<div class="flex-1">
 				<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -79,12 +79,12 @@
 									{{-- Price (Mobile) --}}
 									<div class="md:hidden flex items-center justify-between">
 										<span class="text-sm text-gray-500">Price</span>
-										<span class="font-medium text-gray-800">${{ number_format(($item['price'] ?? 0) / 100, 2) }}</span>
+										<span class="font-medium text-gray-800">৳{{ number_format(($item['price'] ?? 0), 2) }}</span>
 									</div>
 
 									{{-- Price (Desktop) --}}
 									<div class="hidden md:col-span-2 md:flex items-center justify-center">
-										<span class="font-medium text-gray-800">${{ number_format(($item['price'] ?? 0) / 100, 2) }}</span>
+										<span class="font-medium text-gray-800">৳{{ number_format(($item['price'] ?? 0), 2) }}</span>
 									</div>
 
 									{{-- Quantity --}}
@@ -106,7 +106,7 @@
 									{{-- Subtotal --}}
 									<div class="col-span-2 flex items-center justify-between md:justify-end gap-4">
 										<span class="md:hidden text-sm text-gray-500">Total</span>
-										<span class="text-lg font-bold text-primary-dark">${{ number_format($itemSubtotal / 100, 2) }}</span>
+										<span class="text-lg font-bold text-primary-dark">৳{{ number_format($itemSubtotal, 2) }}</span>
 									</div>
 								</div>
 							</div>
@@ -127,8 +127,8 @@
 			</div>
 
 			{{-- Order Summary --}}
-			<div class="xl:w-96 flex-shrink-0">
-				<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
+			<div class="lg:w-80 xl:w-96 flex-shrink-0 order-first lg:order-last">
+				<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 sticky top-24">
 					<h2 class="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
 
 					{{-- Promo Code --}}
@@ -148,7 +148,7 @@
 					<div class="space-y-3 mb-6">
 						<div class="flex justify-between text-gray-600">
 							<span>Subtotal ({{ $itemCount }} items)</span>
-							<span>${{ number_format($cartSubtotal / 100, 2) }}</span>
+							<span>৳{{ number_format($cartSubtotal, 2) }}</span>
 						</div>
 						<div class="flex justify-between text-gray-600">
 							<span>Shipping</span>
@@ -157,12 +157,12 @@
 						@if ($cartDiscount > 0)
 							<div class="flex justify-between text-green-600">
 								<span>Discount</span>
-								<span>-${{ number_format($cartDiscount / 100, 2) }}</span>
+								<span>-৳{{ number_format($cartDiscount, 2) }}</span>
 							</div>
 						@endif
 						<div class="border-t border-gray-100 pt-3 flex justify-between text-xl font-bold text-gray-900">
 							<span>Total</span>
-							<span>${{ number_format($cartTotal / 100, 2) }}</span>
+							<span>৳{{ number_format($cartTotal, 2) }}</span>
 						</div>
 					</div>
 
