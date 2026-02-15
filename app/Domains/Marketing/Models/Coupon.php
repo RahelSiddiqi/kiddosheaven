@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Domains\Marketing\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Coupon extends Model
+{
+    protected $fillable = [
+        'code',
+        'description',
+        'type',
+        'value',
+        'min_order_amount',
+        'max_discount',
+        'usage_limit',
+        'used_count',
+        'valid_from',
+        'valid_until',
+        'status',
+        'is_general',
+        'user_id',
+    ];
+
+    protected $casts = [
+        'value' => 'decimal:2',
+        'min_order_amount' => 'decimal:2',
+        'max_discount' => 'decimal:2',
+        'valid_from' => 'datetime',
+        'valid_until' => 'datetime',
+        'is_general' => 'boolean',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
+
+    public function isValid(\App\Models\User $user = null): bool
+    {
+        if ($this->status !== 'active') {
+            return false;
+        }
+
+        if (!$this->is_general && $user) {
+            if ($this->user_id !== $user->id) {
+                return false;
+            }
+        }
+
+        if ($this->valid_from && now()->isBefore($this->valid_from)) {
+            return false;
+        }
+
+        if ($this->valid_until && now()->isAfter($this->valid_until)) {
+            return false;
+        }
+
+        if ($this->usage_limit && $this->used_count >= $this->usage_limit) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function calculateDiscount(float $orderTotal, \App\Models\User $user = null): float
+    {
+        if (!$this->isValid($user)) {
+            return 0;
+        }
+
+        if ($this->min_order_amount && $orderTotal < $this->min_order_amount) {
+            return 0;
+        }
+
+        return match ($this->type) {
+            'percentage' => min(($orderTotal * $this->value) / 100, $this->max_discount ?? $orderTotal),
+            'fixed' => min($this->value, $orderTotal),
+            'shipping' => 0,
+            default => 0,
+        };
+    }
+}

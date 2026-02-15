@@ -7,25 +7,18 @@
 
 @theme {
     --font-sans:
-        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Nunito", ui-sans-serif, system-ui, sans-serif,
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
-    /* Custom Color Palette */
-    --color-primary-dark: #005461;
+    /* Theme Color Palette - synced with DefaultTheme */
     --color-primary: #018790;
-    --color-accent: #00b7b5;
-    --color-light: #f4f4f4;
-    --color-danger: #dc2626;
-    --color-danger-light: #fee2e2;
-    --color-danger-dark: #b91c1c;
-}
-
-/* Example usage of the color palette */
-:root {
     --color-primary-dark: #005461;
-    --color-primary: #018790;
     --color-accent: #00b7b5;
+    --color-secondary: #f59e0b;
     --color-light: #f4f4f4;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
     --color-danger: #dc2626;
     --color-danger-light: #fee2e2;
     --color-danger-dark: #b91c1c;
@@ -33,7 +26,7 @@
 
 body {
     background-color: var(--color-light);
-    color: var(--color-primary-dark);
+    color: #1f2937;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -80,12 +73,8 @@ html {
 
 /* Image lazy loading */
 img[loading="lazy"] {
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-img[loading="lazy"].loaded {
     opacity: 1;
+    transition: opacity 0.3s;
 }
 
 /* Better focus states for accessibility */

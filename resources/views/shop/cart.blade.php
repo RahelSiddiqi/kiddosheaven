@@ -46,7 +46,7 @@
 										<a href="{{ route('products.show', $item['slug']) }}"
 											class="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
 											@if ($img)
-												<img src="{{ asset('storage/' . $img) }}" alt="{{ $item['name'] }}" loading="lazy"
+												<img src="{{ asset($img) }}" alt="{{ $item['name'] }}" loading="lazy"
 													class="w-full h-full object-cover hover:scale-105 transition duration-300">
 											@else
 												<div class="w-full h-full flex items-center justify-center">

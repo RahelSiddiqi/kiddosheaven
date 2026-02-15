@@ -185,7 +185,7 @@ class ShopController extends Controller
 
         // Get active variants if product is variable
         $variants = $product->product_type === 'variable'
-            ? $product->activeVariants()->with('variantAttributes.productAttribute', 'variantAttributes.attributeValue')->get()
+            ? $product->activeVariants()->with('variantAttributes.attribute', 'variantAttributes.attributeValue')->get()
             : collect();
 
         return view('shop.product', [

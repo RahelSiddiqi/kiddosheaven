@@ -79,7 +79,7 @@
 									$img = $product->primary_image ?? ($product->images[0] ?? null);
 								@endphp
 								@if ($img)
-									<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+									<img src="{{ asset($img) }}" alt="{{ $product->name }}" loading="lazy"
 										class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
 								@else
 									<div class="w-full h-full flex items-center justify-center">
@@ -134,7 +134,7 @@
 									$img = $product->primary_image ?? ($product->images[0] ?? null);
 								@endphp
 								@if ($img)
-									<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+									<img src="{{ asset($img) }}" alt="{{ $product->name }}" loading="lazy"
 										class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
 								@else
 									<div class="w-full h-full flex items-center justify-center">
@@ -198,7 +198,7 @@
 									$img = $product->primary_image ?? ($product->images[0] ?? null);
 								@endphp
 								@if ($img)
-									<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+									<img src="{{ asset($img) }}" alt="{{ $product->name }}" loading="lazy"
 										class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
 								@else
 									<div class="w-full h-full flex items-center justify-center">
@@ -268,7 +268,7 @@
 										$img = $product->primary_image ?? ($product->images[0] ?? null);
 									@endphp
 									@if ($img)
-										<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+										<img src="{{ asset($img) }}" alt="{{ $product->name }}" loading="lazy"
 											class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
 									@else
 										<div class="w-full h-full flex items-center justify-center">
@@ -341,7 +341,7 @@
 									$img = $product->primary_image ?? ($product->images[0] ?? null);
 								@endphp
 								@if ($img)
-									<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
+									<img src="{{ asset($img) }}" alt="{{ $product->name }}" loading="lazy"
 										class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
 								@else
 									<div class="w-full h-full flex items-center justify-center">

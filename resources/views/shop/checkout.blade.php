@@ -148,7 +148,7 @@
 							<div class="flex items-center gap-3">
 								<div class="w-14 h-14 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0">
 									@if ($img)
-										<img src="{{ asset('storage/' . $img) }}" alt="{{ $item['name'] }}" loading="lazy"
+										<img src="{{ asset($img) }}" alt="{{ $item['name'] }}" loading="lazy"
 											class="w-full h-full object-cover">
 									@else
 										<div class="w-full h-full flex items-center justify-center">

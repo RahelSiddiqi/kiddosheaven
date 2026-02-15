@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="max-width: 100vw; box-sizing: border-box;">
 
 	<head>
 		<meta charset="UTF-8">
@@ -20,6 +20,7 @@
 
 		{{-- Styles --}}
 		@vite(['resources/css/app.css', 'resources/js/app.js'])
+		@livewireStyles
 
 		{{-- Inline Styles for SSR compatibility --}}
 		<style>
@@ -33,12 +34,92 @@
 			.font-nunito {
 				font-family: 'Nunito', sans-serif;
 			}
+
+			html,
+			body {
+				overflow-x: hidden !important;
+				max-width: 100vw;
+			}
 		</style>
 	</head>
 
-	<body class="font-nunito antialiased text-gray-800 bg-gray-50 overflow-x-hidden">
-		{{-- Navigation --}}
-		<nav class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+	<body class="font-nunito antialiased text-gray-800 bg-gray-50"
+		style="overflow-y: auto; position: relative; min-height: 100vh; box-sizing: border-box; margin: 0; padding: 0; width: 100%; max-width: 100%;">
+		{{-- Mobile Top Fixed Navigation --}}
+		<nav class="md:hidden bg-white shadow-sm border-b border-gray-100"
+			style="position: fixed; top: 0; left: 0; right: 0; width: 100%; max-width: 100vw; z-index: 9999; box-sizing: border-box;">
+			{{-- Top Bar --}}
+			<div class="bg-primary text-white text-sm py-2">
+				<div class="container mx-auto px-4 flex items-center justify-between">
+					<div class="flex items-center gap-4">
+						<span class="flex items-center gap-1">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+							</svg>
+							hello@kiddosheaven.local
+						</span>
+					</div>
+				</div>
+			</div>
+
+			{{-- Main Navbar --}}
+			<div class="container mx-auto px-4">
+				<div class="flex items-center justify-between h-14">
+					{{-- Logo --}}
+					<a href="{{ route('home') }}" class="flex items-center gap-2">
+						<span class="text-2xl">🧸</span>
+						<span class="text-lg font-bold text-primary tracking-tight">Kiddo's Heaven</span>
+					</a>
+
+					{{-- Actions --}}
+					<div class="flex items-center gap-2">
+						{{-- Cart --}}
+						@php
+							$cartSession = session('cart');
+							$cartCount = is_array($cartSession) && isset($cartSession['items']) ? count($cartSession['items']) : 0;
+						@endphp
+						<a href="{{ route('cart.index') }}" class="relative p-2 rounded-full hover:bg-gray-100 transition group">
+							<svg class="w-6 h-6 text-gray-600 group-hover:text-primary transition" fill="none" stroke="currentColor"
+								viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+							</svg>
+							@if ($cartCount > 0)
+								<span
+									class="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center">
+									{{ $cartCount }}
+								</span>
+							@endif
+						</a>
+
+						{{-- Mobile Menu Toggle --}}
+						<button type="button" class="p-2 rounded-full hover:bg-gray-100 transition"
+							onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+							<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+							</svg>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			{{-- Mobile Menu --}}
+			<div id="mobile-menu" class="hidden border-t border-gray-100 bg-white">
+				<div class="px-4 py-4 space-y-2">
+					<a href="{{ route('home') }}" class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 transition">Home</a>
+					<a href="{{ route('catalog') }}"
+						class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 transition">Shop</a>
+					<a href="{{ route('about') }}"
+						class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 transition">About</a>
+					<a href="{{ route('contact') }}"
+						class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 transition">Contact</a>
+				</div>
+			</div>
+		</nav>
+
+		{{-- Desktop Navigation (sticky) --}}
+		<nav class="hidden md:block bg-white shadow-sm border-b border-gray-100 sticky top-0 z-40">
 			{{-- Top Bar --}}
 			<div class="bg-primary text-white text-sm py-2">
 				<div class="container mx-auto px-4 flex items-center justify-between">
@@ -123,8 +204,8 @@
 							<div class="relative">
 								<input type="text" name="q" placeholder="Search toys..."
 									class="w-64 pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition text-sm">
-								<svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor"
-									viewBox="0 0 24 24">
+								<svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none"
+									stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 										d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 								</svg>
@@ -177,14 +258,19 @@
 		</nav>
 
 		{{-- Main Content --}}
-		<main class="container mx-auto px-4 py-8 pb-24 md:pb-8" style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
+		<main class="md:hidden container mx-auto px-4 pt-20 pb-24"
+			style="padding-top: max(5rem, env(safe-area-inset-top)); padding-bottom: max(6rem, env(safe-area-inset-bottom)); max-width: 100vw; box-sizing: border-box;">
+			@yield('content')
+		</main>
+
+		<main class="hidden md:block container mx-auto px-4 py-8">
 			@yield('content')
 		</main>
 
 		{{-- Mobile Bottom Navigation --}}
-		<div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50"
-			style="padding-bottom: env(safe-area-inset-bottom);">
-			<div class="flex items-center justify-around h-16 max-w-lg mx-auto">
+		<div class="md:hidden bg-white border-t border-gray-200 z-[9999]"
+			style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-width: 100vw; height: 4rem; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box;">
+			<div class="flex items-center justify-around h-full max-w-lg mx-auto">
 				<a href="{{ route('home') }}"
 					class="flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-primary transition {{ request()->routeIs('home') ? 'text-primary' : '' }}">
 					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -359,6 +445,8 @@
 				</button>
 			</div>
 		@endif
+
+		@livewireScripts
 	</body>
 
 </html>

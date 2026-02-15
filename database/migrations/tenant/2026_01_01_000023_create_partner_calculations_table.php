@@ -1,0 +1,40 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('partner_calculations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('partner_id')->constrained()->cascadeOnDelete();
+            $table->decimal('total_sales', 12, 2);
+            $table->decimal('commission_amount', 12, 2);
+            $table->decimal('payment_amount', 12, 2);
+            $table->date('period_start');
+            $table->date('period_end');
+            $table->string('status')->default('pending'); // pending, approved, paid
+            $table->timestamps();
+        });
+
+        Schema::create('partner_payments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('partner_id')->constrained()->cascadeOnDelete();
+            $table->decimal('amount', 12, 2);
+            $table->date('payment_date');
+            $table->string('reference')->nullable();
+            $table->string('status')->default('pending'); // pending, completed, cancelled
+            $table->text('notes')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('partner_payments');
+        Schema::dropIfExists('partner_calculations');
+    }
+};

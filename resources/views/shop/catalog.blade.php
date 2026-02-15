@@ -12,34 +12,158 @@
 			transform: rotate(90deg);
 		}
 	</style>
-	{{-- Page Header - Hidden, using layout header instead --}}
-	{{-- Mobile Filter Button --}}
-	<button id="mobile-filter-toggle"
-		class="lg:hidden w-full flex items-center justify-between px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-		<div class="flex items-center gap-2">
-			<svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-					d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-			</svg>
-			<span class="font-medium">Filters</span>
+	{{-- MOBILE LAYOUT --}}
+	<div class="block lg:hidden">
+		{{-- Mobile Filter & Sort Buttons --}}
+		<div class="flex gap-3 mb-4 mt-8 sticky top-0 z-1100 bg-white/95 py-2" style="backdrop-filter: blur(8px);">
+			<button id="mobile-filter-toggle"
+				class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium shadow-md bg-(--color-primary) text-black text-base active:scale-95 transition">
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+				</svg>
+				<span class="font-semibold">Filters</span>
+			</button>
+			<button
+				onclick="document.getElementById('sort-dropdown').classList.toggle('hidden'); document.getElementById('filter-overlay').classList.remove('hidden');"
+				class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium border border-gray-200 shadow-sm bg-white text-(--color-primary) text-base active:scale-95 transition">
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+				</svg>
+				<span class="font-semibold">Sort</span>
+			</button>
 		</div>
-		<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-		</svg>
-	</button>
+		{{-- Mobile Sort Dropdown --}}
+		<div id="sort-dropdown" class="fixed inset-0 z-10001 hidden">
+			<div class="fixed inset-0 bg-black/50 z-10000" onclick="closeSortDropdown()"></div>
+			<div class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 animate-slide-up z-10001">
+				<div class="flex items-center justify-between mb-6">
+					<h3 class="font-bold text-xl text-gray-900">Sort By</h3>
+					<button onclick="closeSortDropdown()" class="p-2 hover:bg-gray-100 rounded-full">
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+						</svg>
+					</button>
+				</div>
+				<div class="space-y-3">
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'newest'])) }}"
+						class="flex items-center justify-between p-4 rounded-xl border {{ request('sort') == 'newest' || !request('sort') ? 'border-primary bg-primary/5' : 'border-gray-200' }}">
+						<span class="font-medium">Newest</span>
+						@if (request('sort') == 'newest' || !request('sort'))
+							<svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd"
+									d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+									clip-rule="evenodd" />
+							</svg>
+						@endif
+					</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-low'])) }}"
+						class="flex items-center justify-between p-4 rounded-xl border {{ request('sort') == 'price-low' ? 'border-primary bg-primary/5' : 'border-gray-200' }}">
+						<span class="font-medium">Price: Low to High</span>
+						@if (request('sort') == 'price-low')
+							<svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd"
+									d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+									clip-rule="evenodd" />
+							</svg>
+						@endif
+					</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-high'])) }}"
+						class="flex items-center justify-between p-4 rounded-xl border {{ request('sort') == 'price-high' ? 'border-primary bg-primary/5' : 'border-gray-200' }}">
+						<span class="font-medium">Price: High to Low</span>
+						@if (request('sort') == 'price-high')
+							<svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd"
+									d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+									clip-rule="evenodd" />
+							</svg>
+						@endif
+					</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'popular'])) }}"
+						class="flex items-center justify-between p-4 rounded-xl border {{ request('sort') == 'popular' ? 'border-primary bg-primary/5' : 'border-gray-200' }}">
+						<span class="font-medium">Most Popular</span>
+						@if (request('sort') == 'popular')
+							<svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd"
+									d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+									clip-rule="evenodd" />
+							</svg>
+						@endif
+					</a>
+				</div>
+			</div>
+		</div>
+		{{-- Mobile Filter Overlay, Drawer, and Product Grid --}}
+		<div id="filter-overlay" class="fixed inset-0 bg-black/60 z-9999 pointer-events-auto hidden" tabindex="-1"
+			aria-hidden="true" style="touch-action: none;"></div>
+		<aside id="filter-drawer"
+			class="fixed top-0 left-0 h-full w-4/5 max-w-xs z-10000 bg-white overflow-y-auto transform -translate-x-full transition-transform duration-300 shadow-xl rounded-2xl border border-gray-100 p-0"
+			style="max-height:100vh;" role="dialog" aria-modal="true" aria-label="Filters">
+			<div class="p-0">
+				{{-- ...existing filter markup... --}}
+				@include('shop.partials.filters')
+				<div class="mt-6 pt-4 border-t">
+					<button onclick="closeFilterDrawer()" class="w-full btn-primary">Apply Filters</button>
+				</div>
+			</div>
+		</aside>
+		<div class="flex flex-col gap-8">
+			{{-- ...existing mobile product grid markup... --}}
+			@include('shop.partials.products')
+		</div>
+	</div>
 
-	<div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+	{{-- DESKTOP LAYOUT --}}
+	<div class="hidden lg:grid lg:grid-cols-12 lg:gap-10 w-full">
+		<aside class="lg:col-span-3 lg:sticky lg:top-8 lg:z-30 shadow-lg rounded-2xl border border-gray-100 p-6 bg-white">
+			{{-- ...existing filter markup... --}}
+			@include('shop.partials.filters')
+		</aside>
+		<div class="lg:col-span-9 flex flex-col gap-8">
+			<div
+				class="flex items-center justify-between bg-white rounded-2xl shadow border border-gray-100 px-6 py-4 mb-4 sticky top-8 z-20">
+				<h3 class="font-bold text-lg text-gray-900">Sort By</h3>
+				<div class="flex gap-2">
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'newest'])) }}"
+						class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'newest' || !request('sort') ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Newest</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-low'])) }}"
+						class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'price-low' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Price:
+						Low to High</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-high'])) }}"
+						class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'price-high' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Price:
+						High to Low</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'popular'])) }}"
+						class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'popular' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Most
+						Popular</a>
+				</div>
+			</div>
+			{{-- ...existing desktop product grid markup... --}}
+			@include('shop.partials.products')
+		</div>
+	</div>
+
+	<script>
+		function closeSortDropdown() {
+			document.getElementById('sort-dropdown').classList.add('hidden');
+			document.getElementById('filter-overlay').classList.add('hidden');
+		}
+	</script>
+
+	<div class="lg:grid lg:grid-cols-12 lg:gap-10 flex flex-col gap-6 w-full">
 		{{-- Mobile Filter Overlay --}}
-		<div id="filter-overlay" class="fixed inset-0 bg-black/50 z-50 lg:hidden hidden" onclick="closeFilterDrawer()"></div>
+		<div id="filter-overlay" class="fixed inset-0 bg-black/60 z-9999 pointer-events-auto lg:hidden hidden"
+			tabindex="-1" aria-hidden="true" style="touch-action: none;"></div>
 
 		{{-- Sidebar Filters (Desktop) / Drawer (Mobile) --}}
 		<aside id="filter-drawer"
-			class="lg:w-64 flex-shrink-0 fixed lg:sticky lg:top-28 inset-y-0 left-0 z-50 lg:z-auto w-80 max-w-[85vw] bg-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 lg:block overflow-y-auto lg:max-h-[calc(100vh-7.5rem)] h-full lg:h-auto pb-20 lg:pb-0">
-			<div class="p-6">
+			class="fixed top-0 left-0 h-full w-4/5 max-w-xs z-10000 bg-white overflow-y-auto transform -translate-x-full transition-transform duration-300 lg:sticky lg:translate-x-0 lg:col-span-3 lg:h-auto lg:w-auto lg:shrink-0 lg:block lg:top-8 lg:z-30 shadow-xl lg:shadow-lg rounded-2xl border border-gray-100 p-0 lg:p-0"
+			style="max-height:100vh;" role="dialog" aria-modal="true" aria-label="Filters">
+			<div class="p-0 lg:p-6">
 				{{-- Mobile Filter Header --}}
 				<div class="flex items-center justify-between mb-6 lg:hidden">
 					<h3 class="font-bold text-xl text-gray-900">Filters</h3>
-					<button onclick="closeFilterDrawer()" class="p-2 hover:bg-gray-100 rounded-full">
+					<button onclick="closeFilterDrawer()" class="p-2 hover:bg-gray-100 rounded-full" aria-label="Close Filters">
 						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 						</svg>
@@ -51,6 +175,7 @@
 					<h3 class="font-bold text-gray-900">Filters</h3>
 					<a href="{{ route('catalog') }}" class="text-primary text-sm hover:underline">Clear all</a>
 				</div>
+
 
 				{{-- Category Filter --}}
 				<div class="mb-6">
@@ -210,125 +335,62 @@
 						Apply Filters
 					</button>
 				</div>
-			</div>
+
 		</aside>
 
 		{{-- Products Grid --}}
-		<div class="flex-1">
-			{{-- Sort Bar --}}
-			<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 md:p-4 mb-4 md:mb-6">
-				<div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-					<div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-						<span class="text-sm text-gray-500 whitespace-nowrap">{{ $products->total() }} products</span>
-						@if ($activeCategory)
-							@php $category = $categories->firstWhere('id', $activeCategory) @endphp
-							@if ($category)
-								<span
-									class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm whitespace-nowrap">
-									{{ $category->name }}
-									<a href="{{ route('catalog', request()->except(['category_id', 'page'])) }}" class="hover:text-primary-dark">
-										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-										</svg>
-									</a>
-								</span>
-							@endif
-						@endif
-						@if ($activeBrand)
-							@php $brand = $brands->firstWhere('id', $activeBrand) @endphp
-							@if ($brand)
-								<span
-									class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm whitespace-nowrap">
-									{{ $brand->name }}
-									<a href="{{ route('catalog', request()->except(['brand_id', 'page'])) }}" class="hover:text-primary-dark">
-										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-										</svg>
-									</a>
-								</span>
-							@endif
-						@endif
-						@if ($activePrice)
-							@php
-								$priceLabels = [
-								    'under-10' => 'Under ৳1,000',
-								    '10-25' => '৳1,000 - ৳2,500',
-								    '25-50' => '৳2,500 - ৳5,000',
-								    'over-50' => 'Over ৳5,000',
-								];
-							@endphp
-							<span
-								class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm whitespace-nowrap">
-								{{ $priceLabels[$activePrice] ?? $activePrice }}
-								<a href="{{ route('catalog', request()->except(['price', 'page'])) }}" class="hover:text-primary-dark">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-									</svg>
-								</a>
-							</span>
-						@endif
-						@if (request('featured'))
-							<span
-								class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm whitespace-nowrap">
-								Featured
-								<a href="{{ route('catalog', request()->except(['featured', 'page'])) }}" class="hover:text-primary-dark">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-									</svg>
-								</a>
-							</span>
-						@endif
-						@if (request('new'))
-							<span
-								class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm whitespace-nowrap">
-								New Arrivals
-								<a href="{{ route('catalog', request()->except(['new', 'page'])) }}" class="hover:text-primary-dark">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-									</svg>
-								</a>
-							</span>
-						@endif
-					</div>
-					<div class="flex items-center gap-2 md:gap-3">
-						<span class="text-sm text-gray-500 whitespace-nowrap">Sort:</span>
-						<select onchange="window.location.href = this.value"
-							class="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none min-h-[44px]">
-							<option value="{{ route('catalog', array_merge(request()->all(), ['sort' => 'newest'])) }}"
-								{{ request('sort') == 'newest' || !request('sort') ? 'selected' : '' }}>
-								Newest
-							</option>
-							<option value="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-low'])) }}"
-								{{ request('sort') == 'price-low' ? 'selected' : '' }}>
-								Price: Low to High
-							</option>
-							<option value="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-high'])) }}"
-								{{ request('sort') == 'price-high' ? 'selected' : '' }}>
-								Price: High to Low
-							</option>
-							<option value="{{ route('catalog', array_merge(request()->all(), ['sort' => 'popular'])) }}"
-								{{ request('sort') == 'popular' ? 'selected' : '' }}>
-								Most Popular
-							</option>
-						</select>
+		{{-- Products --}}
+		<div class="lg:col-span-9 flex flex-col gap-8">
+			{{-- Desktop Sort Bar --}}
+			<div
+				class="hidden lg:flex items-center justify-between bg-white rounded-2xl shadow border border-gray-100 px-6 py-4 mb-4 sticky top-8 z-20">
+				<h3 class="font-bold text-lg text-gray-900">Sort By</h3>
+				<div class="flex gap-2">
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'newest'])) }}"
+						class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'newest' || !request('sort') ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Newest</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-low'])) }}"
+						class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'price-low' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Price:
+						Low to High</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-high'])) }}"
+						class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'price-high' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Price:
+						High to Low</a>
+					<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'popular'])) }}"
+						class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'popular' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Most
+						Popular</a>
+				</div>
+			</div>
+			{{-- Desktop Sort Section --}}
+			<div class="hidden lg:block mb-6">
+				<div class="flex items-center justify-between">
+					<h3 class="font-bold text-xl text-gray-900">Sort By</h3>
+					<div class="flex gap-2">
+						<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'newest'])) }}"
+							class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'newest' || !request('sort') ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Newest</a>
+						<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-low'])) }}"
+							class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'price-low' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Price:
+							Low to High</a>
+						<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'price-high'])) }}"
+							class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'price-high' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Price:
+							High to Low</a>
+						<a href="{{ route('catalog', array_merge(request()->all(), ['sort' => 'popular'])) }}"
+							class="px-4 py-2 rounded-lg border text-sm font-medium transition {{ request('sort') == 'popular' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50' }}">Most
+							Popular</a>
 					</div>
 				</div>
 			</div>
-
-			{{-- Products --}}
 			@if ($products->count() > 0)
 				<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-3 md:gap-6">
 					@foreach ($products as $product)
 						<article
 							class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300">
 							<a href="{{ route('products.show', $product->slug) }}">
-								<div class="relative w-full aspect-[4/3] md:aspect-4/3 bg-gray-100 overflow-hidden">
+								<div class="relative w-full aspect-4/3 md:aspect-4/3 bg-gray-100 overflow-hidden">
 									@php
 										$img = $product->primary_image ?? ($product->images[0] ?? null);
 									@endphp
 									@if ($img)
-										<img src="{{ asset('storage/' . $img) }}" alt="{{ $product->name }}" loading="lazy"
-											class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+										<img src="{{ asset($img) }}" alt="{{ $product->name }}" loading="lazy"
+											class="w-full h-full object-cover group-hover:scale-110 transition duration-500 z-0">
 									@else
 										<div class="w-full h-full flex items-center justify-center">
 											<span class="text-3xl md:text-4xl">🧸</span>
@@ -353,14 +415,15 @@
 										class="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-primary text-[10px] md:text-xs font-semibold mb-1 md:mb-2">{{ $product->category->name }}</span>
 								@endif
 								<a href="{{ route('products.show', $product->slug) }}"
-									class="font-semibold text-sm md:text-base text-gray-800 hover:text-primary line-clamp-2 group-hover:text-primary transition">{{ $product->name }}</a>
+									class="font-semibold text-sm md:text-base text-gray-800 hover:text-(--color-primary) line-clamp-2 group-hover:text-(--color-primary) transition">{{ $product->name }}</a>
 								<div class="flex items-center justify-between mt-2 md:mt-3">
-									<span class="text-base md:text-lg font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
+									<span
+										class="text-base md:text-lg font-bold text-(--color-primary-dark)">৳{{ number_format($product->price, 2) }}</span>
 									@if ($product->review_count > 0)
 										<div class="flex items-center gap-1 text-yellow-400 text-xs md:text-sm">
 											<svg class="w-3 h-3 md:w-4 md:h-4 fill-current" viewBox="0 0 20 20">
 												<path
-													d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+													d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.544z" />
 											</svg>
 											<span class="text-gray-600 text-xs">{{ number_format($product->average_rating, 1) }}</span>
 										</div>
@@ -370,7 +433,7 @@
 								<form action="{{ route('cart.add', $product->slug) }}" method="post" class="mt-3 md:hidden">
 									@csrf
 									<button type="submit"
-										class="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-medium flex items-center justify-center gap-2">
+										class="w-full py-2.5 rounded-lg bg-(--color-primary) text-white text-sm font-medium flex items-center justify-center gap-2 active:scale-95 transition">
 										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 										</svg>
@@ -408,6 +471,8 @@
 		</div>
 	</div>
 
+
+
 	{{-- Filter Drawer Scripts --}}
 	<script>
 		const filterToggle = document.getElementById('mobile-filter-toggle');
@@ -418,20 +483,29 @@
 			filterDrawer.classList.remove('-translate-x-full');
 			filterOverlay.classList.remove('hidden');
 			document.body.style.overflow = 'hidden';
+			filterDrawer.setAttribute('aria-hidden', 'false');
+			filterOverlay.setAttribute('aria-hidden', 'false');
 		}
 
 		function closeFilterDrawer() {
 			filterDrawer.classList.add('-translate-x-full');
 			filterOverlay.classList.add('hidden');
 			document.body.style.overflow = '';
+			filterDrawer.setAttribute('aria-hidden', 'true');
+			filterOverlay.setAttribute('aria-hidden', 'true');
 		}
 
 		if (filterToggle && filterDrawer) {
 			filterToggle.addEventListener('click', openFilterDrawer);
 		}
-
 		if (filterOverlay) {
 			filterOverlay.addEventListener('click', closeFilterDrawer);
 		}
+		// Trap focus inside filter drawer when open (accessibility)
+		document.addEventListener('keydown', function(e) {
+			if (!filterDrawer.classList.contains('-translate-x-full')) {
+				if (e.key === 'Escape') closeFilterDrawer();
+			}
+		});
 	</script>
 @endsection

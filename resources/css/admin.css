@@ -30,7 +30,6 @@ a.btn,
 .pagination span {
     min-height: 48px;
     min-width: 48px;
-    padding: 12px 16px;
     touch-action: manipulation;
 }
 
