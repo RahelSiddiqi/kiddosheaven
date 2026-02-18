@@ -13,10 +13,12 @@
     {{-- ===== Product Top Section ===== --}}
     <div class="grid md:grid-cols-2 gap-6 md:gap-10 mb-10">
         {{-- Gallery --}}
-        <x-shop.product.gallery :product="$product" />
+        <div class="min-w-0 w-full">
+            <x-shop.product.gallery :product="$product" />
+        </div>
 
         {{-- Product Info --}}
-        <div class="space-y-5">
+        <div class="space-y-5 min-w-0 w-full">
             {{-- Category & Brand --}}
             <div class="flex items-center gap-2 flex-wrap">
                 @if ($product->brand)
@@ -254,7 +256,7 @@
         {{-- Tab: Description --}}
         <div x-show="activeTab === 'description'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
             @if ($product->description)
-                <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed overflow-hidden break-words">
                     {!! $product->description !!}
                 </div>
             @else
@@ -355,8 +357,9 @@
 
         {{-- Tab: Specifications --}}
         <div x-show="activeTab === 'specs'" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
-            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <table class="w-full text-sm">
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden w-full">
+                <div class="overflow-x-auto w-full">
+                <table class="w-full text-sm min-w-0">
                     <tbody class="divide-y divide-gray-100">
                         @if ($product->sku)
                             <tr>
@@ -413,6 +416,7 @@
                         @endif
                     </tbody>
                 </table>
+                </div>{{-- /overflow-x-auto --}}
 
                 @if ($product->tags && is_array($product->tags) && count($product->tags) > 0)
                     <div class="px-5 py-3 border-t border-gray-100">

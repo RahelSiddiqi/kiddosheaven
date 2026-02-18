@@ -7,10 +7,10 @@
 
 <div x-data="{ activeImage: '{{ $mainImage ? asset('storage/' . $mainImage) : '' }}' }"
     @variant-image-change.window="activeImage = $event.detail.src"
-    class="space-y-3">
+    class="space-y-3 w-full min-w-0">
     {{-- Main Image --}}
-    <div class="relative bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div class="aspect-square bg-gray-50">
+    <div class="relative bg-white rounded-2xl border border-gray-100 overflow-hidden w-full">
+        <div class="aspect-square bg-gray-50 w-full">
             <template x-if="activeImage">
                 <img :src="activeImage" alt="{{ $product->name }}" class="w-full h-full object-contain">
             </template>
@@ -92,15 +92,17 @@
 
     {{-- Thumbnails --}}
     @if (count($allImages) > 1)
-        <div class="flex gap-2.5 overflow-x-auto pl-2 pt-1 pb-1 scrollbar-hide">
-            @foreach ($allImages as $img)
-                <button type="button"
-                    @click="activeImage = '{{ asset('storage/' . $img) }}'"
-                    :class="activeImage === '{{ asset('storage/' . $img) }}' ? 'ring-2 ring-primary border-transparent' : 'border-gray-200 hover:border-primary'"
-                    class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition flex-shrink-0">
-                    <img src="{{ asset('storage/' . $img) }}" alt="Thumbnail" class="w-full h-full object-cover">
-                </button>
-            @endforeach
+        <div class="w-full min-w-0 overflow-hidden">
+            <div class="flex gap-2 overflow-x-auto py-1 scrollbar-hide" style="-webkit-overflow-scrolling: touch;">
+                @foreach ($allImages as $img)
+                    <button type="button"
+                        @click="activeImage = '{{ asset('storage/' . $img) }}'"
+                        :class="activeImage === '{{ asset('storage/' . $img) }}' ? 'ring-2 ring-primary border-transparent' : 'border-gray-200 hover:border-primary'"
+                        class="w-16 h-16 shrink-0 rounded-lg overflow-hidden border-2 transition">
+                        <img src="{{ asset('storage/' . $img) }}" alt="Thumbnail" class="w-full h-full object-cover">
+                    </button>
+                @endforeach
+            </div>
         </div>
     @endif
 </div>
