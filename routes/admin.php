@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\PurchaseBatchController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\PartnerCalculationController;
@@ -32,25 +33,23 @@ use App\Http\Controllers\Admin\ReportController;
 use Illuminate\Support\Facades\Route;
 
 // Admin Authentication Routes (outside middleware)
-Route::middleware('guest')->group(function () {
-    Route::get('/admin/login', [LoginController::class, 'showAdminLoginForm'])->name('admin.login');
-    Route::post('/admin/login', [LoginController::class, 'adminLogin'])->name('admin.login.submit');
-});
+Route::get('/admin/login', [LoginController::class, 'showAdminLoginForm'])->middleware('guest')->name('admin.login');
+Route::post('/admin/login', [LoginController::class, 'adminLogin'])->middleware('guest')->name('admin.login.submit');
 
 Route::post('/admin/logout', [LoginController::class, 'adminLogout'])->name('admin.logout');
 
 // Protected Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->middleware('permission:view-dashboard')->name('dashboard');
 
     // ============================================
     // CATEGORIES
     // ============================================
     Route::prefix('categories')->name('categories.')->group(function () {
-        Route::post('reorder', [\App\Http\Controllers\Admin\CategoryController::class, 'reorder'])->name('reorder');
+        Route::post('reorder', [\App\Http\Controllers\Admin\CategoryController::class, 'reorder'])->middleware('permission:manage-categories')->name('reorder');
         Route::resource('/', \App\Http\Controllers\Admin\CategoryController::class)->parameters(['' => 'category']);
-    });
+    })->middleware('permission:view-categories');
 
     // ============================================
     // PRICING TEMPLATES
@@ -60,12 +59,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/preview', [\App\Http\Controllers\Admin\PricingTemplateController::class, 'preview'])->name('preview');
         Route::post('{pricingTemplate}/attach-categories', [\App\Http\Controllers\Admin\PricingTemplateController::class, 'attachCategories'])->name('attach-categories');
         Route::resource('/', \App\Http\Controllers\Admin\PricingTemplateController::class)->parameters(['' => 'pricingTemplate']);
-    });
+    })->middleware('permission:view-categories');
 
     // ============================================
     // ATTRIBUTES (Global)
     // ============================================
-    Route::prefix('attributes')->name('attributes.')->group(function () {
+    Route::prefix('attributes')->name('attributes.')->middleware('permission:view-categories')->group(function () {
         // Action routes before resource
         Route::post('reorder', [AttributeController::class, 'reorder'])->name('reorder');
 
@@ -86,12 +85,20 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // PRODUCTS
     // ============================================
-    Route::prefix('products')->name('products.')->group(function () {
+    Route::prefix('products')->name('products.')->middleware('permission:view-products')->group(function () {
         // Bulk action route
         Route::post('bulk-action', [ProductController::class, 'bulkAction'])->name('bulk-action');
 
         // Get attributes by category (AJAX helper)
         Route::get('attributes/{category}', [ProductController::class, 'getAttributesByCategory'])->name('attributes');
+
+        // Simplified product creation (NEW)
+        Route::get('create/simple', function () {
+            $categories = \App\Services\CategoryService::class;
+            $categories = app($categories)->getHierarchicalList();
+            $brands = \App\Models\Brand::orderBy('name')->get();
+            return view('admin.products.create-simple', compact('categories', 'brands'));
+        })->name('create.simple');
 
         // Get variant attributes by category (AJAX helper)
         Route::get('variant-attributes/{category}', [ProductController::class, 'getVariantAttributes'])->name('variant-attributes');
@@ -131,9 +138,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // BRANDS
     // ============================================
-    Route::prefix('brands')->name('brands.')->group(function () {
+    Route::prefix('brands')->name('brands.')->middleware('permission:view-brands')->group(function () {
         // Action routes before resource
-        Route::post('{brand}/toggle', [BrandController::class, 'toggleActive'])->name('toggle');
+        Route::post('{brand}/toggle', [BrandController::class, 'toggleActive'])->middleware('permission:manage-brands')->name('toggle');
 
         // Resource routes
         Route::resource('/', BrandController::class)->parameters(['' => 'brand']);
@@ -142,7 +149,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // ORDERS
     // ============================================
-    Route::prefix('orders')->name('orders.')->group(function () {
+    Route::prefix('orders')->name('orders.')->middleware('permission:view-orders')->group(function () {
         // Collection action routes before resource
         Route::post('bulk-status', [OrderController::class, 'bulkUpdateStatus'])->name('bulk-status');
         Route::get('export', [OrderController::class, 'export'])->name('export');
@@ -159,7 +166,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // INVENTORY
     // ============================================
-    Route::prefix('inventory')->name('inventory.')->group(function () {
+    Route::prefix('inventory')->name('inventory.')->middleware('permission:view-inventory')->group(function () {
         // Specific routes before generic index
         Route::get('alerts', [InventoryController::class, 'alerts'])->name('alerts');
         Route::post('update', [InventoryController::class, 'updateStock'])->name('update');
@@ -176,7 +183,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
 
     // Purchase Batches
-    Route::prefix('purchase-batches')->name('purchase-batches.')->group(function () {
+    Route::prefix('purchase-batches')->name('purchase-batches.')->middleware('permission:view-inventory')->group(function () {
         // Specific action routes
         Route::get('product/{product}', [PurchaseBatchController::class, 'getByProduct'])->name('by-product');
         Route::patch('{purchaseBatch}/mark-exhausted', [PurchaseBatchController::class, 'markExhausted'])->name('mark-exhausted');
@@ -188,7 +195,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // CUSTOMERS
     // ============================================
-    Route::prefix('customers')->name('customers.')->group(function () {
+    Route::prefix('customers')->name('customers.')->middleware('permission:view-customers')->group(function () {
         // Action routes
         Route::post('{customer}/toggle', [CustomerController::class, 'toggleActive'])->name('toggle');
 
@@ -199,7 +206,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // MARKETING
     // ============================================
-    Route::prefix('marketing')->name('marketing.')->group(function () {
+    Route::prefix('marketing')->name('marketing.')->middleware('permission:view-marketing')->group(function () {
         // Coupons
         Route::prefix('coupons')->name('coupons.')->group(function () {
             // Specific routes
@@ -222,14 +229,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // CMS
     // ============================================
-    Route::prefix('cms')->name('cms.')->group(function () {
+    Route::prefix('cms')->name('cms.')->middleware('permission:view-cms')->group(function () {
         Route::resource('pages', CmsPageController::class)->parameters(['pages' => 'cms_page']);
     });
 
     // ============================================
     // REVIEWS
     // ============================================
-    Route::prefix('reviews')->name('reviews.')->group(function () {
+    Route::prefix('reviews')->name('reviews.')->middleware('permission:view-reviews')->group(function () {
         // Bulk action routes
         Route::post('bulk-approve', [ReviewController::class, 'bulkApprove'])->name('bulk-approve');
         Route::post('bulk-destroy', [ReviewController::class, 'bulkDestroy'])->name('bulk-destroy');
@@ -244,7 +251,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // CAPITAL ACCOUNTS
     // ============================================
-    Route::prefix('capital-accounts')->name('capital-accounts.')->group(function () {
+    Route::prefix('capital-accounts')->name('capital-accounts.')->middleware('permission:view-finance')->group(function () {
         // Specific routes
         Route::get('partner/{partner}', [CapitalAccountController::class, 'getByPartner'])->name('by-partner');
 
@@ -255,7 +262,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // FINANCIAL TRANSACTIONS
     // ============================================
-    Route::prefix('financial-transactions')->name('financial-transactions.')->group(function () {
+    Route::prefix('financial-transactions')->name('financial-transactions.')->middleware('permission:view-finance')->group(function () {
         // Specific routes
         Route::get('account/{account}', [FinancialTransactionController::class, 'getByAccount'])->name('by-account');
 
@@ -266,7 +273,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // EXPENSES
     // ============================================
-    Route::prefix('expenses')->name('expenses.')->group(function () {
+    Route::prefix('expenses')->name('expenses.')->middleware('permission:view-finance')->group(function () {
         // Category routes
         Route::post('categories', [ExpenseController::class, 'storeCategory'])->name('store-category');
         Route::delete('categories/{category}', [ExpenseController::class, 'destroyCategory'])->name('destroy-category');
@@ -282,7 +289,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // PARTNERS
     // ============================================
-    Route::prefix('partners')->name('partners.')->group(function () {
+    Route::prefix('partners')->name('partners.')->middleware('permission:view-finance')->group(function () {
         // Partner Calculations (nested group with static "calculations" prefix)
         Route::prefix('calculations')->name('calculations.')->group(function () {
             Route::post('{calculation}/approve', [PartnerCalculationController::class, 'approve'])->name('approve');
@@ -303,7 +310,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // INVESTMENTS
     // ============================================
-    Route::prefix('investments')->name('investments.')->group(function () {
+    Route::prefix('investments')->name('investments.')->middleware('permission:view-finance')->group(function () {
         // Action routes
         Route::put('{investment}/status', [InvestmentController::class, 'updateStatus'])->name('update-status');
 
@@ -314,7 +321,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // REPORTS
     // ============================================
-    Route::prefix('reports')->name('reports.')->group(function () {
+    Route::prefix('reports')->name('reports.')->middleware('permission:view-reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
 
         // Inventory Reports
@@ -347,24 +354,46 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     // SETTINGS & ADMINISTRATION
     // ============================================
-    Route::prefix('settings')->name('settings.')->group(function () {
+
+    // Users
+    Route::prefix('users')->name('users.')->middleware('permission:view-users')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->middleware('permission:create-users')->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\UserController::class, 'store'])->middleware('permission:create-users')->name('store');
+        Route::get('/{user}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])->middleware('permission:manage-users')->name('edit');
+        Route::put('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->middleware('permission:manage-users')->name('update');
+        Route::delete('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->middleware('permission:manage-users')->name('destroy');
+    });
+
+    // Profile
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'index'])->name('index');
+        Route::put('/', [ProfileController::class, 'update'])->name('update');
+        Route::put('password', [ProfileController::class, 'updatePassword'])->name('password');
+    });
+
+    Route::prefix('settings')->name('settings.')->middleware('permission:view-settings')->group(function () {
         Route::get('/', [SettingController::class, 'edit'])->name('edit');
-        Route::put('/', [SettingController::class, 'update'])->name('update');
+        Route::put('/', [SettingController::class, 'update'])->middleware('permission:manage-settings')->name('update');
     });
 
     // Roles & Permissions
-    Route::prefix('roles')->name('roles.')->group(function () {
+    Route::prefix('roles')->name('roles.')->middleware('permission:view-roles')->group(function () {
         Route::resource('/', RoleController::class)->parameters(['' => 'role']);
     });
 
-    Route::prefix('permissions')->name('permissions.')->group(function () {
-        Route::resource('/', PermissionController::class)->parameters(['' => 'permission']);
+    Route::prefix('permissions')->name('permissions.')->middleware('permission:view-roles')->group(function () {
+        Route::resource('/', PermissionController::class)
+            ->parameters(['' => 'permission'])
+            ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        Route::post('assign', [PermissionController::class, 'assign'])->name('assign');
+        Route::post('generate', [PermissionController::class, 'generate'])->name('generate');
     });
 
     // ============================================
     // LOYALTY PROGRAM
     // ============================================
-    Route::prefix('loyalty')->name('loyalty.')->group(function () {
+    Route::prefix('loyalty')->name('loyalty.')->middleware('permission:view-marketing')->group(function () {
         Route::get('/', [LoyaltyController::class, 'index'])->name('index');
         Route::put('{program}', [LoyaltyController::class, 'updateProgram'])->name('update');
         Route::post('add-points', [LoyaltyController::class, 'addPoints'])->name('add-points');

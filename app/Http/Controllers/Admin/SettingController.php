@@ -13,7 +13,7 @@ class SettingController extends Controller
     {
         $settings = Setting::pluck('value', 'key')->toArray();
 
-        return view('admin.settings.index', compact('settings'));
+        return view('admin.settings.edit', compact('settings'));
     }
 
     public function update(Request $request)
@@ -23,9 +23,9 @@ class SettingController extends Controller
             'site_description' => 'nullable|string',
             'site_logo' => 'nullable|string',
             'site_favicon' => 'nullable|string',
-            'contact_email' => 'nullable|email',
-            'contact_phone' => 'nullable|string|max:20',
-            'contact_address' => 'nullable|string',
+            'site_email' => 'nullable|email',
+            'site_phone' => 'nullable|string|max:20',
+            'site_address' => 'nullable|string',
             'currency' => 'nullable|string|size:3',
             'timezone' => 'nullable|string',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
@@ -38,6 +38,23 @@ class SettingController extends Controller
             'enable_wishlist' => 'boolean',
             'enable_coupon' => 'boolean',
             'maintenance_mode' => 'boolean',
+            // Commerce badges & policy
+            'return_policy_days' => 'nullable|integer|min:0',
+            'delivery_days' => 'nullable|string|max:50',
+            'cod_enabled' => 'boolean',
+            'safe_non_toxic' => 'boolean',
+            // About page
+            'about_founded_year' => 'nullable|string|max:10',
+            'about_happy_customers' => 'nullable|string|max:20',
+            'about_products_count' => 'nullable|string|max:20',
+            'about_rating' => 'nullable|string|max:10',
+            'about_years_experience' => 'nullable|string|max:20',
+            // Contact & social
+            'contact_hours_weekday' => 'nullable|string|max:100',
+            'contact_hours_weekday_time' => 'nullable|string|max:50',
+            'contact_hours_friday_time' => 'nullable|string|max:50',
+            'social_facebook' => 'nullable|url|max:255',
+            'social_instagram' => 'nullable|url|max:255',
         ]);
 
         foreach ($validated as $key => $value) {

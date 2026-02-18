@@ -50,7 +50,7 @@
 
 			<x-admin.ui.stat-card title="Out of Stock" :value="$outOfStockCount" icon="x-circle" color="red" :url="route('admin.inventory.index', ['filter' => 'out'])" />
 
-			<x-admin.ui.stat-card title="Total Value" :value="'৳' . number_format($totalValue, 2)" icon="currency" color="green" />
+			<x-admin.ui.stat-card title="Total Value" :value="'৳' . number_format($totalValue, 0)" icon="currency" color="green" />
 		</div>
 
 		<!-- Filter & Search Bar -->

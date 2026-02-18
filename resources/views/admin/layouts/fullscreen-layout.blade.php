@@ -6,7 +6,15 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="csrf-token" content="{{ csrf_token() }}">
 
-		<title>{{ $title ?? 'Dashboard' }} | TailAdmin - Laravel Tailwind CSS Admin Dashboard Template</title>
+		<title>{{ $title ?? 'Dashboard' }} — Kiddo's Heaven Admin</title>
+
+		{{-- Favicons --}}
+		<link rel="icon" type="image/x-icon" href="{{ asset('storage/logo/favicon/favicon.ico') }}">
+		<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('storage/logo/favicon/favicon-32x32.png') }}">
+		<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('storage/logo/favicon/favicon-16x16.png') }}">
+		<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('storage/logo/favicon/apple-touch-icon.png') }}">
+		<link rel="manifest" href="{{ asset('storage/logo/favicon/site.webmanifest') }}">
+		<meta name="theme-color" content="#018790">
 
 		<!-- Scripts -->
 		@vite(['resources/css/admin.css', 'resources/js/admin.js'])

@@ -2,6 +2,9 @@
 
 namespace App\Services\Order;
 
+use App\Events\OrderPlaced;
+use App\Events\OrderStatusChanged;
+use App\Models\Setting;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Services\InventoryService;
@@ -63,9 +66,9 @@ class OrderService
      *
      * @param int $userId
      * @param int $perPage
-     * @return LengthAwarePaginator
+     * @return Collection
      */
-    public function getByUser(int $userId, int $perPage = 20): LengthAwarePaginator
+    public function getByUser(int $userId, int $perPage = 20): Collection
     {
         return $this->orderRepository->getByUser($userId, $perPage);
     }
@@ -122,7 +125,11 @@ class OrderService
 
             DB::commit();
 
-            return $order->fresh(['items', 'user']);
+            // Dispatch OrderPlaced event (triggers email, etc.)
+            $order = $order->fresh(['items', 'user']);
+            event(new OrderPlaced($order));
+
+            return $order;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Order creation failed: ' . $e->getMessage());
@@ -196,11 +203,17 @@ class OrderService
     public function updateStatus(int $orderId, string $status): bool
     {
         try {
+            $order = $this->orderRepository->findOrFail($orderId);
+            $oldStatus = $order->status;
+
             $result = $this->orderRepository->updateStatus($orderId, $status);
 
             // Handle stock adjustments based on status
             if ($result) {
                 $this->handleStatusStockAdjustment($orderId, $status);
+
+                // Dispatch OrderStatusChanged event (triggers status history logging)
+                event(new OrderStatusChanged($order->fresh(), $oldStatus, $status));
             }
 
             return $result;
@@ -248,6 +261,9 @@ class OrderService
             $result = $this->orderRepository->updateStatus($orderId, 'cancelled');
 
             DB::commit();
+
+            // Dispatch status change event
+            event(new OrderStatusChanged($order->fresh(), $order->status, 'cancelled'));
 
             return $result;
         } catch (\Exception $e) {
@@ -368,7 +384,7 @@ class OrderService
      */
     protected function orderNumberExists(string $orderNumber): bool
     {
-        return $this->orderRepository->exists(['order_number' => $orderNumber]);
+        return $this->orderRepository->where('order_number', $orderNumber)->isNotEmpty();
     }
 
     /**
@@ -387,7 +403,7 @@ class OrderService
             $subtotal += $price * $quantity;
         }
 
-        $taxRate = 0; // Configure tax rate as needed
+        $taxRate = $this->getTaxRate();
         $tax = $subtotal * ($taxRate / 100);
         $total = $subtotal + $tax;
 
@@ -445,12 +461,9 @@ class OrderService
                 'total_price'        => $unitPrice * $quantity,
             ]);
 
-            // ── Sync the denormalised stock counter ────────
-            $this->productRepository->updateStock(
-                $productId,
-                $quantity,
-                'decrement'
-            );
+            // Note: Stock deduction is already handled by InventoryService->deductStock()
+            // which decrements product.stock_quantity and variant.stock_quantity to keep
+            // the denormalised counters in sync with the batch records
         }
     }
 
@@ -463,7 +476,7 @@ class OrderService
     protected function recalculateTotals(\App\Models\Order $order): void
     {
         $subtotal = $order->items->sum('total_price');
-        $taxRate = 0; // Configure tax rate
+        $taxRate = $this->getTaxRate();
         $tax = $subtotal * ($taxRate / 100);
 
         $this->orderRepository->update($order->id, [
@@ -509,6 +522,19 @@ class OrderService
                     'increment'
                 );
             }
+        }
+    }
+
+    /**
+     * Get the configured tax rate from settings, defaulting to 0.
+     */
+    protected function getTaxRate(): float
+    {
+        try {
+            $setting = Setting::where('key', 'tax_rate')->first();
+            return $setting ? (float) $setting->value : 0;
+        } catch (\Throwable $e) {
+            return 0;
         }
     }
 }

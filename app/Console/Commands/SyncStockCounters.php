@@ -27,7 +27,7 @@ class SyncStockCounters extends Command
             $batchStock = (int) PurchaseBatch::where('product_id', $product->id)
                 ->where('remaining_quantity', '>', 0)
                 ->whereNotIn('status', ['expired', 'damaged'])
-                ->sum('remaining_quantity');
+                ->sum(DB::raw('remaining_quantity - quantity_reserved'));
 
             $drift = $product->stock_quantity - $batchStock;
 
@@ -50,7 +50,7 @@ class SyncStockCounters extends Command
             $batchStock = (int) PurchaseBatch::where('product_variant_id', $variant->id)
                 ->where('remaining_quantity', '>', 0)
                 ->whereNotIn('status', ['expired', 'damaged'])
-                ->sum('remaining_quantity');
+                ->sum(DB::raw('remaining_quantity - quantity_reserved'));
 
             $drift = $variant->stock_quantity - $batchStock;
 

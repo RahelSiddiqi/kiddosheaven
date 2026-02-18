@@ -115,6 +115,113 @@
 					</div>
 				</div>
 
+				<!-- Commerce — Extra Settings -->
+				<div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+					<h4 class="text-md font-semibold text-gray-800 dark:text-white mb-4">Commerce — Badges &amp; Policy</h4>
+					<div class="grid gap-4 md:grid-cols-2">
+						<div>
+							<label for="return_policy_days" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Return Policy (days)</label>
+							<input type="number" name="return_policy_days" id="return_policy_days" min="0"
+								value="{{ old('return_policy_days', $settings['return_policy_days'] ?? '30') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="delivery_days" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Delivery Days</label>
+							<input type="text" name="delivery_days" id="delivery_days" placeholder="e.g. 2-5 business days"
+								value="{{ old('delivery_days', $settings['delivery_days'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div class="flex items-center gap-3">
+							<input type="hidden" name="cod_enabled" value="0">
+							<input type="checkbox" name="cod_enabled" id="cod_enabled" value="1"
+								{{ old('cod_enabled', $settings['cod_enabled'] ?? '1') == '1' ? 'checked' : '' }}
+								class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+							<label for="cod_enabled" class="text-sm font-medium text-gray-700 dark:text-gray-400">Cash on Delivery Enabled</label>
+						</div>
+						<div class="flex items-center gap-3">
+							<input type="hidden" name="safe_non_toxic" value="0">
+							<input type="checkbox" name="safe_non_toxic" id="safe_non_toxic" value="1"
+								{{ old('safe_non_toxic', $settings['safe_non_toxic'] ?? '1') == '1' ? 'checked' : '' }}
+								class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+							<label for="safe_non_toxic" class="text-sm font-medium text-gray-700 dark:text-gray-400">Show «Safe &amp; Non-Toxic» Badge</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- About Page Settings -->
+				<div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+					<h4 class="text-md font-semibold text-gray-800 dark:text-white mb-4">About Page</h4>
+					<div class="grid gap-4 md:grid-cols-3">
+						<div>
+							<label for="about_founded_year" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Founded Year</label>
+							<input type="text" name="about_founded_year" id="about_founded_year" placeholder="2020"
+								value="{{ old('about_founded_year', $settings['about_founded_year'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="about_happy_customers" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Happy Customers Stat</label>
+							<input type="text" name="about_happy_customers" id="about_happy_customers" placeholder="50K+"
+								value="{{ old('about_happy_customers', $settings['about_happy_customers'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="about_products_count" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Products Count Stat</label>
+							<input type="text" name="about_products_count" id="about_products_count" placeholder="2K+"
+								value="{{ old('about_products_count', $settings['about_products_count'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="about_rating" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Rating Stat</label>
+							<input type="text" name="about_rating" id="about_rating" placeholder="5"
+								value="{{ old('about_rating', $settings['about_rating'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="about_years_experience" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Years of Experience</label>
+							<input type="text" name="about_years_experience" id="about_years_experience" placeholder="5+"
+								value="{{ old('about_years_experience', $settings['about_years_experience'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+					</div>
+				</div>
+
+				<!-- Contact & Social Settings -->
+				<div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+					<h4 class="text-md font-semibold text-gray-800 dark:text-white mb-4">Contact &amp; Social</h4>
+					<div class="grid gap-4 md:grid-cols-2">
+						<div>
+							<label for="contact_hours_weekday" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Weekday Hours Label</label>
+							<input type="text" name="contact_hours_weekday" id="contact_hours_weekday" placeholder="Saturday - Thursday"
+								value="{{ old('contact_hours_weekday', $settings['contact_hours_weekday'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="contact_hours_weekday_time" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Weekday Opening Hours</label>
+							<input type="text" name="contact_hours_weekday_time" id="contact_hours_weekday_time" placeholder="10:00 AM - 8:00 PM"
+								value="{{ old('contact_hours_weekday_time', $settings['contact_hours_weekday_time'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="contact_hours_friday_time" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Friday Opening Hours</label>
+							<input type="text" name="contact_hours_friday_time" id="contact_hours_friday_time" placeholder="2:00 PM - 8:00 PM"
+								value="{{ old('contact_hours_friday_time', $settings['contact_hours_friday_time'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="social_facebook" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Facebook URL</label>
+							<input type="url" name="social_facebook" id="social_facebook" placeholder="https://facebook.com/..."
+								value="{{ old('social_facebook', $settings['social_facebook'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+						<div>
+							<label for="social_instagram" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Instagram URL</label>
+							<input type="url" name="social_instagram" id="social_instagram" placeholder="https://instagram.com/..."
+								value="{{ old('social_instagram', $settings['social_instagram'] ?? '') }}"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+						</div>
+					</div>
+				</div>
+
 				<!-- Submit Button -->
 				<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
 					<button type="submit"

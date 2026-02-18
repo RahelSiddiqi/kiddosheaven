@@ -77,7 +77,7 @@
 					@if ($product->description)
 						<div>
 							<h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Description</h4>
-							<p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $product->description }}</p>
+							<div class="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">{!! $product->description !!}</div>
 						</div>
 					@endif
 
@@ -94,24 +94,27 @@
 						</div>
 					@endif
 
-					@if ($product->warranty || $product->manufacturer)
+					@php
+						$adminHtmlFields = array_filter([
+							'Manufacturer'  => $product->manufacturer,
+							'Warranty'      => $product->warranty,
+							'Return Policy' => $product->return_policy,
+							'Ingredients'   => $product->ingredients,
+						], fn($v) => trim(strip_tags($v ?? '')) !== '');
+					@endphp
+					@if (count($adminHtmlFields) > 0)
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							@if ($product->warranty)
-								<div>
-									<span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Warranty</span>
-									<p class="text-sm text-gray-700 dark:text-gray-300">{{ $product->warranty }}</p>
+							@foreach ($adminHtmlFields as $label => $value)
+								<div class="rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4">
+									<h4 class="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2">{{ $label }}</h4>
+									<div class="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">{!! $value !!}</div>
 								</div>
-							@endif
-							@if ($product->manufacturer)
-								<div>
-									<span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Manufacturer</span>
-									<p class="text-sm text-gray-700 dark:text-gray-300">{{ $product->manufacturer }}</p>
-								</div>
-							@endif
+							@endforeach
 						</div>
 					@endif
 				</div>
 			</div>
+
 		</div>
 
 		{{-- Right Column - Sidebar --}}
@@ -120,8 +123,8 @@
 			<x-admin.ui.info-card
 				title="Pricing"
 				:items="[
-					['label' => 'Selling Price', 'value' => '৳' . number_format($product->price, 2), 'mono' => true],
-					['label' => 'Cost Price', 'value' => '৳' . number_format($product->cost_price ?? 0, 2), 'mono' => true],
+					['label' => 'Selling Price', 'value' => '৳' . number_format($product->price, 0), 'mono' => true],
+					['label' => 'Cost Price', 'value' => '৳' . number_format($product->cost_price ?? 0, 0), 'mono' => true],
 					['label' => 'Profit Margin', 'value' => number_format($product->profit_margin, 1) . '%', 'badge' => $product->profit_margin > 0 ? 'green' : 'red'],
 				]"
 			/>
@@ -158,6 +161,40 @@
 					['label' => 'Featured', 'value' => $product->is_featured ? 'Yes' : 'No', 'badge' => $product->is_featured ? 'blue' : 'gray'],
 				]"
 			/>
+
+			{{-- Product Images --}}
+			@php
+				$allImages = array_values(array_filter(array_merge(
+					$product->primary_image ? [$product->primary_image] : [],
+					array_filter($product->images ?? [], fn($img) => $img !== $product->primary_image)
+				)));
+			@endphp
+			@if (count($allImages) > 0)
+				<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+					<div class="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+						<h3 class="text-sm font-semibold text-gray-900 dark:text-white">Images</h3>
+						<span class="text-xs text-gray-500 dark:text-gray-400">{{ count($allImages) }}</span>
+					</div>
+					<div class="p-2">
+						<div class="flex flex-wrap gap-1.5">
+							@foreach ($allImages as $index => $image)
+								<a href="{{ Storage::url($image) }}" target="_blank"
+									class="relative group block rounded overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+									style="width: calc(25% - 5px); aspect-ratio: 1/1;"
+									title="{{ $index === 0 ? 'Primary' : 'Image ' . ($index + 1) }}">
+									<img src="{{ Storage::url($image) }}"
+										alt="Image {{ $index + 1 }}"
+										class="w-full h-full object-cover transition group-hover:opacity-75"
+										onerror="this.src='https://placehold.co/60x60?text=?'">
+									@if ($index === 0)
+										<span class="absolute bottom-0 inset-x-0 text-center text-white bg-black/50 text-[8px] font-semibold py-px leading-tight">Main</span>
+									@endif
+								</a>
+							@endforeach
+						</div>
+					</div>
+				</div>
+			@endif
 		</div>
 	</div>
 
@@ -347,10 +384,10 @@
 									<td class="px-4 py-3 text-right">
 										@if ($hasDiscount)
 											<span class="text-sm font-semibold text-red-600 dark:text-red-400">
-												৳{{ number_format($variant->price, 2) }}
+												৳{{ number_format($variant->price, 0) }}
 											</span>
 											<div class="text-xs text-gray-500 line-through">
-												৳{{ number_format($variant->compare_at_price, 2) }}
+												৳{{ number_format($variant->compare_at_price, 0) }}
 											</div>
 										@else
 											<span class="text-xs text-gray-400">—</span>
@@ -367,7 +404,7 @@
 									</td>
 									<td class="px-4 py-3 text-right">
 										<div class="text-sm font-medium {{ $profitMargin >= 50 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400' }}">
-											৳{{ number_format($profitAmount, 2) }}
+											৳{{ number_format($profitAmount, 0) }}
 										</div>
 										<div class="text-xs text-gray-500">
 											({{ number_format($profitMargin, 0) }}%)

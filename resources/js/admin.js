@@ -6,15 +6,12 @@ import {
     reinitSelect2,
 } from "./global-forms";
 
-// flatpickr
-import flatpickr from "flatpickr";
-import "flatpickr/dist/flatpickr.min.css";
+
 // FullCalendar
 import { Calendar } from "@fullcalendar/core";
 
 window.Alpine = Alpine;
 window.ApexCharts = ApexCharts;
-window.flatpickr = flatpickr;
 window.FullCalendar = Calendar;
 
 // Helper function to reload page after a delay
@@ -30,6 +27,30 @@ Alpine.start();
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize Select2 for all select elements
     initSelect2();
+
+    // Watch for dynamically added select elements
+    const contentObserver = new MutationObserver((mutations) => {
+        let shouldReinitSelect = false;
+
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { // Element node
+                    if (node.tagName === 'SELECT' || (node.querySelector && node.querySelector('select:not(.no-select2)'))) {
+                        shouldReinitSelect = true;
+                    }
+                }
+            });
+        });
+
+        if (shouldReinitSelect) {
+            setTimeout(() => initSelect2(), 100);
+        }
+    });
+
+    contentObserver.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
 
     // Map imports
     if (document.querySelector("#mapOne")) {

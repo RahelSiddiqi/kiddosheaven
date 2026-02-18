@@ -128,7 +128,7 @@
 													@if ($coupon->type === 'percentage')
 														{{ $coupon->value }}%
 													@elseif($coupon->type === 'fixed')
-														৳ {{ number_format($coupon->value, 2) }}
+														৳ {{ number_format($coupon->value, 0) }}
 													@else
 														Free
 													@endif

@@ -35,7 +35,7 @@
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 		<x-admin.ui.stat-card
 			title="Order Total"
-			:value="'৳' . number_format($order->total_amount - $order->discount_amount, 2)"
+			:value="'৳' . number_format($order->total_amount - $order->discount_amount, 0)"
 			:subtitle="$order->items->sum('quantity') . ' items'"
 			icon="currency"
 			color="blue"

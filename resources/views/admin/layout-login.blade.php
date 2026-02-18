@@ -5,6 +5,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Admin Login — Kiddo\'s Heaven')</title>
+
+    {{-- Favicons --}}
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/logo/favicon/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('storage/logo/favicon/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('storage/logo/favicon/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('storage/logo/favicon/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ asset('storage/logo/favicon/site.webmanifest') }}">
+    <meta name="theme-color" content="#018790">
+
     @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/js/app.js'])
 
     <!-- Theme initialization - prevents flash of wrong theme -->
@@ -12,7 +21,7 @@
         (function() {
             const storedTheme = localStorage.getItem('admin_theme');
             const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
+
             if (storedTheme === 'dark' || (!storedTheme && systemPrefersDark)) {
                 document.documentElement.classList.remove('light');
                 document.documentElement.classList.add('dark');
@@ -32,33 +41,33 @@
             scrollbar-width: thin;
             scrollbar-color: #90A4AE transparent;
         }
-        
+
         .login-wrapper::-webkit-scrollbar {
             width: 8px;
             background-color: transparent;
         }
-        
+
         .login-wrapper::-webkit-scrollbar-track {
             background-color: transparent;
         }
-        
+
         .login-wrapper::-webkit-scrollbar-thumb {
             background-color: #90A4AE;
             border-radius: 6px;
         }
-        
+
         .login-wrapper::-webkit-scrollbar-thumb:hover {
             background-color: #78909C;
         }
-        
+
         .dark .login-wrapper {
             scrollbar-color: #475569 transparent;
         }
-        
+
         .dark .login-wrapper::-webkit-scrollbar-thumb {
             background-color: #475569;
         }
-        
+
         .dark .login-wrapper::-webkit-scrollbar-thumb:hover {
             background-color: #64748b;
         }
@@ -97,13 +106,13 @@
 
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
-            const bgColor = type === 'success' 
+            const bgColor = type === 'success'
                 ? 'bg-green-50 border-green-200 text-green-700'
                 : 'bg-red-50 border-red-200 text-red-700';
             const iconPath = type === 'success'
                 ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
                 : 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-            
+
             toast.className = 'flex items-center gap-3 p-4 rounded-lg shadow-lg border animate-slide-in-right cursor-pointer ' + bgColor;
             toast.innerHTML = `
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

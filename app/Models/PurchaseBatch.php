@@ -16,6 +16,8 @@ class PurchaseBatch extends Model
         'product_id',
         'product_variant_id',
         'partner_id',
+        'investment_id',
+        'payment_method',
         'unit_cost',
         'quantity_received',
         'remaining_quantity',
@@ -44,6 +46,12 @@ class PurchaseBatch extends Model
     const STATUS_SOLD = 'sold';
     const STATUS_EXPIRED = 'expired';
     const STATUS_DAMAGED = 'damaged';
+
+    const PAYMENT_CASH = 'cash';
+    const PAYMENT_INVESTMENT = 'investment';
+    const PAYMENT_LOAN = 'loan';
+    const PAYMENT_PARTNER_CAPITAL = 'partner_capital';
+    const PAYMENT_OTHER = 'other';
 
     /**
      * Boot method to auto-generate batch number
@@ -84,11 +92,27 @@ class PurchaseBatch extends Model
     }
 
     /**
+     * Get the investment that funded this batch.
+     */
+    public function investment(): BelongsTo
+    {
+        return $this->belongsTo(Investment::class);
+    }
+
+    /**
      * Get movements for this batch.
      */
     public function movements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class, 'batch_id');
+    }
+
+    /**
+     * Calculate total batch cost (unit_cost × quantity_received).
+     */
+    public function getTotalCostAttribute(): float
+    {
+        return $this->quantity_received * $this->unit_cost;
     }
 
     /**

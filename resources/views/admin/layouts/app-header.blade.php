@@ -49,9 +49,8 @@
             </button>
 
             <!-- Logo (mobile only) -->
-            <a href="/" class="xl:hidden">
-                <img class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" />
-                <img class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" />
+            <a href="/admin" class="xl:hidden">
+                <img src="{{ asset('storage/logo/logo.png') }}" alt="Kiddo's Heaven" class="h-9 w-auto" />
             </a>
 
             <!-- Application Menu Toggle (mobile only) -->

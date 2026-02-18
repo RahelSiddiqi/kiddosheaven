@@ -29,13 +29,13 @@
 
 	<!-- Date Filter -->
 	<div class="rounded-2xl border border-gray-200 bg-white p-4 mb-6 dark:border-gray-800 dark:bg-white/3">
-		<form method="GET" class="flex flex-wrap gap-3 items-end">
-			<div>
+		<form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:flex xl:flex-nowrap gap-3 items-end">
+			<div class="flex-1 min-w-[160px]">
 				<label for="start_date" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
 				<input type="date" name="start_date" value="{{ $startDate->format('Y-m-d') }}"
 					class="h-11 rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-600">
 			</div>
-			<div>
+			<div class="flex-1 min-w-[160px]">
 				<label for="end_date" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
 				<input type="date" name="end_date" value="{{ $endDate->format('Y-m-d') }}"
 					class="h-11 rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-600">

@@ -32,14 +32,14 @@
 		/>
 		<x-admin.ui.stat-card
 			title="Selling Price"
-			:value="'৳' . number_format($variant->price, 2)"
-			:subtitle="'Cost: ৳' . number_format($variant->cost_price, 2)"
+			:value="'৳' . number_format($variant->price, 0)"
+			:subtitle="'Cost: ৳' . number_format($variant->cost_price, 0)"
 			icon="currency"
 			color="blue"
 		/>
 		<x-admin.ui.stat-card
 			title="Profit per Unit"
-			:value="'৳' . number_format($variant->price - $variant->cost_price, 2)"
+			:value="'৳' . number_format($variant->price - $variant->cost_price, 0)"
 			:subtitle="number_format((($variant->price - $variant->cost_price) / $variant->price) * 100, 1) . '% margin'"
 			icon="profit"
 			:color="$variant->price - $variant->cost_price > 0 ? 'green' : 'red'"
@@ -241,11 +241,11 @@
 			<x-admin.ui.info-card
 				title="Pricing"
 				:items="[
-			    ['label' => 'Selling Price', 'value' => '৳' . number_format($variant->price, 2), 'mono' => true],
-			    ['label' => 'Cost Price (FIFO)', 'value' => '৳' . number_format($variant->cost_price, 2), 'mono' => true],
+			    ['label' => 'Selling Price', 'value' => '৳' . number_format($variant->price, 0), 'mono' => true],
+			    ['label' => 'Cost Price (FIFO)', 'value' => '৳' . number_format($variant->cost_price, 0), 'mono' => true],
 			    [
 			        'label' => 'Profit per Unit',
-			        'value' => '৳' . number_format($variant->price - $variant->cost_price, 2),
+			        'value' => '৳' . number_format($variant->price - $variant->cost_price, 0),
 			        'mono' => true,
 			        'badge' => $variant->price - $variant->cost_price > 0 ? 'green' : 'red',
 			    ],

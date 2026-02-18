@@ -7,13 +7,13 @@
 		<div class="col-span-12">
 			<!-- Filter Form -->
 			<form method="GET" class="rounded-2xl border border-gray-200 bg-white p-4 mb-6 dark:border-gray-800 dark:bg-white/3">
-				<div class="flex flex-wrap items-end gap-4">
-					<div class="w-40">
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:flex xl:flex-nowrap items-end gap-4">
+				<div class="flex-1 min-w-[160px]">
 						<label for="from_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">From Date</label>
 						<input type="date" name="from_date" id="from_date" value="{{ request('from_date', $fromDate) }}"
 							class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
 					</div>
-					<div class="w-40">
+				<div class="flex-1 min-w-[160px]">
 						<label for="to_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">To Date</label>
 						<input type="date" name="to_date" id="to_date" value="{{ request('to_date', $toDate) }}"
 							class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
@@ -33,7 +33,7 @@
 			<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
 				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
 					<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</p>
-					<p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">৳{{ number_format($totalRevenue / 100, 2) }}
+					<p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">৳{{ number_format($totalRevenue, 2) }}
 					</p>
 				</div>
 				<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">

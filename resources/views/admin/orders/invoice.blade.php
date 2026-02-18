@@ -142,10 +142,10 @@
 									{{ $item->quantity }}
 								</td>
 								<td class="py-4 text-right text-gray-900 dark:text-white">
-									৳{{ number_format($item->price / 100, 2) }}
+									৳{{ number_format($item->price, 0) }}
 								</td>
 								<td class="py-4 text-right font-medium text-gray-900 dark:text-white">
-									৳{{ number_format(($item->quantity * $item->price) / 100, 2) }}
+									৳{{ number_format($item->quantity * $item->price, 0) }}
 								</td>
 							</tr>
 						@endforeach
@@ -160,14 +160,14 @@
 						<div class="flex justify-between text-sm">
 							<span class="text-gray-500 dark:text-gray-400">Subtotal</span>
 							<span class="text-gray-900 dark:text-white font-medium">
-								৳{{ number_format($order->total_amount / 100, 2) }}
+								৳{{ number_format($order->total_amount, 0) }}
 							</span>
 						</div>
 						@if ($order->discount_amount > 0)
 							<div class="flex justify-between text-sm">
 								<span class="text-gray-500 dark:text-gray-400">Discount</span>
 								<span class="text-green-600 font-medium">
-									-৳{{ number_format($order->discount_amount / 100, 2) }}
+									-৳{{ number_format($order->discount_amount, 0) }}
 								</span>
 							</div>
 						@endif
@@ -175,14 +175,14 @@
 							<div class="flex justify-between text-sm">
 								<span class="text-gray-500 dark:text-gray-400">Shipping</span>
 								<span class="text-gray-900 dark:text-white font-medium">
-									৳{{ number_format($order->shipping_cost / 100, 2) }}
+									৳{{ number_format($order->shipping_cost, 0) }}
 								</span>
 							</div>
 						@endif
 						<div class="flex justify-between text-lg font-bold border-t dark:border-slate-700 pt-3">
 							<span class="text-gray-900 dark:text-white">Total</span>
 							<span class="text-gray-900 dark:text-white">
-								৳{{ number_format(($order->total_amount - $order->discount_amount + ($order->shipping_cost ?? 0)) / 100, 2) }}
+								৳{{ number_format($order->total_amount - $order->discount_amount + ($order->shipping_cost ?? 0), 0) }}
 							</span>
 						</div>
 					</div>

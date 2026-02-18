@@ -68,7 +68,7 @@
 				<div class="grid grid-cols-2 gap-6 mb-6">
 					<div class="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4">
 						<p class="text-sm text-gray-500 dark:text-gray-400">Amount</p>
-						<p class="text-2xl font-bold text-gray-800 dark:text-white/90">৳{{ number_format($expense->amount, 2) }}</p>
+						<p class="text-2xl font-bold text-gray-800 dark:text-white/90">৳{{ number_format($expense->amount, 0) }}</p>
 					</div>
 					<div class="rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 p-4">
 						<p class="text-sm text-gray-500 dark:text-gray-400">Date</p>

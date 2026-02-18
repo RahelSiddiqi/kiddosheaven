@@ -89,7 +89,7 @@
 					<div>
 						<span class="text-sm text-gray-500 dark:text-gray-400">Invested Amount</span>
 						<h4 class="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
-							{{ number_format($investment->amount, 2) }}
+							{{ number_format($investment->amount, 0) }}
 						</h4>
 					</div>
 					<div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-500/15 flex items-center justify-center">
@@ -184,7 +184,7 @@
 					</div>
 					<div>
 						<p class="text-sm text-gray-500 dark:text-gray-400">Amount</p>
-						<p class="font-medium text-gray-800 dark:text-white/90">{{ number_format($investment->amount, 2) }}</p>
+						<p class="font-medium text-gray-800 dark:text-white/90">{{ number_format($investment->amount, 0) }}</p>
 					</div>
 					<div>
 						<p class="text-sm text-gray-500 dark:text-gray-400">Investment Date</p>
@@ -217,7 +217,7 @@
 				<div class="grid grid-cols-2 gap-4">
 					<div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
 						<p class="text-sm text-gray-500 dark:text-gray-400">Invested Amount</p>
-						<p class="text-2xl font-bold text-gray-800 dark:text-white/90">{{ number_format($investment->amount, 2) }}</p>
+						<p class="text-2xl font-bold text-gray-800 dark:text-white/90">{{ number_format($investment->amount, 0) }}</p>
 					</div>
 					<div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
 						<p class="text-sm text-gray-500 dark:text-gray-400">Type</p>

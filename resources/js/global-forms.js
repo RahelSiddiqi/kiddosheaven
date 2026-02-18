@@ -12,7 +12,7 @@ window.Select2 = select2;
 const Select2 = window.Select2;
 
 function isDarkMode() {
-    return document.documentElement.classList.contains('dark') || 
+    return document.documentElement.classList.contains('dark') ||
            document.body.classList.contains('dark') ||
            localStorage.getItem('theme') === 'dark' ||
            window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -62,9 +62,9 @@ function initSelect2() {
                     );
                 },
             });
-            
+
             $(select).next('.select2-container').find('.select2-selection').addClass('rounded-xl');
-            
+
             if (dark) {
                 $(select).next('.select2-container').find('.select2-selection').addClass('dark-mode');
                 $(select).on('select2:open', function() {
@@ -86,7 +86,7 @@ function reinitSelect2() {
         ) {
             return;
         }
-        
+
         const isMultiple = select.multiple;
         const allowClear =
             select.dataset.allowClear === "true" ||

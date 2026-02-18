@@ -3,20 +3,22 @@
 namespace App\Http\Controllers\Admin\Product;
 
 use App\Http\Controllers\Controller;
-use App\Services\Product\ProductService;
-use App\Services\VariantGeneratorService;
 use App\Http\Requests\Admin\Product\StoreProductRequest;
 use App\Http\Requests\Admin\Product\UpdateProductRequest;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductAttribute;
-use App\Models\Brand;
 use App\Services\CategoryService;
+use App\Services\Product\ProductService;
+use App\Services\VariantGeneratorService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     protected ProductService $productService;
+
     protected VariantGeneratorService $variantService;
+
     protected CategoryService $categoryService;
 
     public function __construct(
@@ -69,6 +71,7 @@ class ProductController extends Controller
         $categories = $categories->map(function ($category) {
             $attributeCount = $category->attributes()->count();
             $category->attribute_count = $attributeCount;
+
             return $category;
         });
 
@@ -83,7 +86,16 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         try {
-            $product = $this->productService->create($request->validated());
+            // Get validated data
+            $data = $request->validated();
+
+            // Handle file uploads - need to get them separately as validated() doesn't include files
+            $files = $request->allFiles();
+            if (isset($files['images'])) {
+                $data['images'] = $files['images'];
+            }
+
+            $product = $this->productService->create($data);
 
             if ($request->ajax()) {
                 return response()->json([
@@ -99,11 +111,11 @@ class ProductController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to create product: ' . $e->getMessage(),
+                    'message' => 'Failed to create product: '.$e->getMessage(),
                 ], 500);
             }
 
-            return back()->withInput()->with('error', 'Failed to create product: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Failed to create product: '.$e->getMessage());
         }
     }
 
@@ -114,7 +126,7 @@ class ProductController extends Controller
     {
         $product = $this->productService->findById($id);
 
-        if (!$product) {
+        if (! $product) {
             abort(404);
         }
 
@@ -149,7 +161,7 @@ class ProductController extends Controller
     {
         $product = $this->productService->findById($id);
 
-        if (!$product) {
+        if (! $product) {
             abort(404);
         }
 
@@ -160,6 +172,7 @@ class ProductController extends Controller
         $categories = $categories->map(function ($category) {
             $attributeCount = $category->attributes()->count();
             $category->attribute_count = $attributeCount;
+
             return $category;
         });
 
@@ -174,7 +187,16 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, $id)
     {
         try {
-            $product = $this->productService->update($id, $request->validated());
+            // Get validated data
+            $data = $request->validated();
+
+            // Handle file uploads
+            $files = $request->allFiles();
+            if (isset($files['images'])) {
+                $data['images'] = $files['images'];
+            }
+
+            $product = $this->productService->update($id, $data);
 
             if ($request->ajax()) {
                 return response()->json([
@@ -190,11 +212,11 @@ class ProductController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to update product: ' . $e->getMessage(),
+                    'message' => 'Failed to update product: '.$e->getMessage(),
                 ], 500);
             }
 
-            return back()->withInput()->with('error', 'Failed to update product: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Failed to update product: '.$e->getMessage());
         }
     }
 
@@ -219,11 +241,11 @@ class ProductController extends Controller
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to delete product: ' . $e->getMessage(),
+                    'message' => 'Failed to delete product: '.$e->getMessage(),
                 ], 500);
             }
 
-            return back()->with('error', 'Failed to delete product: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete product: '.$e->getMessage());
         }
     }
 
@@ -271,7 +293,7 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Bulk action failed: ' . $e->getMessage(),
+                'message' => 'Bulk action failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -300,7 +322,7 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load attributes: ' . $e->getMessage(),
+                'message' => 'Failed to load attributes: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -329,21 +351,49 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load attributes: ' . $e->getMessage(),
+                'message' => 'Failed to load attributes: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Get all attributes by category (for AJAX).
+     * Get all attributes by category for easy product creation.
+     * Returns all attributes so user can choose which to use for variants.
      */
     public function getAttributesByCategory($categoryId)
     {
-        $category = Category::with('attributes.values')->findOrFail($categoryId);
+        try {
+            $category = Category::with('parent')->findOrFail($categoryId);
+            $ids = collect([$category->id])->merge($category->ancestors()->pluck('id'))->unique()->values();
 
-        return response()->json([
-            'success' => true,
-            'attributes' => $category->attributes,
-        ]);
+            $attributes = ProductAttribute::whereHas('categories', function ($query) use ($ids) {
+                $query->whereIn('categories.id', $ids);
+            })
+                ->with('values')
+                ->orderBy('sort_order')
+                ->get()
+                ->map(function ($attr) {
+                    return [
+                        'id' => $attr->id,
+                        'name' => $attr->name,
+                        'type' => $attr->type,
+                        'values' => $attr->values->map(fn($v) => [
+                            'id' => $v->id,
+                            'value' => $v->value,
+                            'display_value' => $v->display_value,
+                        ]),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'attributes' => $attributes,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load attributes: '.$e->getMessage(),
+            ], 500);
+        }
     }
 }

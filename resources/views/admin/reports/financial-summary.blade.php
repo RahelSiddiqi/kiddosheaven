@@ -11,7 +11,7 @@
 					<div>
 						<span class="text-sm text-gray-500 dark:text-gray-400">Net Profit</span>
 						<h4 class="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
-							{{ number_format($netProfit, 2) }} BDT
+							{{ number_format($netProfit['net_profit'] ?? 0, 2) }} BDT
 						</h4>
 					</div>
 					<div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-500/15 flex items-center justify-center">

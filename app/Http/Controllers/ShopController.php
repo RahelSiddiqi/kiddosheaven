@@ -12,12 +12,16 @@ class ShopController extends Controller
     {
         $homeCategories = Category::where('show_on_home', true)->orderBy('sort_order')->get();
 
-        // Featured products by category
+        // Featured products by category (include child categories)
         $featuredByCategory = [];
         foreach ($homeCategories as $category) {
-            $products = $category->products()
+            // Get category IDs including all descendants
+            $categoryIds = collect([$category])->merge($category->descendants())->pluck('id');
+
+            $products = Product::whereIn('category_id', $categoryIds)
                 ->where('is_active', true)
                 ->where('is_featured', true)
+                ->with(['brand', 'category', 'variants'])
                 ->take(4)
                 ->get();
             if ($products->isNotEmpty()) {
@@ -27,7 +31,7 @@ class ShopController extends Controller
 
         // Flash sales (active)
         $flashSales = \App\Models\FlashSale::active()
-            ->with(['products' => function($query) {
+            ->with(['products' => function ($query) {
                 $query->where('is_active', true)->take(8);
             }])
             ->first();
@@ -35,6 +39,7 @@ class ShopController extends Controller
         // New arrivals (last 14 days)
         $newArrivals = Product::where('is_active', true)
             ->where('created_at', '>=', now()->subDays(14))
+            ->with(['brand', 'category', 'variants'])
             ->orderBy('created_at', 'desc')
             ->take(8)
             ->get();
@@ -42,6 +47,7 @@ class ShopController extends Controller
         // Best sellers (most ordered)
         $bestSellers = Product::where('is_active', true)
             ->withCount('orderItems')
+            ->with(['brand', 'category', 'variants'])
             ->orderBy('order_items_count', 'desc')
             ->take(8)
             ->get();
@@ -49,6 +55,7 @@ class ShopController extends Controller
         // All featured products (if no category-specific featured)
         $allFeatured = Product::where('is_active', true)
             ->where('is_featured', true)
+            ->with(['brand', 'category', 'variants'])
             ->take(8)
             ->get();
 
@@ -146,12 +153,12 @@ class ShopController extends Controller
                 break;
         }
 
-        $products = $query->paginate(12)->withQueryString();
+        $products = $query->with(['brand', 'category', 'variants'])->paginate(12)->withQueryString();
 
         // Get all parent categories with their children for hierarchy display
         $categories = Category::where('is_active', true)
             ->whereNull('parent_id')
-            ->with(['children' => function($query) {
+            ->with(['children' => function ($query) {
                 $query->where('is_active', true)->orderBy('sort_order');
             }])
             ->orderBy('sort_order')
@@ -177,6 +184,7 @@ class ShopController extends Controller
         $related = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
+            ->with(['brand', 'category', 'variants'])
             ->take(4)
             ->get();
 
@@ -185,14 +193,20 @@ class ShopController extends Controller
 
         // Get active variants if product is variable
         $variants = $product->product_type === 'variable'
-            ? $product->activeVariants()->with('variantAttributes.productAttribute', 'variantAttributes.attributeValue')->get()
+            ? $product->activeVariants()->with('variantAttributes.attribute', 'variantAttributes.attributeValue')->get()
             : collect();
+
+        // Check if user has this product in their wishlist
+        $inWishlist = auth()->check()
+            ? auth()->user()->wishlist()->where('product_id', $product->id)->exists()
+            : false;
 
         return view('shop.product', [
             'product' => $product,
             'related' => $related,
             'reviews' => $reviews,
             'variants' => $variants,
+            'inWishlist' => $inWishlist,
         ]);
     }
 }

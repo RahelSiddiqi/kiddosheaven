@@ -210,13 +210,13 @@
 											</div>
 										</td>
 										<td class="py-4 px-4 text-right text-sm text-gray-600 dark:text-gray-400">
-											৳{{ number_format($originalPrice, 2) }}
+													৳{{ number_format($originalPrice, 0) }}
 										</td>
 										<td class="py-4 px-4 text-right text-sm font-semibold text-green-600 dark:text-green-400">
-											৳{{ number_format($flashPrice, 2) }}
+													৳{{ number_format($flashPrice, 0) }}
 										</td>
 										<td class="py-4 px-4 text-right text-sm font-medium text-red-500">
-											-৳{{ number_format($savings, 2) }}
+													-৳{{ number_format($savings, 0) }}
 										</td>
 										<td class="py-4 px-4 text-right">
 											@if ($product->stock_quantity <= 5)

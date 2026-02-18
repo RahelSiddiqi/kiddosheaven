@@ -28,6 +28,26 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // SMS driver: 'vonage' | 'twilio' | 'log' (default — logs OTP to laravel.log for dev)
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+    ],
+
+    // Vonage (formerly Nexmo) — recommended, free trial at https://www.vonage.com
+    // Sign up with email only (no phone verification required)
+    'vonage' => [
+        'key'    => env('VONAGE_KEY'),
+        'secret' => env('VONAGE_SECRET'),
+        'from'   => env('VONAGE_FROM', 'KiddosH'),
+    ],
+
+    // Twilio (alternative) — https://www.twilio.com
+    'twilio' => [
+        'sid'   => env('TWILIO_SID'),
+        'token' => env('TWILIO_TOKEN'),
+        'from'  => env('TWILIO_FROM'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -32,7 +32,8 @@ Route::get('/checkout/thank-you/{order}', [CheckoutController::class, 'thankYou'
 // Static pages
 Route::get('/page/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('page.show');
 Route::view('/about', 'about')->name('about');
-Route::view('/contact', 'contact')->name('contact');
+Route::get('/contact', [App\Http\Controllers\ContactController::class, 'show'])->name('contact');
+Route::post('/contact', [App\Http\Controllers\ContactController::class, 'send'])->name('contact.send');
 
 // Customer Authentication
 Route::middleware('guest')->group(function () {
@@ -42,15 +43,47 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
+
+    // OTP Login (AJAX)
+    Route::post('/otp/login/send', [App\Http\Controllers\Auth\OtpController::class, 'sendLoginOtp'])->name('otp.login.send');
+    Route::post('/otp/login/verify', [App\Http\Controllers\Auth\OtpController::class, 'verifyLoginOtp'])->name('otp.login.verify');
+
+    // OTP Registration Verification
+    Route::get('/register/verify', [App\Http\Controllers\Auth\OtpController::class, 'showRegistrationVerify'])->name('register.verify');
+    Route::post('/register/otp/send', [App\Http\Controllers\Auth\OtpController::class, 'sendRegistrationOtp'])->name('register.otp.send');
+    Route::post('/register/otp/verify', [App\Http\Controllers\Auth\OtpController::class, 'verifyRegistrationOtp'])->name('register.otp.verify');
 });
 
 // Customer Account
 Route::middleware('auth')->group(function () {
     Route::get('/account', [AccountController::class, 'index'])->name('account');
     Route::put('/account', [AccountController::class, 'update'])->name('account.update');
+
+    // Orders
     Route::get('/orders', [CustomerOrderController::class, 'index'])->name('customer.orders.index');
-    Route::get('/orders/{id}', [CustomerOrderController::class, 'show'])->name('customer.orders.show');
-    Route::post('/orders/{id}/cancel', [CustomerOrderController::class, 'cancel'])->name('customer.orders.cancel');
+    Route::get('/orders/{order}', [CustomerOrderController::class, 'show'])->name('customer.orders.show');
+    Route::post('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->name('customer.orders.cancel');
+
+    // Addresses
+    Route::get('/account/addresses', [\App\Http\Controllers\Customer\AddressController::class, 'index'])->name('account.addresses');
+    Route::post('/account/addresses', [\App\Http\Controllers\Customer\AddressController::class, 'store'])->name('account.addresses.store');
+    Route::put('/account/addresses/{address}', [\App\Http\Controllers\Customer\AddressController::class, 'update'])->name('account.addresses.update');
+    Route::delete('/account/addresses/{address}', [\App\Http\Controllers\Customer\AddressController::class, 'destroy'])->name('account.addresses.destroy');
+    Route::post('/account/addresses/{address}/default', [\App\Http\Controllers\Customer\AddressController::class, 'setDefault'])->name('account.addresses.default');
+
+    // Wishlist
+    Route::get('/wishlist', [\App\Http\Controllers\Customer\WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/toggle/{product}', [\App\Http\Controllers\Customer\WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::post('/wishlist/add/{product}', [\App\Http\Controllers\Customer\WishlistController::class, 'add'])->name('wishlist.add');
+    Route::delete('/wishlist/remove/{product}', [\App\Http\Controllers\Customer\WishlistController::class, 'remove'])->name('wishlist.remove');
+    Route::post('/wishlist/move-to-cart/{product}', [\App\Http\Controllers\Customer\WishlistController::class, 'moveToCart'])->name('wishlist.move-to-cart');
+    Route::delete('/wishlist/clear', [\App\Http\Controllers\Customer\WishlistController::class, 'clear'])->name('wishlist.clear');
+
+    // Reviews
+    Route::post('/products/{slug}/reviews', [\App\Http\Controllers\Customer\ReviewController::class, 'store'])->name('reviews.store');
+    Route::put('/reviews/{review}', [\App\Http\Controllers\Customer\ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{review}', [\App\Http\Controllers\Customer\ReviewController::class, 'destroy'])->name('reviews.destroy');
+
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 });
 

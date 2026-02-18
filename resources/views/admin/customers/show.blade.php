@@ -75,7 +75,7 @@
 								</div>
 								<div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
 									<p class="text-2xl font-bold text-blue-600 dark:text-blue-400">৳
-										{{ number_format($orders->sum('total_amount') / 100, 2) }}</p>
+										{{ number_format($orders->sum('total_amount'), 0) }}</p>
 									<p class="text-xs text-gray-500 dark:text-gray-400">Total Spent</p>
 								</div>
 							</div>
@@ -174,7 +174,7 @@
 											</div>
 											<div class="flex items-center gap-4">
 												<span class="font-semibold text-gray-900 dark:text-white">৳
-													{{ number_format($order->total_amount / 100, 2) }}</span>
+														{{ number_format($order->total_amount, 0) }}</span>
 												<a href="{{ route('admin.orders.show', $order) }}"
 													class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
 													View Details

@@ -48,7 +48,7 @@ class OrderController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $order->load(['items.product', 'items.product.category', 'statusHistory', 'address']);
+        $order->load(['items.product', 'items.product.category', 'statusHistory']);
 
         return view('customer.orders.show', compact('order'));
     }
