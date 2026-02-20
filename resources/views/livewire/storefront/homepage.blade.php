@@ -84,6 +84,44 @@
         </section>
     @endif
 
+    {{-- Featured Collections --}}
+    @if (!empty($featuredCollections) && $featuredCollections->isNotEmpty())
+        <section>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Shop by Collection</h2>
+                <a href="{{ route('collections.index') }}" wire:navigate
+                    class="text-primary hover:text-primary-dark font-semibold flex items-center gap-1">
+                    All Collections
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                @foreach ($featuredCollections as $collection)
+                    <a href="{{ route('collections.show', $collection->slug) }}" wire:navigate
+                        class="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow aspect-[4/3] bg-gray-100">
+                        @if ($collection->image_url)
+                            <img src="{{ $collection->image_url }}" alt="{{ $collection->name }}"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        @else
+                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary-dark/20">
+                                <svg class="w-16 h-16 text-primary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                            </div>
+                        @endif
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+                            <h3 class="text-white font-bold text-lg leading-tight">{{ $collection->name }}</h3>
+                            <p class="text-white/80 text-sm mt-0.5">{{ $collection->products_count }} products</p>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     {{-- Best Sellers --}}
     @if ($bestSellers->isNotEmpty())
         <section>

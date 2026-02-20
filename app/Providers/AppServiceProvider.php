@@ -41,6 +41,16 @@ class AppServiceProvider extends ServiceProvider
             \App\Listeners\SendOrderConfirmationEmail::class,
         );
 
+        Event::listen(
+            \App\Events\ShipmentShipped::class,
+            \App\Listeners\SendOrderShippedEmail::class,
+        );
+
+        Event::listen(
+            \App\Events\ShipmentDelivered::class,
+            \App\Listeners\SendOrderDeliveredEmail::class,
+        );
+
         // Share all site settings with every view (cached for 60 min)
         View::composer('*', function ($view) {
             $settings = Cache::remember('site_settings', 3600, function () {

@@ -113,18 +113,57 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
                     <h2 class="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
 
+                    {{-- Coupon Code --}}
+                    <div class="mb-5">
+                        @if ($couponApplied)
+                            <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                <span class="text-sm text-green-700 font-medium">{{ $couponMessage }}</span>
+                                <button wire:click="removeCoupon" class="text-green-500 hover:text-red-500 transition ml-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        @else
+                            <div class="flex gap-2">
+                                <input wire:model="coupon_code"
+                                    type="text"
+                                    placeholder="Coupon code"
+                                    class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase placeholder-gray-400"
+                                    @keydown.enter.prevent="$wire.applyCoupon()" />
+                                <button wire:click="applyCoupon"
+                                    class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary-dark transition">
+                                    Apply
+                                </button>
+                            </div>
+                            @if ($couponMessage)
+                                <p class="mt-1 text-xs text-red-600">{{ $couponMessage }}</p>
+                            @endif
+                        @endif
+                    </div>
+
                     <div class="space-y-3 mb-6">
                         <div class="flex justify-between text-gray-600">
                             <span>Subtotal ({{ count($cart['items']) }} items)</span>
                             <span class="font-semibold">@price($subtotal)</span>
                         </div>
+                        @if ($couponDiscount > 0)
+                            <div class="flex justify-between text-green-600">
+                                <span>Discount</span>
+                                <span class="font-semibold">-@price($couponDiscount)</span>
+                            </div>
+                        @endif
                         <div class="flex justify-between text-gray-600">
-                            <span>Tax (15%)</span>
+                            <span>Tax ({{ $taxRate }}%)</span>
                             <span class="font-semibold">@price($tax)</span>
                         </div>
                         <div class="flex justify-between text-gray-600">
                             <span>Shipping</span>
-                            <span class="font-semibold text-green-600">FREE</span>
+                            @if ($shipping == 0)
+                                <span class="font-semibold text-green-600">FREE</span>
+                            @else
+                                <span class="font-semibold">@price($shipping)</span>
+                            @endif
                         </div>
                     </div>
 

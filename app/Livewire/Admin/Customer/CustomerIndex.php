@@ -21,12 +21,20 @@ class CustomerIndex extends Component
     #[Url]
     public string $status = '';
 
+    #[Url]
+    public string $sortBy = 'newest';
+
     public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
     public function updatedStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSortBy(): void
     {
         $this->resetPage();
     }
@@ -49,22 +57,29 @@ class CustomerIndex extends Component
 
     public function render()
     {
-        $customers = User::where('is_admin', false)
+        $query = User::where('is_admin', false)
             ->when($this->search, fn($q) => $q->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
                     ->orWhere('email', 'like', "%{$this->search}%")
                     ->orWhere('phone', 'like', "%{$this->search}%");
             }))
             ->when($this->status === 'active', fn($q) => $q->where('is_active', true))
-            ->when($this->status === 'inactive', fn($q) => $q->where('is_active', false))
-            ->latest()
-            ->paginate(20);
+            ->when($this->status === 'inactive', fn($q) => $q->where('is_active', false));
+
+        $query = match ($this->sortBy) {
+            'highest_ltv'  => $query->orderByDesc('lifetime_value'),
+            'most_orders'  => $query->orderByDesc('total_orders'),
+            default        => $query->latest(),
+        };
+
+        $customers = $query->paginate(20);
 
         $stats = [
-            'total' => User::where('is_admin', false)->count(),
-            'active' => User::where('is_admin', false)->where('is_active', true)->count(),
-            'inactive' => User::where('is_admin', false)->where('is_active', false)->count(),
-            'new_this_month' => User::where('is_admin', false)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+            'total'           => User::where('is_admin', false)->count(),
+            'active'          => User::where('is_admin', false)->where('is_active', true)->count(),
+            'inactive'        => User::where('is_admin', false)->where('is_active', false)->count(),
+            'new_this_month'  => User::where('is_admin', false)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+            'avg_ltv'         => (float) User::where('is_admin', false)->avg('lifetime_value'),
         ];
 
         return view('livewire.admin.customer.customer-index', compact('customers', 'stats'));

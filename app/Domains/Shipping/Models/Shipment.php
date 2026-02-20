@@ -100,6 +100,8 @@ class Shipment extends Model
             'shipping_carrier'          => $carrier ?? $this->carrier,
             'shipped_at'                => now(),
         ]);
+
+        event(new \App\Events\ShipmentShipped($this));
     }
 
     public function markDelivered(): void
@@ -114,5 +116,7 @@ class Shipment extends Model
             'delivered_at'       => now(),
             'status'             => 'delivered',
         ]);
+
+        event(new \App\Events\ShipmentDelivered($this));
     }
 }

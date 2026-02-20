@@ -4,12 +4,14 @@ namespace App\Livewire\Storefront;
 
 use Livewire\Component;
 use App\Domains\Catalog\Models\Category;
+use App\Domains\Catalog\Models\Collection;
 use App\Domains\Product\Models\Product;
 use App\Domains\Marketing\Models\FlashSale;
 
 class Homepage extends Component
 {
     public $featuredByCategory = [];
+    public $featuredCollections = [];
     public $flashSale = null;
     public $newArrivals = [];
     public $bestSellers = [];
@@ -41,6 +43,18 @@ class Homepage extends Component
             }
         } catch (\Exception $e) {
             // Column might not exist yet, skip
+        }
+
+        // Flash sales (if table exists)
+        try {
+            $this->featuredCollections = Collection::active()
+                ->featured()
+                ->withCount('products')
+                ->orderBy('position')
+                ->take(6)
+                ->get();
+        } catch (\Exception $e) {
+            $this->featuredCollections = collect();
         }
 
         // Flash sales (if table exists)

@@ -172,6 +172,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::prefix('customers')->name('customers.')->middleware('permission:view-customers')->group(function () {
         // Livewire handles customer index and show
         Route::get('/', \App\Livewire\Admin\Customer\CustomerIndex::class)->name('index');
+        Route::get('/segments', \App\Livewire\Admin\Customer\CustomerSegments::class)->name('segments.index');
         Route::get('/{customerId}', \App\Livewire\Admin\Customer\CustomerShow::class)->name('show');
         // CustomerIndex and CustomerShow handle toggle directly via Eloquent
     });

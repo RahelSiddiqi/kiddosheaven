@@ -3,8 +3,8 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <x-admin.ui.stat-card title="Total Customers" :value="$stats['total']" icon="users" color="blue" />
         <x-admin.ui.stat-card title="Active" :value="$stats['active']" icon="check" color="green" />
-        <x-admin.ui.stat-card title="Inactive" :value="$stats['inactive']" icon="x-circle" color="red" />
         <x-admin.ui.stat-card title="New This Month" :value="$stats['new_this_month']" icon="trending" color="purple" />
+        <x-admin.ui.stat-card title="Avg. Lifetime Value" :value="'৳' . number_format($stats['avg_ltv'], 0)" icon="currency" color="yellow" />
     </div>
 
     <div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
@@ -26,6 +26,14 @@
                     <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search customers..."
                         class="h-10.5 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-10.5 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800 xl:w-75" />
                 </div>
+
+                <!-- Sort -->
+                <select wire:model.live="sortBy"
+                    class="h-10.5 rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
+                    <option value="newest">Newest First</option>
+                    <option value="highest_ltv">Highest LTV</option>
+                    <option value="most_orders">Most Orders</option>
+                </select>
 
                 <!-- Status Filter -->
                 <select wire:model.live="status"
@@ -51,6 +59,12 @@
                             </th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
                                 Joined Date
+                            </th>
+                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                                Orders
+                            </th>
+                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                                Lifetime Value
                             </th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">
                                 Status
@@ -84,6 +98,16 @@
                                 <td class="px-4 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900 dark:text-white">{{ $customer->created_at->format('M d, Y') }}</div>
                                     <div class="text-xs text-gray-500 dark:text-gray-400">{{ $customer->created_at->diffForHumans() }}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ $customer->total_orders ?? 0 }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">orders</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">৳{{ number_format($customer->lifetime_value ?? 0, 0) }}</div>
+                                    @if ($customer->last_order_at ?? null)
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Last: {{ \Carbon\Carbon::parse($customer->last_order_at)->diffForHumans() }}</div>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap">
                                     @if ($customer->is_active ?? true)
