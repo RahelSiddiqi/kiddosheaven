@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,7 +23,13 @@ class AccountController extends Controller
             ->take(5)
             ->get();
 
-        return view('customer.account', compact('user', 'orders'));
+        $reviews = Review::where('user_id', $user->id)
+            ->with('product:id,name,slug,images')
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('customer.account', compact('user', 'orders', 'reviews'));
     }
 
     public function update(Request $request)

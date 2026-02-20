@@ -50,32 +50,69 @@
 					</div>
 
 					{{-- Shipping Address --}}
-					<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+					<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6" x-data="addressPicker()">
 						<h2 class="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
 							<span class="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs sm:text-sm font-bold">2</span>
 							Shipping Address
 						</h2>
+
+						{{-- Saved addresses picker (logged-in users only) --}}
+						@auth
+							@if ($savedAddresses->isNotEmpty())
+								<div class="mb-4">
+									<p class="text-xs sm:text-sm font-medium text-gray-700 mb-2">Use a saved address</p>
+									<div class="grid gap-2 sm:grid-cols-2">
+										@foreach ($savedAddresses as $addr)
+											<button type="button" @click="fill({{ json_encode(['address_line' => $addr->address_line, 'city' => $addr->city, 'postal_code' => $addr->postal_code ?? '']) }})"
+												class="text-left p-3 rounded-lg border border-gray-200 hover:border-primary/60 hover:bg-primary/5 transition text-xs sm:text-sm">
+												<p class="font-semibold text-gray-800 truncate">{{ $addr->address_line }}</p>
+												<p class="text-gray-500">{{ $addr->city }}@if($addr->postal_code) — {{ $addr->postal_code }}@endif</p>
+												@if ($addr->is_default)
+													<span class="inline-block mt-1 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Default</span>
+												@endif
+											</button>
+										@endforeach
+									</div>
+									<p class="text-xs text-gray-400 mt-2">Or fill in a new address below</p>
+								</div>
+							@endif
+						@endauth
+
 						<div class="grid sm:grid-cols-2 gap-3 sm:gap-4">
 							<div class="sm:col-span-2">
 								<label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Street Address *</label>
-								<input type="text" name="address_line" value="{{ old('address_line') }}" placeholder="123 Main Street, Apt 4B" required autocomplete="street-address"
+								<input type="text" name="address_line" x-ref="address_line" value="{{ old('address_line') }}" placeholder="123 Main Street, Apt 4B" required autocomplete="street-address"
 									class="w-full rounded-lg border border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm sm:text-base">
 								@error('address_line') <p class="text-red-600 text-xs sm:text-sm mt-1">{{ $message }}</p> @enderror
 							</div>
 							<div>
 								<label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">City *</label>
-								<input type="text" name="city" value="{{ old('city') }}" placeholder="Dhaka" required autocomplete="address-level2"
+								<input type="text" name="city" x-ref="city" value="{{ old('city') }}" placeholder="Dhaka" required autocomplete="address-level2"
 									class="w-full rounded-lg border border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm sm:text-base">
 								@error('city') <p class="text-red-600 text-xs sm:text-sm mt-1">{{ $message }}</p> @enderror
 							</div>
 							<div>
 								<label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Postal Code</label>
-								<input type="text" name="postal_code" value="{{ old('postal_code') }}" placeholder="1200" autocomplete="postal-code"
+								<input type="text" name="postal_code" x-ref="postal_code" value="{{ old('postal_code') }}" placeholder="1200" autocomplete="postal-code"
 									class="w-full rounded-lg border border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm sm:text-base">
 								@error('postal_code') <p class="text-red-600 text-xs sm:text-sm mt-1">{{ $message }}</p> @enderror
 							</div>
 						</div>
 					</div>
+
+					@push('scripts')
+					<script>
+						function addressPicker() {
+							return {
+								fill(addr) {
+									this.$refs.address_line.value = addr.address_line;
+									this.$refs.city.value = addr.city;
+									this.$refs.postal_code.value = addr.postal_code;
+								}
+							}
+						}
+					</script>
+					@endpush
 
 					{{-- Payment Method --}}
 					<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">

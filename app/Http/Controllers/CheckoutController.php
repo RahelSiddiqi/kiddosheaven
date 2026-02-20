@@ -30,8 +30,17 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty.');
         }
 
+        $savedAddresses = collect();
+        if (auth()->check()) {
+            $savedAddresses = \App\Models\Address::where('user_id', auth()->id())
+                ->orderByDesc('is_default')
+                ->orderByDesc('created_at')
+                ->get();
+        }
+
         return view('shop.checkout', [
-            'cart' => $cart,
+            'cart'           => $cart,
+            'savedAddresses' => $savedAddresses,
         ]);
     }
 

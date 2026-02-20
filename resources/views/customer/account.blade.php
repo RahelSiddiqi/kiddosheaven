@@ -153,4 +153,73 @@
 			</div>
 		</div>
 	</div>
+
+	{{-- My Reviews --}}
+	<div class="mt-6 sm:mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+		<h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">My Reviews</h2>
+
+		@if ($reviews->isEmpty())
+			<div class="text-center py-8">
+				<svg class="w-10 sm:w-12 h-10 sm:h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+				</svg>
+				<p class="text-gray-500 text-sm sm:text-base">You haven't written any reviews yet.</p>
+			</div>
+		@else
+			<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+				@foreach ($reviews as $review)
+					<div class="rounded-xl border border-gray-100 p-4 flex flex-col gap-2">
+						{{-- Product --}}
+						<a href="{{ route('product.show', $review->product->slug) }}"
+							class="flex items-center gap-3 hover:opacity-80 transition">
+							@php $img = is_array($review->product->images) ? ($review->product->images[0] ?? null) : null; @endphp
+							@if ($img)
+								<img src="{{ Storage::url($img) }}" alt="{{ $review->product->name }}"
+									class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
+							@else
+								<div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+									<svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+									</svg>
+								</div>
+							@endif
+							<p class="text-sm font-semibold text-gray-800 line-clamp-2">{{ $review->product->name }}</p>
+						</a>
+
+						{{-- Stars --}}
+						<div class="flex items-center gap-0.5">
+							@for ($i = 1; $i <= 5; $i++)
+								<svg class="w-4 h-4 {{ $i <= $review->rating ? 'text-amber-400' : 'text-gray-200' }}" fill="currentColor" viewBox="0 0 20 20">
+									<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+								</svg>
+							@endfor
+						</div>
+
+						{{-- Comment --}}
+						@if ($review->comment)
+							<p class="text-xs sm:text-sm text-gray-600 line-clamp-3">{{ $review->comment }}</p>
+						@endif
+
+						{{-- Footer --}}
+						<div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
+							<span @class([
+								'text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full',
+								'bg-green-100 text-green-700' => $review->is_approved ?? false,
+								'bg-yellow-100 text-yellow-700' => !($review->is_approved ?? false),
+							])>
+								{{ ($review->is_approved ?? false) ? 'Approved' : 'Pending' }}
+							</span>
+							<form method="POST" action="{{ route('reviews.destroy', $review->id) }}"
+								onsubmit="return confirm('Delete this review?')">
+								@csrf
+								@method('DELETE')
+								<button type="submit" class="text-xs text-red-500 hover:text-red-700 transition">Delete</button>
+							</form>
+						</div>
+					</div>
+				@endforeach
+			</div>
+		@endif
+	</div>
 @endsection
