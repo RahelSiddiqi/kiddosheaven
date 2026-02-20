@@ -155,7 +155,7 @@
 
 		{{-- Sidebar Filters (Desktop) / Drawer (Mobile) --}}
 		<aside id="filter-drawer"
-			class="lg:w-64 flex-shrink-0 fixed lg:sticky lg:top-28 inset-y-0 left-0 z-50 lg:z-auto w-80 max-w-[85vw] bg-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 lg:block overflow-y-auto lg:max-h-[calc(100vh-7.5rem)] h-full lg:h-auto pb-20 lg:pb-0">
+			class="lg:w-64 flex-shrink-0 fixed lg:sticky lg:top-28 inset-y-0 left-0 z-50 lg:z-auto w-[85vw] max-w-80 bg-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 lg:block overflow-y-auto lg:max-h-[calc(100vh-7.5rem)] h-full lg:h-auto pb-20 lg:pb-0">
 			<div class="p-6">
 				{{-- Mobile Filter Header --}}
 				<div class="flex items-center justify-between mb-6 lg:hidden">
@@ -552,7 +552,7 @@
 			const section = button.closest('.filter-section');
 			const content = section.querySelector('.filter-content');
 			const isExpanded = section.classList.toggle('expanded');
-			
+
 			if (content) {
 				content.style.display = isExpanded ? 'block' : 'none';
 			}

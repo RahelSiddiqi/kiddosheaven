@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -26,9 +27,9 @@ return new class extends Migration
 
         // Ensure the 'customer' role exists
         if (Schema::hasTable('roles')) {
-            $customerRole = \DB::table('roles')->where('slug', 'customer')->first();
+            $customerRole = DB::table('roles')->where('slug', 'customer')->first();
             if (! $customerRole) {
-                \DB::table('roles')->insert([
+                DB::table('roles')->insert([
                     'name'        => 'Customer',
                     'slug'        => 'customer',
                     'description' => 'Frontend store customer',

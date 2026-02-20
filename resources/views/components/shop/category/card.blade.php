@@ -1,12 +1,14 @@
 @props(['category'])
 
 <a href="{{ route('catalog', ['category_id' => $category->id]) }}"
-    class="group relative bg-white rounded-2xl p-5 md:p-6 text-center border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all duration-300">
-    <div class="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl md:text-3xl group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-300">
+    class="group flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-gray-100 hover:border-primary/40 hover:shadow-md hover:bg-primary/[0.03] transition-all duration-200">
+    <div class="w-9 h-9 shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-lg group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-200">
         {{ $category->icon ?? '🧸' }}
     </div>
-    <h3 class="font-bold text-gray-900 text-sm group-hover:text-primary transition">{{ $category->name }}</h3>
-    @if (isset($category->products_count))
-        <p class="text-xs text-gray-400 mt-1">{{ $category->products_count }} {{ Str::plural('item', $category->products_count) }}</p>
-    @endif
+    <div class="min-w-0">
+        <h3 class="font-semibold text-gray-800 text-xs leading-tight truncate group-hover:text-primary transition">{{ $category->name }}</h3>
+        @if (isset($category->products_count))
+            <p class="text-[10px] text-gray-400 mt-0.5">{{ $category->products_count }} {{ Str::plural('item', $category->products_count) }}</p>
+        @endif
+    </div>
 </a>

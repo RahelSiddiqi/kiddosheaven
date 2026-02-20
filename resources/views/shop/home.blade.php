@@ -37,9 +37,9 @@
 
     {{-- Shop by Category --}}
     @if ($homeCategories->isNotEmpty())
-        <section class="mb-12 md:mb-16">
+        <section class="mb-10 md:mb-12">
             <x-shop.ui.section-heading title="Shop by Category" />
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3">
                 @foreach ($homeCategories as $category)
                     <x-shop.category.card :category="$category" />
                 @endforeach

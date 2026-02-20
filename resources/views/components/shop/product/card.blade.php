@@ -74,8 +74,8 @@
 		</a>
 
 		{{-- Price --}}
-		<div class="flex items-center justify-between mt-2 md:mt-3">
-			<div class="flex flex-col">
+		<div class="flex flex-col mt-2 md:mt-3 gap-1">
+			<div class="flex items-center gap-2">
 				<span class="text-base md:text-lg font-bold text-[#018790]">৳ {{ number_format($product->price, 0) }}</span>
 				@if ($hasDiscount)
 					<span class="text-xs text-[#888] line-through">৳ {{ number_format($originalPrice, 0) }}</span>
