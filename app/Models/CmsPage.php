@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Domains\Concerns\BelongsToSite;
 
 class CmsPage extends Model
 {
     use HasFactory;
+    use BelongsToSite;
 
     protected $fillable = [
+        'site_id',
         'title',
         'slug',
         'content',

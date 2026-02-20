@@ -64,7 +64,7 @@
                             </p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-primary-dark">৳{{ number_format($order->total, 2) }}</p>
+                            <p class="text-2xl font-bold text-primary-dark">@price($order->total)</p>
                             <p class="text-sm text-gray-500">{{ ucfirst($order->payment_method ?? 'N/A') }}</p>
                         </div>
                     </div>

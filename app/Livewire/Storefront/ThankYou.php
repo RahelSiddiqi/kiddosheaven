@@ -12,7 +12,7 @@ class ThankYou extends Component
     public function mount(Order $order)
     {
         // Ensure the order belongs to the current user (if logged in)
-        if (auth()->check() && $order->customer_id !== auth()->id()) {
+        if (auth()->check() && $order->user_id !== auth()->id()) {
             abort(403);
         }
 

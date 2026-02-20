@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Domains\Concerns\BelongsToSite;
 
 class Brand extends Model
 {
+    use BelongsToSite;
+
     protected $fillable = [
+        'site_id',
         'name',
         'slug',
         'description',

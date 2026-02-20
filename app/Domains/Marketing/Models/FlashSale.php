@@ -4,10 +4,14 @@ namespace App\Domains\Marketing\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Domains\Concerns\BelongsToSite;
 
 class FlashSale extends Model
 {
+    use BelongsToSite;
+
     protected $fillable = [
+        'site_id',
         'name',
         'description',
         'discount_percentage',

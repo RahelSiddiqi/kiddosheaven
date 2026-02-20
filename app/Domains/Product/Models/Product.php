@@ -7,12 +7,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Domains\Concerns\BelongsToSite;
 
 class Product extends Model
 {
     use SoftDeletes;
+    use BelongsToSite;
 
     protected $fillable = [
+        'site_id',
         'catalog_id',
         'name',
         'slug',

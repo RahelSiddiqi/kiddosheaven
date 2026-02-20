@@ -4,10 +4,14 @@ namespace App\Domains\Catalog\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Domains\Concerns\BelongsToSite;
 
 class Brand extends Model
 {
+    use BelongsToSite;
+
     protected $fillable = [
+        'site_id',
         'name',
         'slug',
         'description',

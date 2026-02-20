@@ -278,7 +278,7 @@ class OrderService
      * Looks at inventory_movements for the exact batch→quantity mapping.
      * Falls back to the single purchase_batch_id on the order_item.
      */
-    protected function resolveConsumedBatches(int $orderId, \App\Models\OrderItem $item): array
+    protected function resolveConsumedBatches(int $orderId, \App\Domains\Order\Models\OrderItem $item): array
     {
         // Inventory movements logged during the original sale
         $movements = \App\Models\InventoryMovement::where('product_id', $item->product_id)

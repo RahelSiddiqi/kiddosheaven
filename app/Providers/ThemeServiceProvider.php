@@ -34,7 +34,10 @@ class ThemeServiceProvider extends ServiceProvider
 
             // Try to load overrides from DB (SiteThemeSetting)
             try {
-                $settings = \App\Domains\Site\Models\SiteThemeSetting::first();
+                $siteId = app()->bound('current.site') ? app('current.site')->id : null;
+                $settings = $siteId
+                    ? \App\Domains\Site\Models\SiteThemeSetting::where('site_id', $siteId)->first()
+                    : \App\Domains\Site\Models\SiteThemeSetting::first();
                 if ($settings) {
                     $colors = array_merge($colors, $settings->colors ?? []);
                     $typography = array_merge($typography, $settings->typography ?? []);

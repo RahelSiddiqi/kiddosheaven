@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Domains\Concerns\BelongsToSite;
 
 class Address extends Model
 {
     use HasFactory;
+    use BelongsToSite;
 
     protected $fillable = [
+        'site_id',
         'user_id',
         'type',
         'name',

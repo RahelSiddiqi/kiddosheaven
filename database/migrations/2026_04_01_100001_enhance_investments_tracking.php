@@ -4,6 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+use Illuminate\Support\Facades\DB;
+
 return new class extends Migration
 {
     /**
@@ -14,8 +16,10 @@ return new class extends Migration
     {
         Schema::table('investments', function (Blueprint $table) {
             // Track how much of the investment has been spent on purchases
-            $table->decimal('spent_amount', 12, 2)->default(0)->after('amount')
-                ->comment('Amount spent on purchases from this investment');
+            if (!Schema::hasColumn('investments', 'spent_amount')) {
+                $table->decimal('spent_amount', 12, 2)->default(0)->after('amount')
+                    ->comment('Amount spent on purchases from this investment');
+            }
 
             // Virtual column: available_balance = amount - spent_amount
             // This will be calculated in the model as an accessor
@@ -25,10 +29,21 @@ return new class extends Migration
                 $table->foreignId('investor_id')->nullable()->after('id')
                     ->constrained('investors')->nullOnDelete();
             }
+        });
 
-            // Ensure investment_date has proper index
-            $table->index('investment_date');
-            $table->index(['investor_id', 'status']);
+        // Add indexes with existence checks using raw SQL
+        $indexes = collect(DB::select('SHOW INDEX FROM investments'))
+            ->pluck('Key_name')
+            ->unique()
+            ->toArray();
+
+        Schema::table('investments', function (Blueprint $table) use ($indexes) {
+            if (!in_array('investments_investment_date_index', $indexes)) {
+                $table->index('investment_date');
+            }
+            if (!in_array('investments_investor_id_status_index', $indexes)) {
+                $table->index(['investor_id', 'status']);
+            }
         });
     }
 

@@ -27,6 +27,13 @@
                     <span class="px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold shadow">Sale</span>
                 @endif
             </div>
+
+            {{-- Wishlist Button --}}
+            @auth
+            <div class="absolute top-2 right-2">
+                <livewire:storefront.wishlist-button :productId="$product->id" :key="'wl-'.$product->id" />
+            </div>
+            @endauth
         </div>
     </a>
 
@@ -45,10 +52,10 @@
         <div class="flex items-center justify-between mt-2 md:mt-3">
             <div class="flex flex-col">
                 @if ($product->discount_price && $product->discount_price > 0)
-                    <span class="text-xs text-gray-400 line-through">৳{{ number_format($product->price, 2) }}</span>
-                    <span class="text-base md:text-lg font-bold text-primary-dark">৳{{ number_format($product->discount_price, 2) }}</span>
+                    <span class="text-xs text-gray-400 line-through">@price($product->price)</span>
+                    <span class="text-base md:text-lg font-bold text-primary-dark">@price($product->discount_price)</span>
                 @else
-                    <span class="text-base md:text-lg font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
+                    <span class="text-base md:text-lg font-bold text-primary-dark">@price($product->price)</span>
                 @endif
             </div>
 

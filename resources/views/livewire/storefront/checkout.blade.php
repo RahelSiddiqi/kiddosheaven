@@ -13,6 +13,13 @@
     {{-- Page Header --}}
     <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Checkout</h1>
 
+    @error('order')
+        <div class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+            <span class="font-medium">{{ $message }}</span>
+        </div>
+    @enderror
+
     <form wire:submit="placeOrder" class="grid lg:grid-cols-3 gap-8">
         {{-- Checkout Form --}}
         <div class="lg:col-span-2 space-y-6">
@@ -148,11 +155,11 @@
                             <div class="flex-1 min-w-0">
                                 <p class="font-medium text-sm text-gray-900 line-clamp-2">{{ $item['name'] }}</p>
                                 <p class="text-sm text-gray-600 mt-1">
-                                    Qty: {{ $item['quantity'] }} × ৳{{ number_format($item['price'], 2) }}
+                                    Qty: {{ $item['quantity'] }} x @price($item['price'])
                                 </p>
                             </div>
                             <p class="font-semibold text-gray-900 text-sm">
-                                ৳{{ number_format($item['price'] * $item['quantity'], 2) }}
+                                @price($item['price'] * $item['quantity'])
                             </p>
                         </div>
                     @endforeach
@@ -162,27 +169,33 @@
                 <div class="space-y-3 mb-6">
                     <div class="flex justify-between text-gray-600">
                         <span>Subtotal ({{ count($cart['items']) }} items)</span>
-                        <span class="font-semibold">৳{{ number_format($subtotal, 2) }}</span>
+                        <span class="font-semibold">@price($subtotal)</span>
                     </div>
+                    @if ($taxRate > 0)
                     <div class="flex justify-between text-gray-600">
-                        <span>Tax (15%)</span>
-                        <span class="font-semibold">৳{{ number_format($tax, 2) }}</span>
+                        <span>VAT ({{ $taxRate }}%)</span>
+                        <span class="font-semibold">@price($tax)</span>
                     </div>
+                    @endif
                     <div class="flex justify-between text-gray-600">
                         <span>Shipping</span>
                         <span class="font-semibold {{ $shipping == 0 ? 'text-green-600' : '' }}">
-                            {{ $shipping == 0 ? 'FREE' : '৳' . number_format($shipping, 2) }}
+                            @if ($shipping == 0)
+                                FREE
+                            @else
+                                @price($shipping)
+                            @endif
                         </span>
                     </div>
                     @if ($subtotal < 1000 && $shipping > 0)
-                        <p class="text-xs text-gray-500">💡 Add ৳{{ number_format(1000 - $subtotal, 2) }} more for free shipping</p>
+                        <p class="text-xs text-gray-500">Add @price(1000 - $subtotal) more for free shipping</p>
                     @endif
                 </div>
 
                 <div class="border-t border-gray-200 pt-4 mb-6">
                     <div class="flex justify-between items-center">
                         <span class="text-lg font-bold text-gray-900">Total</span>
-                        <span class="text-2xl font-bold text-primary-dark">৳{{ number_format($total, 2) }}</span>
+                        <span class="text-2xl font-bold text-primary-dark">@price($total)</span>
                     </div>
                 </div>
 

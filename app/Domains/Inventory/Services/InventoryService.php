@@ -235,11 +235,12 @@ class InventoryService
         array $details = []
     ): PurchaseBatch {
         return DB::transaction(function () use ($product, $quantity, $unitCost, $details) {
+            $variantId = $details['product_variant_id'] ?? null;
+
             $batch = PurchaseBatch::create([
                 'product_id'              => $product->id,
-                'product_variant_id'      => $details['product_variant_id'] ?? null,
+                'product_variant_id'      => $variantId,
                 'partner_id'              => $details['partner_id'] ?? null,
-                    'product_variant_id'      => $details['product_variant_id'] ?? null,
                 'unit_cost'               => $unitCost,
                 'quantity_received'       => $quantity,
                 'remaining_quantity'      => $quantity,
@@ -252,11 +253,9 @@ class InventoryService
                 'notes'                   => $details['notes'] ?? null,
             ]);
 
-            $variantId = $details['product_variant_id'] ?? null;
             InventoryMovement::create([
                 'product_id'         => $product->id,
-                'product_variant_id' => $details['product_variant_id'] ?? null,
-                    'product_variant_id' => $variantId,
+                'product_variant_id' => $variantId,
                 'movement_type'      => InventoryMovement::TYPE_PURCHASE,
                 'quantity'           => $quantity,
                 'unit_cost'          => $unitCost,
@@ -264,22 +263,13 @@ class InventoryService
                 'notes'              => "Purchase: {$quantity} units @ {$unitCost}",
             ]);
 
-
-                // Increment product and variant counters to keep summaries in sync
-                $product->increment('stock_quantity', $quantity);
-
-                if ($variantId) {
-                    if ($variant = ProductVariant::lockForUpdate()->find($variantId)) {
-                        $variant->increment('stock_quantity', $quantity);
-                    }
-                }
-            // Sync the product-level stock counter
+            // Increment counters once — with lock for variants to prevent race conditions
             $product->increment('stock_quantity', $quantity);
 
-            // If variant, sync variant stock too
-            if (!empty($details['product_variant_id'])) {
-                ProductVariant::where('id', $details['product_variant_id'])
-                    ->increment('stock_quantity', $quantity);
+            if ($variantId) {
+                if ($variant = ProductVariant::lockForUpdate()->find($variantId)) {
+                    $variant->increment('stock_quantity', $quantity);
+                }
             }
 
             return $batch;

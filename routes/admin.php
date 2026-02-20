@@ -18,10 +18,8 @@ use App\Http\Controllers\Admin\Product\ProductController;
 use App\Http\Controllers\Admin\Product\ProductImageController;
 use App\Http\Controllers\Admin\Product\ProductVariantController;
 use App\Http\Controllers\Admin\Product\ProductAttributeValueController;
-use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PurchaseBatchController;
 use App\Http\Controllers\Admin\ReviewController;
-use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Auth\LoginController;
@@ -40,46 +38,33 @@ Route::post('/admin/logout', [LoginController::class, 'adminLogout'])->name('adm
 
 // Protected Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->middleware('permission:view-dashboard')->name('dashboard');
+    // Dashboard — Livewire full-page component
+    Route::get('/', \App\Livewire\Admin\Dashboard\Dashboard::class)->middleware('permission:view-dashboard')->name('dashboard');
 
     // ============================================
     // CATEGORIES
     // ============================================
-    Route::prefix('categories')->name('categories.')->group(function () {
-        Route::post('reorder', [\App\Http\Controllers\Admin\CategoryController::class, 'reorder'])->middleware('permission:manage-categories')->name('reorder');
-        Route::resource('/', \App\Http\Controllers\Admin\CategoryController::class)->parameters(['' => 'category']);
-    })->middleware('permission:view-categories');
+    Route::prefix('categories')->name('categories.')->middleware('permission:view-categories')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Catalog\CategoryIndex::class)->name('index');
+        // CategoryIndex inline modal handles create / edit / delete directly via Eloquent
+    });
 
     // ============================================
     // PRICING TEMPLATES
     // ============================================
-    Route::prefix('pricing-templates')->name('pricing-templates.')->group(function () {
-        Route::get('/list', [\App\Http\Controllers\Admin\PricingTemplateController::class, 'list'])->name('list');
-        Route::post('/preview', [\App\Http\Controllers\Admin\PricingTemplateController::class, 'preview'])->name('preview');
-        Route::post('{pricingTemplate}/attach-categories', [\App\Http\Controllers\Admin\PricingTemplateController::class, 'attachCategories'])->name('attach-categories');
-        Route::resource('/', \App\Http\Controllers\Admin\PricingTemplateController::class)->parameters(['' => 'pricingTemplate']);
-    })->middleware('permission:view-categories');
+    Route::prefix('pricing-templates')->name('pricing-templates.')->middleware('permission:view-categories')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Catalog\PricingTemplateIndex::class)->name('index');
+        // PricingTemplateIndex handles all CRUD inline
+    });
 
     // ============================================
     // ATTRIBUTES (Global)
     // ============================================
     Route::prefix('attributes')->name('attributes.')->middleware('permission:view-categories')->group(function () {
-        // Action routes before resource
-        Route::post('reorder', [AttributeController::class, 'reorder'])->name('reorder');
-
-        // Attribute Values (nested under specific attribute)
-        Route::prefix('{attribute}/values')->name('values.')->group(function () {
-            Route::get('edit', [AttributeValueController::class, 'edit'])->name('edit');
-            Route::post('/', [AttributeValueController::class, 'store'])->name('store');
-            Route::post('bulk', [AttributeValueController::class, 'storeBulk'])->name('store-bulk');
-            Route::put('{value}', [AttributeValueController::class, 'update'])->name('update');
-            Route::delete('{value}', [AttributeValueController::class, 'destroy'])->name('destroy');
-            Route::post('reorder', [AttributeValueController::class, 'reorder'])->name('reorder');
-        });
-
-        // Resource routes last
-        Route::resource('/', AttributeController::class)->parameters(['' => 'attribute']);
+        // Livewire index and value manager
+        Route::get('/', \App\Livewire\Admin\Product\AttributeIndex::class)->name('index');
+        Route::get('/{attributeId}/values', \App\Livewire\Admin\Product\AttributeValueManager::class)->name('values.index');
+        // AttributeIndex and AttributeValueManager handle all CRUD inline
     });
 
     // ============================================
@@ -131,36 +116,32 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::post('attribute-values/sync-from-category', [ProductAttributeValueController::class, 'syncFromCategory'])->name('attribute-values.sync');
         });
 
-        // Resource routes last
-        Route::resource('/', ProductController::class)->parameters(['' => 'product']);
+        // Livewire handles product index, create and edit; ProductForm calls ProductService directly
+        Route::get('/', \App\Livewire\Admin\Product\ProductIndex::class)->name('index');
+        Route::get('/create', \App\Livewire\Admin\Product\ProductForm::class)->name('create');
+        Route::get('/{productId}/edit', \App\Livewire\Admin\Product\ProductForm::class)->name('edit');
+        Route::resource('/', ProductController::class)->parameters(['' => 'product'])->except(['index', 'create', 'edit', 'store', 'update']);
     });
 
     // ============================================
     // BRANDS
     // ============================================
     Route::prefix('brands')->name('brands.')->middleware('permission:view-brands')->group(function () {
-        // Action routes before resource
-        Route::post('{brand}/toggle', [BrandController::class, 'toggleActive'])->middleware('permission:manage-brands')->name('toggle');
-
-        // Resource routes
-        Route::resource('/', BrandController::class)->parameters(['' => 'brand']);
+        Route::get('/', \App\Livewire\Admin\Catalog\BrandIndex::class)->name('index');
+        // BrandIndex inline modal handles create / edit / delete / toggle directly via Eloquent
     });
 
     // ============================================
     // ORDERS
     // ============================================
     Route::prefix('orders')->name('orders.')->middleware('permission:view-orders')->group(function () {
-        // Collection action routes before resource
-        Route::post('bulk-status', [OrderController::class, 'bulkUpdateStatus'])->name('bulk-status');
+        // Export and invoice routes (return downloadable content)
         Route::get('export', [OrderController::class, 'export'])->name('export');
-
-        // Single order action routes (with {order} parameter)
-        Route::patch('{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::get('{order}/invoice', [OrderController::class, 'invoice'])->name('invoice');
-        Route::post('{order}/ship', [OrderController::class, 'ship'])->name('ship');
 
-        // Resource routes last (only index and show)
-        Route::resource('/', OrderController::class)->parameters(['' => 'order'])->only(['index', 'show']);
+        // Livewire handles order index and show
+        Route::get('/', \App\Livewire\Admin\Order\OrderIndex::class)->name('index');
+        Route::get('/{orderId}', \App\Livewire\Admin\Order\OrderShow::class)->name('show');
     });
 
     // ============================================
@@ -168,39 +149,31 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // ============================================
     Route::prefix('inventory')->name('inventory.')->middleware('permission:view-inventory')->group(function () {
         // Specific routes before generic index
-        Route::get('alerts', [InventoryController::class, 'alerts'])->name('alerts');
+        Route::get('alerts', \App\Livewire\Admin\Inventory\InventoryAlerts::class)->name('alerts');
         Route::post('update', [InventoryController::class, 'updateStock'])->name('update');
-        Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::get('/', \App\Livewire\Admin\Inventory\InventoryIndex::class)->name('index');
 
-        // Inventory Movements (nested under inventory)
+        // Inventory Movements (nested under inventory) - Livewire handles all CRUD inline
         Route::prefix('movements')->name('movements.')->group(function () {
-            // Specific action routes
-            Route::get('product/{product}', [InventoryMovementController::class, 'getByProduct'])->name('by-product');
-
-            // Resource routes
-            Route::resource('/', InventoryMovementController::class)->parameters(['' => 'inventory_movement']);
+            Route::get('/', \App\Livewire\Admin\Inventory\InventoryMovementIndex::class)->name('index');
+            // InventoryMovementIndex inline modal handles create/edit/delete
         });
     });
 
-    // Purchase Batches
+    // Purchase Batches - Livewire handles all CRUD inline
     Route::prefix('purchase-batches')->name('purchase-batches.')->middleware('permission:view-inventory')->group(function () {
-        // Specific action routes
-        Route::get('product/{product}', [PurchaseBatchController::class, 'getByProduct'])->name('by-product');
-        Route::patch('{purchaseBatch}/mark-exhausted', [PurchaseBatchController::class, 'markExhausted'])->name('mark-exhausted');
-
-        // Resource routes
-        Route::resource('/', PurchaseBatchController::class)->parameters(['' => 'purchase_batch']);
+        Route::get('/', \App\Livewire\Admin\Inventory\PurchaseBatchIndex::class)->name('index');
+        // PurchaseBatchIndex inline modal handles create/edit/delete/mark-exhausted
     });
 
     // ============================================
     // CUSTOMERS
     // ============================================
     Route::prefix('customers')->name('customers.')->middleware('permission:view-customers')->group(function () {
-        // Action routes
-        Route::post('{customer}/toggle', [CustomerController::class, 'toggleActive'])->name('toggle');
-
-        // Resource routes (only index and show)
-        Route::resource('/', CustomerController::class)->parameters(['' => 'customer'])->only(['index', 'show']);
+        // Livewire handles customer index and show
+        Route::get('/', \App\Livewire\Admin\Customer\CustomerIndex::class)->name('index');
+        Route::get('/{customerId}', \App\Livewire\Admin\Customer\CustomerShow::class)->name('show');
+        // CustomerIndex and CustomerShow handle toggle directly via Eloquent
     });
 
     // ============================================
@@ -212,17 +185,24 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             // Specific routes
             Route::get('users', [CouponController::class, 'getUsers'])->name('users');
 
-            // Resource routes
-            Route::resource('/', CouponController::class)->parameters(['' => 'coupon']);
+            // Livewire handles coupon index and form
+            Route::get('/', \App\Livewire\Admin\Marketing\CouponIndex::class)->name('index');
+            Route::get('/create', \App\Livewire\Admin\Marketing\CouponForm::class)->name('create');
+            Route::get('/{couponId}/edit', \App\Livewire\Admin\Marketing\CouponForm::class)->name('edit');
+
+            // Only keep destroy - CouponForm handles store/update directly
+            Route::delete('/{coupon}', [CouponController::class, 'destroy'])->name('destroy');
         });
 
         // Flash Sales
         Route::prefix('flash-sales')->name('flash-sales.')->group(function () {
-            // Action routes
-            Route::post('{flashSale}/toggle', [FlashSaleController::class, 'toggleStatus'])->name('toggle');
+            // Livewire handles flash sale index and form
+            Route::get('/', \App\Livewire\Admin\Marketing\FlashSaleIndex::class)->name('index');
+            Route::get('/create', \App\Livewire\Admin\Marketing\FlashSaleForm::class)->name('create');
+            Route::get('/{flashSaleId}/edit', \App\Livewire\Admin\Marketing\FlashSaleForm::class)->name('edit');
 
-            // Resource routes
-            Route::resource('/', FlashSaleController::class)->parameters(['' => 'flash_sale']);
+            // Only keep destroy - FlashSaleForm handles store/update directly
+            Route::delete('/{flashSale}', [FlashSaleController::class, 'destroy'])->name('destroy');
         });
     });
 
@@ -230,99 +210,75 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // CMS
     // ============================================
     Route::prefix('cms')->name('cms.')->middleware('permission:view-cms')->group(function () {
-        Route::resource('pages', CmsPageController::class)->parameters(['pages' => 'cms_page']);
+        Route::prefix('pages')->name('pages.')->group(function () {
+            // Livewire handles CMS page index and form
+            Route::get('/', \App\Livewire\Admin\Cms\CmsPageIndex::class)->name('index');
+            Route::get('/create', \App\Livewire\Admin\Cms\CmsPageForm::class)->name('create');
+            Route::get('/{pageId}/edit', \App\Livewire\Admin\Cms\CmsPageForm::class)->name('edit');
+
+            // Only keep destroy - CmsPageForm handles store/update directly
+            Route::delete('/{page}', [CmsPageController::class, 'destroy'])->name('destroy');
+        });
     });
 
     // ============================================
     // REVIEWS
     // ============================================
     Route::prefix('reviews')->name('reviews.')->middleware('permission:view-reviews')->group(function () {
-        // Bulk action routes
-        Route::post('bulk-approve', [ReviewController::class, 'bulkApprove'])->name('bulk-approve');
-        Route::post('bulk-destroy', [ReviewController::class, 'bulkDestroy'])->name('bulk-destroy');
+        // Livewire handles review index with approve, reject, delete, bulkApprove, bulkDelete
+        Route::get('/', \App\Livewire\Admin\Reviews\ReviewIndex::class)->name('index');
 
-        // Single review actions
-        Route::post('{review}/approve', [ReviewController::class, 'approve'])->name('approve');
-
-        // Resource routes (only index, show, destroy)
-        Route::resource('/', ReviewController::class)->parameters(['' => 'review'])->only(['index', 'show', 'destroy']);
+        // Resource routes (only show for viewing individual review)
+        Route::get('/{review}', [ReviewController::class, 'show'])->name('show');
     });
 
     // ============================================
     // CAPITAL ACCOUNTS
     // ============================================
     Route::prefix('capital-accounts')->name('capital-accounts.')->middleware('permission:view-finance')->group(function () {
-        // Specific routes
-        Route::get('partner/{partner}', [CapitalAccountController::class, 'getByPartner'])->name('by-partner');
-
-        // Resource routes
-        Route::resource('/', CapitalAccountController::class)->parameters(['' => 'capital_account']);
+        Route::get('/', \App\Livewire\Admin\Finance\CapitalAccountIndex::class)->name('index');
+        // CapitalAccountIndex handles create/edit/delete inline
     });
 
     // ============================================
     // FINANCIAL TRANSACTIONS
     // ============================================
     Route::prefix('financial-transactions')->name('financial-transactions.')->middleware('permission:view-finance')->group(function () {
-        // Specific routes
-        Route::get('account/{account}', [FinancialTransactionController::class, 'getByAccount'])->name('by-account');
-
-        // Resource routes
-        Route::resource('/', FinancialTransactionController::class)->parameters(['' => 'financial_transaction']);
+        Route::get('/', \App\Livewire\Admin\Finance\FinancialTransactionIndex::class)->name('index');
+        // FinancialTransactionIndex handles create/edit/delete inline
     });
 
     // ============================================
-    // EXPENSES
+    // EXPENSES (Accounting)
     // ============================================
     Route::prefix('expenses')->name('expenses.')->middleware('permission:view-finance')->group(function () {
-        // Category routes
-        Route::post('categories', [ExpenseController::class, 'storeCategory'])->name('store-category');
-        Route::delete('categories/{category}', [ExpenseController::class, 'destroyCategory'])->name('destroy-category');
-
-        // Single expense actions
-        Route::post('{expense}/approve', [ExpenseController::class, 'approve'])->name('approve');
-        Route::post('{expense}/reject', [ExpenseController::class, 'reject'])->name('reject');
-
-        // Resource routes
-        Route::resource('/', ExpenseController::class)->parameters(['' => 'expense']);
+        Route::get('/', \App\Livewire\Admin\Accounting\AccountingOverview::class)->name('index');
+        Route::get('/create', \App\Livewire\Admin\Accounting\ExpenseForm::class)->name('create');
+        Route::get('/{expenseId}/edit', \App\Livewire\Admin\Accounting\ExpenseForm::class)->name('edit');
+        // AccountingOverview handles approve/reject/delete, ExpenseForm handles create/update
     });
 
     // ============================================
     // PARTNERS
     // ============================================
     Route::prefix('partners')->name('partners.')->middleware('permission:view-finance')->group(function () {
-        // Partner Calculations (nested group with static "calculations" prefix)
-        Route::prefix('calculations')->name('calculations.')->group(function () {
-            Route::post('{calculation}/approve', [PartnerCalculationController::class, 'approve'])->name('approve');
-            Route::post('{calculation}/mark-paid', [PartnerCalculationController::class, 'markPaid'])->name('mark-paid');
-        });
-
-        // Partner-specific actions (with {partner} parameter)
-        Route::put('{partner}/status', [PartnerController::class, 'updateStatus'])->name('update-status');
-        Route::post('{partner}/payments', [PartnerController::class, 'storePayment'])->name('payments.store');
-        Route::put('{partner}/payments/{payment}', [PartnerController::class, 'updatePayment'])->name('payments.update');
-        Route::delete('{partner}/payments/{payment}', [PartnerController::class, 'destroyPayment'])->name('payments.destroy');
-        Route::post('{partner}/calculate', [PartnerController::class, 'calculateCommission'])->name('calculate');
-
-        // Resource routes last
-        Route::resource('/', PartnerController::class)->parameters(['' => 'partner']);
+        Route::get('/', \App\Livewire\Admin\Finance\PartnerIndex::class)->name('index');
+        // PartnerIndex handles all partner CRUD, payments, and commission calculations inline
     });
 
     // ============================================
     // INVESTMENTS
     // ============================================
     Route::prefix('investments')->name('investments.')->middleware('permission:view-finance')->group(function () {
-        // Action routes
-        Route::put('{investment}/status', [InvestmentController::class, 'updateStatus'])->name('update-status');
-
-        // Resource routes
-        Route::resource('/', InvestmentController::class)->parameters(['' => 'investment']);
+        Route::get('/', \App\Livewire\Admin\Finance\InvestmentIndex::class)->name('index');
+        // InvestmentIndex handles create/edit/delete/status inline
     });
 
     // ============================================
     // REPORTS
     // ============================================
     Route::prefix('reports')->name('reports.')->middleware('permission:view-reports')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/', \App\Livewire\Admin\Reports\ReportsDashboard::class)->name('index');
 
         // Inventory Reports
         Route::get('inventory', [ReportController::class, 'inventory'])->name('inventory');
@@ -357,45 +313,52 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Users
     Route::prefix('users')->name('users.')->middleware('permission:view-users')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->middleware('permission:create-users')->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\UserController::class, 'store'])->middleware('permission:create-users')->name('store');
-        Route::get('/{user}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])->middleware('permission:manage-users')->name('edit');
-        Route::put('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->middleware('permission:manage-users')->name('update');
+        Route::get('/', \App\Livewire\Admin\User\UserIndex::class)->middleware('permission:view-users')->name('index');
+        Route::get('/create', \App\Livewire\Admin\User\UserForm::class)->middleware('permission:create-users')->name('create');
+        Route::get('/{userId}/edit', \App\Livewire\Admin\User\UserForm::class)->middleware('permission:manage-users')->name('edit');
+        // UserForm handles create/update directly, only keep destroy
         Route::delete('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->middleware('permission:manage-users')->name('destroy');
     });
 
     // Profile
     Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/', [ProfileController::class, 'index'])->name('index');
-        Route::put('/', [ProfileController::class, 'update'])->name('update');
-        Route::put('password', [ProfileController::class, 'updatePassword'])->name('password');
+        Route::get('/', \App\Livewire\Admin\Profile\ProfileSettings::class)->name('index');
+        // ProfileSettings handles update + password via Livewire
     });
 
     Route::prefix('settings')->name('settings.')->middleware('permission:view-settings')->group(function () {
-        Route::get('/', [SettingController::class, 'edit'])->name('edit');
-        Route::put('/', [SettingController::class, 'update'])->middleware('permission:manage-settings')->name('update');
+        Route::get('/', \App\Livewire\Admin\Settings\ApplicationSettings::class)->name('edit');
+        // ApplicationSettings handles save() via Livewire
     });
 
-    // Roles & Permissions
+    // Theme Settings
+    Route::prefix('theme')->name('theme.')->middleware('permission:view-settings')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Theme\ThemeSettings::class)->name('index');
+    });
+
+    // ============================================
+    // SAAS ADMIN
+    // ============================================
+    Route::prefix('sites')->name('sites.')->middleware('permission:view-settings')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Site\SiteIndex::class)->name('index');
+    });
+
+    // Roles & Permissions (Livewire)
     Route::prefix('roles')->name('roles.')->middleware('permission:view-roles')->group(function () {
-        Route::resource('/', RoleController::class)->parameters(['' => 'role']);
+        Route::get('/', \App\Livewire\Admin\Role\RoleIndex::class)->name('index');
+        // RoleIndex inline modal handles create / edit / delete with permission assignment
     });
 
     Route::prefix('permissions')->name('permissions.')->middleware('permission:view-roles')->group(function () {
-        Route::resource('/', PermissionController::class)
-            ->parameters(['' => 'permission'])
-            ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-        Route::post('assign', [PermissionController::class, 'assign'])->name('assign');
-        Route::post('generate', [PermissionController::class, 'generate'])->name('generate');
+        Route::get('/', \App\Livewire\Admin\Permission\PermissionIndex::class)->name('index');
+        // PermissionIndex handles create / edit / delete / assign / generate
     });
 
     // ============================================
     // LOYALTY PROGRAM
     // ============================================
     Route::prefix('loyalty')->name('loyalty.')->middleware('permission:view-marketing')->group(function () {
-        Route::get('/', [LoyaltyController::class, 'index'])->name('index');
-        Route::put('{program}', [LoyaltyController::class, 'updateProgram'])->name('update');
-        Route::post('add-points', [LoyaltyController::class, 'addPoints'])->name('add-points');
+        Route::get('/', \App\Livewire\Admin\Loyalty\LoyaltyManagement::class)->name('index');
+        // LoyaltyManagement handles saveSettings() and adjustPoints() directly via Eloquent
     });
 });

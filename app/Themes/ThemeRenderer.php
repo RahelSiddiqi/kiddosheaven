@@ -79,9 +79,12 @@ class ThemeRenderer
      */
     protected function getThemeSettings(): ?SiteThemeSetting
     {
-        // For now, return the first site's settings
-        // In multi-site setup, this would resolve based on current domain
-        return SiteThemeSetting::first();
+        // Resolve based on current tenant site
+        $siteId = app()->bound('current.site') ? app('current.site')->id : null;
+
+        return $siteId
+            ? SiteThemeSetting::where('site_id', $siteId)->first()
+            : SiteThemeSetting::first();
     }
 
     /**

@@ -60,10 +60,10 @@
                         <div class="flex-1">
                             <p class="font-semibold text-gray-900">{{ $item->product_name }}</p>
                             <p class="text-sm text-gray-600 mt-1">
-                                Quantity: {{ $item->quantity }} × ৳{{ number_format($item->price, 2) }}
+                                Quantity: {{ $item->quantity }} × @price($item->price)
                             </p>
                         </div>
-                        <p class="font-bold text-gray-900">৳{{ number_format($item->subtotal, 2) }}</p>
+                        <p class="font-bold text-gray-900">@price($item->subtotal)</p>
                     </div>
                 @endforeach
             </div>
@@ -74,11 +74,11 @@
             <div class="space-y-2 mb-4">
                 <div class="flex justify-between text-gray-600">
                     <span>Subtotal</span>
-                    <span class="font-semibold">৳{{ number_format($order->subtotal, 2) }}</span>
+                    <span class="font-semibold">@price($order->subtotal)</span>
                 </div>
                 <div class="flex justify-between text-gray-600">
                     <span>Tax</span>
-                    <span class="font-semibold">৳{{ number_format($order->tax, 2) }}</span>
+                    <span class="font-semibold">@price($order->tax)</span>
                 </div>
                 <div class="flex justify-between text-gray-600">
                     <span>Shipping</span>
@@ -89,7 +89,7 @@
             </div>
             <div class="flex justify-between items-center pt-4 border-t border-gray-200">
                 <span class="text-lg font-bold text-gray-900">Total</span>
-                <span class="text-2xl font-bold text-primary-dark">৳{{ number_format($order->total, 2) }}</span>
+                <span class="text-2xl font-bold text-primary-dark">@price($order->total)</span>
             </div>
         </div>
 

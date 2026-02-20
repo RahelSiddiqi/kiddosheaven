@@ -3,10 +3,14 @@
 namespace App\Domains\Content\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Domains\Concerns\BelongsToSite;
 
 class CmsPage extends Model
 {
+    use BelongsToSite;
+
     protected $fillable = [
+        'site_id',
         'title',
         'slug',
         'content',

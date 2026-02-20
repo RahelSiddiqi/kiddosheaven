@@ -4,10 +4,14 @@ namespace App\Domains\Marketing\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Domains\Concerns\BelongsToSite;
 
 class Coupon extends Model
 {
+    use BelongsToSite;
+
     protected $fillable = [
+        'site_id',
         'code',
         'description',
         'type',

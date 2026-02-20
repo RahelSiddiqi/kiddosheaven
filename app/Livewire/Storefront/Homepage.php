@@ -116,6 +116,9 @@ class Homepage extends Component
 
     public function render()
     {
+        view()->share('page_title', config('app.name') . ' - Kids Toys & Products');
+        view()->share('page_description', 'Discover amazing toys and products for kids at ' . config('app.name'));
+
         return view('livewire.storefront.homepage');
     }
 }

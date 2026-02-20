@@ -4,6 +4,7 @@ namespace App\Livewire\Storefront;
 
 use Livewire\Component;
 use App\Domains\Product\Models\Product;
+use App\Services\Cart\CartService;
 
 class ProductDetail extends Component
 {
@@ -55,31 +56,17 @@ class ProductDetail extends Component
         }
     }
 
-    public function addToCart()
+    public function addToCart(): void
     {
-        $cart = session('cart', ['items' => []]);
+        $result = app(CartService::class)->addItem($this->product->id, $this->quantity);
 
-        $key = $this->product->id . ($this->selectedVariantId ? '-' . $this->selectedVariantId : '');
-
-        if (isset($cart['items'][$key])) {
-            $cart['items'][$key]['quantity'] += $this->quantity;
+        if ($result['success']) {
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', message: 'Product added to cart!', type: 'success');
+            $this->quantity = 1;
         } else {
-            $cart['items'][$key] = [
-                'product_id' => $this->product->id,
-                'variant_id' => $this->selectedVariantId,
-                'name' => $this->product->name,
-                'slug' => $this->product->slug,
-                'price' => $this->product->price,
-                'image' => $this->product->primary_image ?? ($this->product->images[0] ?? null),
-                'quantity' => $this->quantity,
-            ];
+            $this->dispatch('notify', message: $result['message'], type: 'error');
         }
-
-        session(['cart' => $cart]);
-        $this->dispatch('cart-updated');
-
-        session()->flash('cart-success', 'Product added to cart!');
-        $this->quantity = 1;
     }
 
     public function render()
@@ -111,6 +98,9 @@ class ProductDetail extends Component
                 // Variants might not exist
             }
         }
+
+        view()->share('page_title', $this->product?->name ?? 'Product');
+        view()->share('page_description', $this->product ? strip_tags(substr($this->product->description ?? '', 0, 160)) : '');
 
         return view('livewire.storefront.product-detail', [
             'related' => $related,

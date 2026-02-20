@@ -65,7 +65,7 @@
                                     {{ $item['name'] }}
                                 </a>
                                 <p class="text-lg font-bold text-primary-dark mt-2">
-                                    ৳{{ number_format($item['price'], 2) }}
+                                    @price($item['price'])
                                 </p>
 
                                 {{-- Quantity Controls --}}
@@ -100,7 +100,7 @@
 
                                 {{-- Item Total --}}
                                 <p class="text-sm text-gray-600 mt-3">
-                                    Subtotal: <span class="font-bold text-gray-900">৳{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                                    Subtotal: <span class="font-bold text-gray-900">@price($item['price'] * $item['quantity'])</span>
                                 </p>
                             </div>
                         </div>
@@ -116,11 +116,11 @@
                     <div class="space-y-3 mb-6">
                         <div class="flex justify-between text-gray-600">
                             <span>Subtotal ({{ count($cart['items']) }} items)</span>
-                            <span class="font-semibold">৳{{ number_format($subtotal, 2) }}</span>
+                            <span class="font-semibold">@price($subtotal)</span>
                         </div>
                         <div class="flex justify-between text-gray-600">
                             <span>Tax (15%)</span>
-                            <span class="font-semibold">৳{{ number_format($tax, 2) }}</span>
+                            <span class="font-semibold">@price($tax)</span>
                         </div>
                         <div class="flex justify-between text-gray-600">
                             <span>Shipping</span>
@@ -131,7 +131,7 @@
                     <div class="border-t border-gray-200 pt-4 mb-6">
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-bold text-gray-900">Total</span>
-                            <span class="text-2xl font-bold text-primary-dark">৳{{ number_format($total, 2) }}</span>
+                            <span class="text-2xl font-bold text-primary-dark">@price($total)</span>
                         </div>
                     </div>
 

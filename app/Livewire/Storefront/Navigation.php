@@ -5,6 +5,7 @@ namespace App\Livewire\Storefront;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use App\Domains\Catalog\Models\Category;
+use App\Services\Cart\CartService;
 
 class Navigation extends Component
 {
@@ -12,17 +13,15 @@ class Navigation extends Component
     public $searchQuery = '';
     public $isMobileMenuOpen = false;
 
-    public function mount()
+    public function mount(): void
     {
         $this->updateCartCount();
     }
 
     #[On('cart-updated')]
-    public function updateCartCount()
+    public function updateCartCount(): void
     {
-        $cart = session('cart', []);
-        $items = $cart['items'] ?? [];
-        $this->cartCount = array_sum(array_column($items, 'quantity'));
+        $this->cartCount = app(CartService::class)->getItemCount();
     }
 
     public function search()

@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Kiddo's Heaven - Premium toys and games for children">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? config('app.name', "Kiddo's Heaven") }}</title>
+    <x-seo-meta
+        :title="$page_title ?? config('app.name')"
+        :description="$page_description ?? ''"
+    />
 
     {{-- Favicon --}}
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
@@ -18,6 +20,9 @@
 
     {{-- Vite Assets --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Livewire Styles --}}
+    @livewireStyles
 
     {{-- Dynamic Theme CSS Variables --}}
     <style>
@@ -36,6 +41,17 @@
         .font-nunito { font-family: {{ ($themeTypography['font_family_base'] ?? 'Nunito') }}, sans-serif; }
         html, body { overflow-x: hidden !important; max-width: 100vw; }
     </style>
+
+    {{-- Google Analytics --}}
+    @if(!empty($siteSettings['google_analytics_id']))
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $siteSettings['google_analytics_id'] }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ addslashes($siteSettings['google_analytics_id']) }}');
+    </script>
+    @endif
 </head>
 
 <body class="font-nunito antialiased text-gray-800 bg-gray-50 min-h-screen flex flex-col">
@@ -165,6 +181,9 @@
 
     {{-- Cart Drawer --}}
     @livewire('storefront.cart-drawer')
+
+    {{-- Livewire Scripts --}}
+    @livewireScripts
 
     {{-- Toast Notifications (works with SPA navigation) --}}
     <div x-data="{

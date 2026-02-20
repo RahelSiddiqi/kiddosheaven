@@ -73,9 +73,9 @@
 
             {{-- Price --}}
             <div class="flex items-center gap-4">
-                <span class="text-4xl font-bold text-primary-dark">৳{{ number_format($product->price, 2) }}</span>
+                <span class="text-4xl font-bold text-primary-dark">@price($product->price)</span>
                 @if ($product->compare_at_price)
-                    <span class="text-xl text-gray-400 line-through">৳{{ number_format($product->compare_at_price, 2) }}</span>
+                    <span class="text-xl text-gray-400 line-through">@price($product->compare_at_price)</span>
                 @endif
             </div>
 
@@ -137,6 +137,9 @@
             @endif
         </div>
     </div>
+
+    {{-- Product Reviews --}}
+    @livewire('storefront.product-reviews', ['productId' => $product->id], key('reviews-'.$product->id))
 
     {{-- Related Products --}}
     @if ($related->isNotEmpty())

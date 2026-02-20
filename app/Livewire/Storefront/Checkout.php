@@ -2,149 +2,196 @@
 
 namespace App\Livewire\Storefront;
 
-use Livewire\Component;
+use App\Services\Cart\CartService;
+use App\Services\Order\OrderService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Livewire\Attributes\Validate;
-use App\Domains\Order\Models\Order;
-use App\Domains\Order\Models\OrderItem;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Livewire\Component;
 
 class Checkout extends Component
 {
-    // Customer Information
+    // ── Customer Information ─────────────────────────────────────
     #[Validate('required|string|max:255')]
-    public $customer_name = '';
+    public string $customer_name = '';
 
     #[Validate('required|email|max:255')]
-    public $customer_email = '';
+    public string $customer_email = '';
 
     #[Validate('required|string|max:20')]
-    public $customer_phone = '';
+    public string $customer_phone = '';
 
-    // Shipping Address
+    // ── Shipping Address ─────────────────────────────────────────
     #[Validate('required|string|max:500')]
-    public $shipping_address = '';
+    public string $shipping_address = '';
 
     #[Validate('required|string|max:255')]
-    public $shipping_city = '';
+    public string $shipping_city = '';
 
-    #[Validate('required|string|max:100')]
-    public $shipping_state = '';
+    #[Validate('nullable|string|max:100')]
+    public string $shipping_state = '';
 
     #[Validate('required|string|max:20')]
-    public $shipping_zip = '';
+    public string $shipping_zip = '';
 
-    // Payment
+    // ── Payment ───────────────────────────────────────────────────
     #[Validate('required|in:cod,card,bkash')]
-    public $payment_method = 'cod';
+    public string $payment_method = 'cod';
 
-    public $notes = '';
+    public string $notes = '';
 
-    // Cart data
-    public $cart = [];
-    public $subtotal = 0;
-    public $tax = 0;
-    public $shipping = 0;
-    public $total = 0;
+    // ── View-safe cart summary (plain scalars / arrays, no Eloquent models) ──
+    public array $cart = ['items' => []];
+    public float $subtotal  = 0;
+    public float $tax       = 0;
+    public float $taxRate   = 0;
+    public float $shipping  = 0;
+    public float $total     = 0;
 
-    public $processing = false;
+    public bool $processing = false;
 
-    public function mount()
+    // ─────────────────────────────────────────────────────────────
+
+    public function mount(CartService $cartService): void
     {
-        // Redirect if cart is empty
-        $this->cart = session('cart', ['items' => []]);
-        if (empty($this->cart['items'])) {
-            return redirect()->route('cart.index');
+        if ($cartService->getItemCount() === 0) {
+            redirect()->route('cart.index');
+            return;
         }
 
-        // Pre-fill if user is logged in
+        // Build a view-safe cart items array — no Eloquent model instances in public properties
+        $cartItems = $cartService->getItems();
+
+        $this->cart = [
+            'items' => $cartItems->map(fn($item) => [
+                'product_id' => $item['product_id'],
+                'name'       => $item['product']->name,
+                'sku'        => $item['product']->sku ?? null,
+                'image'      => $item['product']->image_path,
+                'price'      => (float) $item['price'],
+                'quantity'   => (int) $item['quantity'],
+            ])->values()->all(),
+        ];
+
+        $this->calculateTotals();
+
+        // Pre-fill form from authenticated user
         if (auth()->check()) {
             $user = auth()->user();
-            $this->customer_name = $user->name ?? '';
+            $this->customer_name  = $user->name  ?? '';
             $this->customer_email = $user->email ?? '';
             $this->customer_phone = $user->phone ?? '';
         }
-
-        $this->calculateTotals();
     }
 
-    public function calculateTotals()
+    /**
+     * Recalculate display totals.
+     * Tax rate is loaded from TaxService (reads from settings table).
+     * Shipping is ৳100 (free over ৳1000).
+     * The actual order record uses OrderService::getTaxRate() (from Settings),
+     * which may differ; the CartService tier handles the stored totals.
+     */
+    public function calculateTotals(): void
     {
-        $this->subtotal = 0;
+        $this->subtotal = array_sum(
+            array_map(fn($i) => $i['price'] * $i['quantity'], $this->cart['items'])
+        );
 
-        foreach ($this->cart['items'] ?? [] as $item) {
-            $this->subtotal += $item['price'] * $item['quantity'];
-        }
-
-        $this->tax = $this->subtotal * 0.15; // 15% tax
-        $this->shipping = $this->subtotal >= 1000 ? 0 : 100; // Free shipping over ৳1000
-        $this->total = $this->subtotal + $this->tax + $this->shipping;
+        $taxService     = app(\App\Services\TaxService::class);
+        $this->taxRate  = $taxService->ratePercent();
+        $this->tax      = $taxService->calculate($this->subtotal);
+        $this->shipping = $this->subtotal >= 1000 ? 0 : 100;
+        $this->total    = $this->subtotal + $this->tax + $this->shipping;
     }
 
-    public function placeOrder()
+    /**
+     * Place the order.
+     *
+     * Delegates entirely to OrderService::create() which:
+     *  - generates the order number
+     *  - runs FIFO/LIFO stock deduction via InventoryService
+     *  - records inventory_movements
+     *  - populates unit_cost + purchase_batch_id on order_items
+     *  - fires the OrderPlaced event (confirmation email)
+     *
+     * This component MUST NOT write directly to Order, OrderItem,
+     * PurchaseBatch, or InventoryMovement.
+     */
+    public function placeOrder(CartService $cartService, OrderService $orderService): mixed
     {
-        // Validate all fields
         $this->validate();
+
+        if ($cartService->getItemCount() === 0) {
+            $this->addError('order', 'Your cart is empty.');
+            return null;
+        }
 
         $this->processing = true;
 
         try {
-            DB::beginTransaction();
+            $cartData = $cartService->prepareForOrder();
 
-            // Create the order
-            $order = Order::create([
-                'order_number' => 'ORD-' . strtoupper(Str::random(10)),
-                'customer_id' => auth()->id(),
-                'customer_name' => $this->customer_name,
-                'customer_email' => $this->customer_email,
-                'customer_phone' => $this->customer_phone,
-                'shipping_address' => $this->shipping_address,
-                'shipping_city' => $this->shipping_city,
-                'shipping_state' => $this->shipping_state,
-                'shipping_zip' => $this->shipping_zip,
-                'subtotal' => $this->subtotal,
-                'tax' => $this->tax,
-                'shipping' => $this->shipping,
-                'total' => $this->total,
-                'payment_method' => $this->payment_method,
-                'payment_status' => $this->payment_method === 'cod' ? 'pending' : 'pending',
-                'status' => 'pending',
-                'notes' => $this->notes,
+            $order = $orderService->create([
+                'user_id'          => auth()->id(),
+                'customer_name'    => $this->customer_name,
+                'customer_email'   => $this->customer_email,
+                'customer_phone'   => $this->customer_phone,
+                'address_line'     => $this->shipping_address,
+                'city'             => $this->shipping_city,
+                'postal_code'      => $this->shipping_zip,
+                'payment_method'   => $this->payment_method,
+                'notes'            => $this->buildNotesField(),
+                // Totals — passed explicitly so OrderService does NOT
+                // recalculate and overwrite the tax with the wrong rate.
+                'items'            => $cartData['items'],
+                'subtotal'         => $this->subtotal,
+                'tax_amount'       => $this->tax,
+                'shipping_amount'  => $this->shipping,
+                'total_amount'     => $this->total,
             ]);
 
-            // Create order items
-            foreach ($this->cart['items'] as $item) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item['product_id'],
-                    'variant_id' => $item['variant_id'] ?? null,
-                    'product_name' => $item['name'],
-                    'product_sku' => $item['sku'] ?? null,
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'subtotal' => $item['price'] * $item['quantity'],
-                ]);
-            }
-
-            DB::commit();
-
-            // Clear the cart
-            session()->forget('cart');
+            // Clear via CartService so the correct session key is purged
+            $cartService->clear();
             $this->dispatch('cart-updated');
 
-            // Redirect to thank you page
             return redirect()->route('checkout.thankyou', $order);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             $this->processing = false;
-            session()->flash('error', 'Failed to place order. Please try again.');
-            \Log::error('Order creation failed: ' . $e->getMessage());
+
+            Log::error('Checkout::placeOrder failed', [
+                'customer_email' => $this->customer_email,
+                'message'        => $e->getMessage(),
+                'trace'          => $e->getTraceAsString(),
+            ]);
+
+            $this->addError('order', 'Failed to place order. Please try again.');
+            return null;
         }
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.storefront.checkout');
+    }
+
+    /**
+     * Combine user notes with shipping state into a single notes field.
+     * The orders table has no dedicated shipping_state column — state is
+     * preserved here so it isn't silently discarded.
+     */
+    protected function buildNotesField(): string
+    {
+        $parts = [];
+
+        if (!empty($this->shipping_state)) {
+            $parts[] = 'State/Division: ' . $this->shipping_state;
+        }
+
+        if (!empty($this->notes)) {
+            $parts[] = $this->notes;
+        }
+
+        return implode(' | ', $parts);
     }
 }

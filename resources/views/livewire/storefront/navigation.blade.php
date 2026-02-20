@@ -123,6 +123,9 @@
                         </div>
                     </form>
 
+                    {{-- Currency Selector --}}
+                    <livewire:storefront.currency-selector />
+
                     {{-- Cart --}}
                     <button wire:click="$dispatch('open-cart-drawer')" class="relative p-2 rounded-full hover:bg-gray-100 transition">
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

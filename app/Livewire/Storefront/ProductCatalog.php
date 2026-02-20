@@ -234,6 +234,9 @@ class ProductCatalog extends Component
                 ->get();
         });
 
+        view()->share('page_title', 'Shop - ' . config('app.name'));
+        view()->share('page_description', 'Browse our full catalog of kids toys and products.');
+
         return view('livewire.storefront.product-catalog', [
             'products' => $products,
             'categories' => $categories,

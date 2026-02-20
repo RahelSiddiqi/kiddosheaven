@@ -249,4 +249,57 @@
 			/>
 		</div>
 	</div>
+
+	{{-- Status History Timeline --}}
+	<div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+		<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status History</h3>
+		@if($order->statusHistory->isEmpty())
+			<p class="text-gray-500 text-sm">No status history recorded.</p>
+		@else
+		<div class="flow-root">
+			<ul class="-mb-8">
+				@foreach($order->statusHistory->sortByDesc('created_at') as $history)
+				<li>
+					<div class="relative pb-8">
+						@if(!$loop->last)
+						<span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-600" aria-hidden="true"></span>
+						@endif
+						<div class="relative flex space-x-3">
+							<div>
+								<span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white dark:ring-gray-800
+									{{ match($history->status) {
+										'pending' => 'bg-yellow-100 text-yellow-600',
+										'processing' => 'bg-blue-100 text-blue-600',
+										'shipped' => 'bg-purple-100 text-purple-600',
+										'delivered', 'completed' => 'bg-green-100 text-green-600',
+										'cancelled', 'refunded' => 'bg-red-100 text-red-600',
+										default => 'bg-gray-100 text-gray-600'
+									} }}">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+									</svg>
+								</span>
+							</div>
+							<div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+								<div>
+									<p class="text-sm text-gray-900 dark:text-white font-medium capitalize">{{ str_replace('_', ' ', $history->status) }}</p>
+									@if($history->note)
+									<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ $history->note }}</p>
+									@endif
+									@if($history->creator)
+									<p class="text-xs text-gray-400 mt-0.5">by {{ $history->creator->name }}</p>
+									@endif
+								</div>
+								<div class="text-right text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+									{{ $history->created_at->format('M d, Y H:i') }}
+								</div>
+							</div>
+						</div>
+					</div>
+				</li>
+				@endforeach
+			</ul>
+		</div>
+		@endif
+	</div>
 @endsection

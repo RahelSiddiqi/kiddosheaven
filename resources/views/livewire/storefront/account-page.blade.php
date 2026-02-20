@@ -63,6 +63,14 @@
                         </svg>
                         <span class="font-medium text-gray-700">All Orders</span>
                     </a>
+                    <a href="{{ route('wishlist') }}" wire:navigate
+                        class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span class="font-medium text-gray-700">My Wishlist</span>
+                    </a>
                     <a href="{{ route('catalog') }}" wire:navigate
                         class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
                         <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +122,7 @@
                                 </div>
                                 <div class="flex items-center justify-between text-sm text-gray-500">
                                     <span>{{ $order->created_at->format('M d, Y') }}</span>
-                                    <span class="font-bold text-primary-dark">৳{{ number_format($order->total, 2) }}</span>
+                                    <span class="font-bold text-primary-dark">@price($order->total)</span>
                                 </div>
                             </a>
                         @endforeach
@@ -123,4 +131,7 @@
             </div>
         </div>
     </div>
+
+    {{-- Address Book Section --}}
+    @livewire('storefront.address-book')
 </div>

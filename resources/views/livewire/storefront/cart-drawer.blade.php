@@ -45,7 +45,7 @@
                                 {{-- Product Info --}}
                                 <div class="flex-1 min-w-0">
                                     <h3 class="font-medium text-gray-900 truncate">{{ $item['name'] }}</h3>
-                                    <p class="text-sm text-primary-dark font-bold mt-1">৳{{ number_format($item['price'], 2) }}</p>
+                                    <p class="text-sm text-primary-dark font-bold mt-1">@price($item['price'])</p>
 
                                     {{-- Quantity Controls --}}
                                     <div class="flex items-center gap-2 mt-2">
@@ -84,7 +84,7 @@
                     {{-- Subtotal --}}
                     <div class="flex items-center justify-between text-lg font-bold">
                         <span class="text-gray-900">Subtotal:</span>
-                        <span class="text-primary-dark">৳{{ number_format($subtotal, 2) }}</span>
+                        <span class="text-primary-dark">@price($subtotal)</span>
                     </div>
 
                     {{-- Actions --}}

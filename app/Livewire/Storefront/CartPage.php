@@ -3,67 +3,65 @@
 namespace App\Livewire\Storefront;
 
 use Livewire\Component;
-use App\Domains\Product\Models\Product;
+use App\Services\Cart\CartService;
 
 class CartPage extends Component
 {
-    public $cart = [];
+    public $cart     = ['items' => []];
     public $subtotal = 0;
-    public $tax = 0;
-    public $total = 0;
+    public $tax      = 0;
+    public $shipping = 0;
+    public $total    = 0;
 
-    public function mount()
+    public function mount(): void
     {
         $this->loadCart();
     }
 
-    public function loadCart()
+    public function loadCart(): void
     {
-        $this->cart = session('cart', ['items' => []]);
+        $items = app(CartService::class)->getItems()->map(fn($item) => [
+            'product_id' => $item['product_id'],
+            'name'       => $item['product']->name,
+            'image'      => $item['product']->image_path,
+            'price'      => (float) $item['price'],
+            'quantity'   => (int)   $item['quantity'],
+            'subtotal'   => (float) $item['subtotal'],
+        ])->values()->all();
+
+        $this->cart = ['items' => $items];
         $this->calculateTotals();
     }
 
-    public function calculateTotals()
+    public function calculateTotals(): void
     {
-        $this->subtotal = 0;
-
-        foreach ($this->cart['items'] ?? [] as $item) {
-            $this->subtotal += $item['price'] * $item['quantity'];
-        }
-
-        $this->tax = $this->subtotal * 0.15; // 15% tax
-        $this->total = $this->subtotal + $this->tax;
+        $this->subtotal = array_sum(array_column($this->cart['items'], 'subtotal'));
+        $this->tax      = round($this->subtotal * 0.15, 2);
+        $this->shipping = $this->subtotal >= 1000 ? 0 : 100;
+        $this->total    = $this->subtotal + $this->tax + $this->shipping;
     }
 
-    public function updateQuantity($key, $quantity)
+    public function updateQuantity($productId, $quantity): void
     {
         $quantity = max(1, intval($quantity));
-
-        if (isset($this->cart['items'][$key])) {
-            $this->cart['items'][$key]['quantity'] = $quantity;
-            session(['cart' => $this->cart]);
-            $this->loadCart();
-            $this->dispatch('cart-updated');
-        }
-    }
-
-    public function removeItem($key)
-    {
-        if (isset($this->cart['items'][$key])) {
-            unset($this->cart['items'][$key]);
-            session(['cart' => $this->cart]);
-            $this->loadCart();
-            $this->dispatch('cart-updated');
-            session()->flash('cart-success', 'Item removed from cart');
-        }
-    }
-
-    public function clearCart()
-    {
-        session(['cart' => ['items' => []]]);
+        app(CartService::class)->updateItem((int) $productId, $quantity);
         $this->loadCart();
         $this->dispatch('cart-updated');
-        session()->flash('cart-success', 'Cart cleared');
+    }
+
+    public function removeItem($productId): void
+    {
+        app(CartService::class)->removeItem((int) $productId);
+        $this->loadCart();
+        $this->dispatch('cart-updated');
+        $this->dispatch('notify', message: 'Item removed from cart', type: 'info');
+    }
+
+    public function clearCart(): void
+    {
+        app(CartService::class)->clear();
+        $this->loadCart();
+        $this->dispatch('cart-updated');
     }
 
     public function render()
