@@ -13,8 +13,15 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Legacy services
         $this->app->singleton(\App\Services\CurrencyService::class);
         $this->app->singleton(\App\Services\TaxService::class);
+
+        // Domain services
+        $this->app->singleton(\App\Domains\Payment\Services\PaymentService::class);
+        $this->app->singleton(\App\Domains\GiftCard\Services\GiftCardService::class);
+        $this->app->singleton(\App\Domains\Tax\Services\ZoneTaxService::class);
+        $this->app->singleton(\App\Domains\B2B\Services\B2BPricingService::class);
     }
 
     public function boot(): void

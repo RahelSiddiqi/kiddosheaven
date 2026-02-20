@@ -8,11 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Domains\Concerns\BelongsToSite;
+use App\Domains\Concerns\HasTags;
+use App\Domains\Concerns\HasMetafields;
 
 class Product extends Model
 {
     use SoftDeletes;
     use BelongsToSite;
+    use HasTags;
+    use HasMetafields;
 
     protected $fillable = [
         'site_id',

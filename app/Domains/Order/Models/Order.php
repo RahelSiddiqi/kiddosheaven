@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Domains\Concerns\BelongsToSite;
+use App\Domains\Concerns\HasTags;
 
 class Order extends Model
 {
     use BelongsToSite;
+    use HasTags;
 
     protected $fillable = [
         'site_id',
