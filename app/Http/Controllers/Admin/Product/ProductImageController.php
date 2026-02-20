@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin\Product;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ProductImageController extends Controller
 {
@@ -16,17 +16,16 @@ class ProductImageController extends Controller
     public function upload(Request $request, Product $product)
     {
         $request->validate([
-            'images' => 'required|array|max:10',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'images'   => 'required|array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:20480',
         ]);
 
+        $imageService   = app(ImageService::class);
         $uploadedImages = [];
         $existingImages = $product->images ?? [];
 
         foreach ($request->file('images') as $image) {
-            $filename = Str::random(20) . '.' . $image->getClientOriginalExtension();
-            $path = $image->storeAs('products', $filename, 'public');
-            $uploadedImages[] = $path;
+            $uploadedImages[] = $imageService->store($image, 'products');
         }
 
         // Merge with existing images

@@ -13,6 +13,11 @@ class LoginController extends Controller
      */
     public function showAdminLoginForm()
     {
+        // If already authenticated as admin or staff, redirect to dashboard
+        if (Auth::check() && ($user = Auth::user()) && ($user->is_admin || ($user->role_id && !$user->hasRole('customer')))) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return view('admin.login');
     }
 
@@ -28,11 +33,20 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            $user = Auth::user();
 
-            if (!Auth::user()->isAdmin()) {
+            // Allow super-admins and staff with an assigned non-customer role
+            if (!$user->is_admin && (!$user->role_id || $user->hasRole('customer'))) {
                 Auth::logout();
                 return back()->withErrors([
                     'email' => 'You do not have admin access.',
+                ])->onlyInput('email');
+            }
+
+            if (!$user->is_active) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Your account has been deactivated.',
                 ])->onlyInput('email');
             }
 
@@ -81,7 +95,7 @@ class LoginController extends Controller
                 return redirect()->intended(route('admin.dashboard'));
             }
 
-            return redirect()->intended(route('account.index'));
+            return redirect()->intended(route('account'));
         }
 
         return back()->withErrors([

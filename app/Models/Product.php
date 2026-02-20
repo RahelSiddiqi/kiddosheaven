@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
@@ -110,6 +109,46 @@ class Product extends Model
     public function inventoryItems()
     {
         return $this->hasMany(InventoryItem::class);
+    }
+
+    /**
+     * Get attribute configurations for this product.
+     */
+    public function attributeConfigs(): HasMany
+    {
+        return $this->hasMany(ProductAttributeConfig::class);
+    }
+
+    /**
+     * Get attributes marked for variant creation on this specific product.
+     */
+    public function variantAttributeConfigs()
+    {
+        return $this->attributeConfigs()
+            ->where('usage_type', ProductAttributeConfig::USAGE_VARIANT)
+            ->with('attribute.values');
+    }
+
+    /**
+     * Get attributes marked as specifications (non-variant) for this product.
+     */
+    public function specificationConfigs()
+    {
+        return $this->attributeConfigs()
+            ->where('usage_type', ProductAttributeConfig::USAGE_SPECIFICATION)
+            ->with('attribute.values');
+    }
+
+    /**
+     * Get all available attributes from category for configuration.
+     */
+    public function getAvailableAttributesAttribute()
+    {
+        if (!$this->category_id) {
+            return collect();
+        }
+
+        return $this->category->attributes()->with('values')->get();
     }
 
     /**
@@ -244,6 +283,30 @@ class Product extends Model
     public function inventoryMovements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class);
+    }
+
+    /**
+     * Get effective stock quantity: sums variant stocks for variable products,
+     * falls back to product-level stock_quantity for simple products.
+     */
+    public function getEffectiveStockAttribute(): int
+    {
+        if ($this->product_type === 'variable') {
+            $loaded = $this->relationLoaded('variants') ? $this->getRelation('variants') : null;
+            if ($loaded !== null) {
+                return (int) $loaded->sum('stock_quantity');
+            }
+            return (int) $this->variants()->sum('stock_quantity');
+        }
+        return (int) ($this->stock_quantity ?? 0);
+    }
+
+    /**
+     * Whether the product has any stock available (variant-aware).
+     */
+    public function getIsInStockAttribute(): bool
+    {
+        return $this->effective_stock > 0;
     }
 
     /**

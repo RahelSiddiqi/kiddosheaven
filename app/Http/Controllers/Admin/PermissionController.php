@@ -27,11 +27,17 @@ class PermissionController extends Controller
             $query->where('group', $request->group);
         }
 
-        $permissions = $query->orderBy('group')->orderBy('name')->get();
+        $permissions = $query->orderBy('group')->orderBy('name')->get()->groupBy('group');
         $groups = Permission::distinct()->pluck('group')->filter()->sort()->values();
         $roles = Role::all();
 
         return view('admin.permissions.index', compact('permissions', 'groups', 'roles'));
+    }
+
+    public function create()
+    {
+        $groups = Permission::distinct()->pluck('group')->filter()->sort()->values();
+        return view('admin.permissions.create', compact('groups'));
     }
 
     public function store(Request $request)
@@ -50,6 +56,12 @@ class PermissionController extends Controller
         ]);
 
         return back()->with('success', 'Permission created successfully.');
+    }
+
+    public function edit(Permission $permission)
+    {
+        $groups = Permission::distinct()->pluck('group')->filter()->sort()->values();
+        return view('admin.permissions.edit', compact('permission', 'groups'));
     }
 
     public function update(Request $request, Permission $permission)

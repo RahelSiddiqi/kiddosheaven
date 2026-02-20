@@ -29,18 +29,18 @@
 
 	<!-- Filter Form -->
 	<form method="GET" class="rounded-2xl border border-gray-200 bg-white p-4 mb-6 dark:border-gray-800 dark:bg-white/3">
-		<div class="flex flex-wrap items-end gap-4">
-			<div class="w-40">
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 xl:flex xl:flex-nowrap items-end gap-4">
+			<div class="flex-1 min-w-[160px]">
 				<label for="from_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">From Date</label>
 				<input type="date" name="from_date" id="from_date" value="{{ $startDate->format('Y-m-d') }}"
 					class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
 			</div>
-			<div class="w-40">
+			<div class="flex-1 min-w-[160px]">
 				<label for="to_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">To Date</label>
 				<input type="date" name="to_date" id="to_date" value="{{ $endDate->format('Y-m-d') }}"
 					class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
 			</div>
-			<div class="w-40">
+			<div class="flex-1 min-w-[160px]">
 				<label for="status" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Order
 					Status</label>
 				<select name="status" id="status"
@@ -53,7 +53,7 @@
 					<option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
 				</select>
 			</div>
-			<div class="w-40">
+			<div class="flex-1 min-w-[160px]">
 				<label for="payment_status" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Payment</label>
 				<select name="payment_status" id="payment_status"
 					class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
@@ -89,7 +89,7 @@
 					<h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Order Details</h3>
 					<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $orders->count() }} orders in selected period</p>
 				</div>
-				<a href="{{ route('admin.orders.export') }}?from_date={{ $fromDate }}&to_date={{ $toDate }}"
+			<a href="{{ route('admin.orders.export') }}?from_date={{ $startDate->format('Y-m-d') }}&to_date={{ $endDate->format('Y-m-d') }}"
 					class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

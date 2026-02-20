@@ -212,7 +212,7 @@
 												</div>
 												<div class="flex-1 min-w-0">
 													<p class="font-medium text-sm text-gray-900 dark:text-white truncate">{{ $product->name }}</p>
-													<p class="text-xs text-gray-500 dark:text-gray-400">Stock: {{ $product->stock_quantity }} | ৳{{ number_format($product->price / 100, 2) }}</p>
+																	<p class="text-xs text-gray-500 dark:text-gray-400">Stock: {{ $product->stock_quantity }} | ৳{{ number_format($product->price, 0) }}</p>
 												</div>
 											</label>
 										@empty

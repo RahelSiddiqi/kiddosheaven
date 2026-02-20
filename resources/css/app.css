@@ -30,6 +30,8 @@ body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 /* ========================================
@@ -40,6 +42,8 @@ body {
 html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 /* Prevent iOS zoom on input focus */
@@ -77,10 +81,9 @@ img[loading="lazy"] {
     transition: opacity 0.3s;
 }
 
-/* Better focus states for accessibility */
+/* Remove default focus-visible outlines */
 *:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+    outline: none;
 }
 
 /* ========================================
@@ -475,13 +478,6 @@ a {
 
 /* Larger touch targets for small screens */
 @media (max-width: 480px) {
-    button,
-    .btn,
-    [role="button"] {
-        min-height: 48px;
-        padding: 14px 20px;
-    }
-
     /* Larger checkboxes and radio buttons */
     input[type="checkbox"],
     input[type="radio"] {
@@ -508,14 +504,8 @@ a {
 }
 
 .product-card-image {
-    aspect-ratio: 4/3;
+    aspect-ratio: 1;
     object-fit: cover;
-}
-
-@media (min-width: 640px) {
-    .product-card-image {
-        aspect-ratio: 1;
-    }
 }
 
 /* ========================================

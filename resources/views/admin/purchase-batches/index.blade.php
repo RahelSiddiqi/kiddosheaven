@@ -78,7 +78,7 @@
 											<div class="text-sm text-gray-500 dark:text-gray-400">{{ $batch->product->name }}</div>
 										</td>
 										<td class="px-4 py-4 whitespace-nowrap">
-											<div class="text-sm text-gray-500 dark:text-gray-400">{{ number_format($batch->unit_cost, 2) }} BDT</div>
+											<div class="text-sm text-gray-500 dark:text-gray-400">{{ number_format($batch->unit_cost, 0) }} BDT</div>
 										</td>
 										<td class="px-4 py-4 whitespace-nowrap">
 											<div class="text-sm text-gray-500 dark:text-gray-400">{{ $batch->quantity_received }}</div>
@@ -88,7 +88,7 @@
 										</td>
 										<td class="px-4 py-4 whitespace-nowrap">
 											<div class="text-sm text-gray-500 dark:text-gray-400">
-												{{ number_format($batch->unit_cost * $batch->remaining_quantity, 2) }} BDT</div>
+												{{ number_format($batch->unit_cost * $batch->remaining_quantity, 0) }} BDT</div>
 										</td>
 										<td class="px-4 py-4 whitespace-nowrap">
 											<div class="text-sm text-gray-500 dark:text-gray-400">

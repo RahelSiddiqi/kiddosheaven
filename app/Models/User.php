@@ -24,6 +24,10 @@ class User extends Authenticatable
         'phone',
         'is_admin',
         'is_active',
+        'role_id',
+        'otp_code',
+        'otp_expires_at',
+        'phone_verified_at',
     ];
 
     /**
@@ -44,16 +48,55 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_admin' => 'boolean',
-            'is_active' => 'boolean',
+            'email_verified_at'  => 'datetime',
+            'otp_expires_at'     => 'datetime',
+            'phone_verified_at'  => 'datetime',
+            'password'           => 'hashed',
+            'is_admin'           => 'boolean',
+            'is_active'          => 'boolean',
         ];
     }
 
     public function isAdmin(): bool
     {
         return $this->is_admin === true;
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this->hasRole('customer');
+    }
+
+    public function isPhoneVerified(): bool
+    {
+        return $this->phone_verified_at !== null;
+    }
+
+    /**
+     * The role assigned to this user.
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Check if the user has a specific permission (via their role).
+     */
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->is_admin) {
+            return true; // super-admins bypass all permission checks
+        }
+        return $this->role?->hasPermission($permission) ?? false;
+    }
+
+    /**
+     * Check if the user has a specific role by slug.
+     */
+    public function hasRole(string $roleSlug): bool
+    {
+        return $this->role?->slug === $roleSlug;
     }
 
     /**

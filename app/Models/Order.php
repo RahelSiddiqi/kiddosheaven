@@ -25,6 +25,12 @@ class Order extends Model
         'cancellation_reason',
     ];
 
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+    ];
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);
@@ -39,10 +45,10 @@ class Order extends Model
     }
 
     /**
-     * Get the customer's shipping address.
+     * Get the order status history.
      */
-    public function shippingAddress()
+    public function statusHistory()
     {
-        return $this->belongsTo(Address::class, 'address_id');
+        return $this->hasMany(OrderStatusHistory::class);
     }
 }

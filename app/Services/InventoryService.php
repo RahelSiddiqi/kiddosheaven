@@ -148,11 +148,74 @@ class InventoryService
             $remainingQty -= $deductFromBatch;
         }
 
+        // If there's remaining quantity after batches, check if product has stock_quantity as fallback
+        // This handles products added WITHOUT purchase batches (legacy/manual stock additions)
+        $product = null;
+        if ($remainingQty > 0) {
+            $product = Product::find($productId);
+
+            if ($product && $product->stock_quantity >= $remainingQty) {
+                // Fallback: Use stock_quantity for products without proper batches
+                // Just track the deduction, stock will be synced at the end of this method
+                $deductedQty = $remainingQty;
+
+                // Create a movement record for audit trail
+                InventoryMovement::create([
+                    'product_id'         => $productId,
+                    'product_variant_id' => $variantId,
+                    'batch_id'           => null,
+                    'movement_type'      => InventoryMovement::TYPE_SALE,
+                    'quantity'           => -$deductedQty,
+                    'unit_cost'          => null,
+                    'reference_type'     => $referenceType,
+                    'reference_id'       => $referenceId,
+                    'user_id'            => $userId,
+                    'notes'              => "Sale without batch (legacy): {$deductedQty} units",
+                ]);
+
+                $remainingQty = 0;
+            } elseif ($product && $product->stock_quantity > 0) {
+                // Partial fallback - use what we have
+                $deductedQty = min($product->stock_quantity, $remainingQty);
+
+                InventoryMovement::create([
+                    'product_id'         => $productId,
+                    'product_variant_id' => $variantId,
+                    'batch_id'           => null,
+                    'movement_type'      => InventoryMovement::TYPE_SALE,
+                    'quantity'           => -$deductedQty,
+                    'unit_cost'          => null,
+                    'reference_type'     => $referenceType,
+                    'reference_id'       => $referenceId,
+                    'user_id'            => $userId,
+                    'notes'              => "Partial sale without batch (legacy): {$deductedQty} units",
+                ]);
+
+                $remainingQty -= $deductedQty;
+            }
+        }
+
+        // Final check - still insufficient stock?
         if ($remainingQty > 0) {
             throw new \Exception(
                 "Insufficient stock for product #{$productId}. " .
                 "Needed {$quantity}, available " . ($quantity - $remainingQty)
             );
+        }
+
+        // Sync product/variant stock_quantity to keep counters in sync
+        if (!$product) {
+            $product = Product::find($productId);
+        }
+
+        if ($product) {
+            $product->decrement('stock_quantity', $quantity);
+        }
+        if ($variantId) {
+            $variant = ProductVariant::find($variantId);
+            if ($variant) {
+                $variant->decrement('stock_quantity', $quantity);
+            }
         }
 
         return $usedBatches;
@@ -448,7 +511,7 @@ class InventoryService
         $batchTotal = PurchaseBatch::where('product_id', $product->id)
             ->where('remaining_quantity', '>', 0)
             ->whereNotIn('status', [PurchaseBatch::STATUS_EXPIRED, PurchaseBatch::STATUS_DAMAGED])
-            ->sum('remaining_quantity');
+            ->sum(DB::raw('remaining_quantity - quantity_reserved'));
 
         $product->update(['stock_quantity' => $batchTotal]);
     }
@@ -461,7 +524,7 @@ class InventoryService
         $batchTotal = PurchaseBatch::where('product_variant_id', $variant->id)
             ->where('remaining_quantity', '>', 0)
             ->whereNotIn('status', [PurchaseBatch::STATUS_EXPIRED, PurchaseBatch::STATUS_DAMAGED])
-            ->sum('remaining_quantity');
+            ->sum(DB::raw('remaining_quantity - quantity_reserved'));
 
         $variant->update(['stock_quantity' => $batchTotal]);
     }

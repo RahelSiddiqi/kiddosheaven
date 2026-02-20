@@ -10,7 +10,7 @@ class StoreBrandRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->is_admin;
+        return auth()->check() && (auth()->user()->is_admin || auth()->user()->hasPermission('manage-products'));
     }
 
     public function rules(): array

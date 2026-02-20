@@ -39,8 +39,13 @@ class ExpenseController extends Controller
 
         $expenses = $query->orderBy('expense_date', 'desc')->paginate(10);
         $categories = ExpenseCategory::where('is_active', true)->get();
+        $statuses = [
+            Expense::STATUS_PENDING => 'Pending',
+            Expense::STATUS_APPROVED => 'Approved',
+            Expense::STATUS_REJECTED => 'Rejected',
+        ];
 
-        return view('admin.expenses.index', compact('expenses', 'categories'));
+        return view('admin.expenses.index', compact('expenses', 'categories', 'statuses'));
     }
 
     public function create()

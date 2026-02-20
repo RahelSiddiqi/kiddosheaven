@@ -22,3 +22,10 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Large media files
+storage/*.mp4
+storage/*.mov
+storage/*.avi
+storage/*.mkv
+storage/*.webm

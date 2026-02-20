@@ -3,7 +3,7 @@
 @section('content')
 	{{-- Stats Row with Linked Cards --}}
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-		<x-admin.ui.stat-card title="Total Revenue" :value="'৳' . number_format($stats['totalRevenue'], 2)" :subtitle="$stats['revenueChange']" icon="currency" :color="$stats['revenueChangeType'] === 'positive' ? 'green' : 'red'"
+		<x-admin.ui.stat-card title="Total Revenue" :value="'৳' . number_format($stats['totalRevenue'], 0)" :subtitle="$stats['revenueChange']" icon="currency" :color="$stats['revenueChangeType'] === 'positive' ? 'green' : 'red'"
 			:trend="$stats['revenueChangeType']" :url="route('admin.reports.sales')" />
 		<x-admin.ui.stat-card title="Orders This Month" :value="$stats['ordersThisMonth']" subtitle="orders placed" icon="cart" color="blue"
 			:url="route('admin.orders.index')" />

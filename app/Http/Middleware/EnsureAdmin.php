@@ -15,8 +15,16 @@ class EnsureAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || !auth()->user()->isAdmin()) {
+        $user = auth()->user();
+
+        // Must be logged in and either a super-admin or a staff member with a role
+        if (!$user || (!$user->is_admin && !$user->role_id)) {
             abort(403, 'Unauthorized access.');
+        }
+
+        if (!$user->is_active) {
+            auth()->logout();
+            return redirect()->route('admin.login')->withErrors(['email' => 'Your account has been deactivated.']);
         }
 
         return $next($request);

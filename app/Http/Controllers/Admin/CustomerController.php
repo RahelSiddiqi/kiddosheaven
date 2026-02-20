@@ -10,7 +10,8 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::where('is_admin', false);
+        // Show only users with the 'customer' role (frontend registered users)
+        $query = User::whereHas('role', fn ($q) => $q->where('slug', 'customer'));
 
         if ($request->filled('search')) {
             $search = $request->search;

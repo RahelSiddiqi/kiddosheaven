@@ -33,7 +33,7 @@
 					<x-admin.ui.stat-card title="Processing" :value="$stats['processing']" icon="cart" color="blue" :compact="true" />
 					<x-admin.ui.stat-card title="Shipped" :value="$stats['shipped']" icon="cart" color="purple" :compact="true" />
 					<x-admin.ui.stat-card title="Delivered" :value="$stats['delivered']" icon="cart" color="green" :compact="true" />
-					<x-admin.ui.stat-card title="Revenue" :value="'৳' . number_format($stats['total_revenue'] / 100, 2)" icon="currency" color="brand" :compact="true" />
+						<x-admin.ui.stat-card title="Revenue" :value="'৳' . number_format($stats['total_revenue'], 0)" icon="currency" color="brand" :compact="true" />
 				</div>
 
 				<!-- Bulk Actions -->
@@ -148,7 +148,7 @@
 											</td>
 											<td class="py-4 whitespace-nowrap">
 												<div class="text-sm font-semibold text-gray-900 dark:text-white">
-													৳{{ number_format($order->total_amount / 100, 2) }}</div>
+															৳{{ number_format($order->total_amount, 0) }}</div>
 											</td>
 											<td class="py-4 whitespace-nowrap">
 												@php

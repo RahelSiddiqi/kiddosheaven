@@ -12,7 +12,7 @@ class UpdateOrderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::user()->is_admin;
+        return Auth::check() && (Auth::user()->is_admin || Auth::user()->hasPermission('manage-orders'));
     }
 
     /**

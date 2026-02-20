@@ -10,7 +10,7 @@
 			style="display: none;">
 			<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-
+			</svg>
 		</div>
 	@endif
 
@@ -93,7 +93,8 @@
 									class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800 @error('brand_id') border-red-500 @enderror">
 									<option value="">Select brand</option>
 									@foreach ($brands as $brand)
-										<option value="{{ $brand->id }}" {{ old('brand_id', $product->brand_id) == $brand->id ? 'selected' : '' }}>
+										<option value="{{ $brand->id }}"
+											{{ old('brand_id', $product->brand_id) == $brand->id ? 'selected' : '' }}>
 											{{ $brand->name }}</option>
 									@endforeach
 								</select>
@@ -153,8 +154,8 @@
 						<div>
 							<label for="description"
 								class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Description</label>
-							<textarea id="description" name="description" rows="4"
-							 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800 @error('description') border-red-500 @enderror">{{ old('description', $product->description) }}</textarea>
+							<div id="quill-description" class="quill-editor-container" style="min-height: 120px;"></div>
+							<input type="hidden" name="description" id="input-description" value="{{ old('description', $product->description) }}">
 							@error('description')
 								<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
 							@enderror
@@ -170,25 +171,25 @@
 					<div class="p-6 space-y-4">
 						<div>
 							<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Features</label>
-							<textarea name="features" rows="3" placeholder="• Feature 1&#10;• Feature 2&#10;• Feature 3"
-							 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('features', $product->features) }}</textarea>
+							<div id="quill-features" class="quill-editor-container" style="min-height: 120px;"></div>
+							<input type="hidden" name="features" id="input-features" value="{{ old('features', $product->features) }}">
 						</div>
-						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
 							<div>
 								<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Care Instructions</label>
-								<textarea name="care_instructions" rows="2" placeholder="Machine wash cold, tumble dry low"
-								 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('care_instructions', $product->care_instructions) }}</textarea>
+								<div id="quill-care_instructions" class="quill-editor-container" style="min-height: 120px;"></div>
+								<input type="hidden" name="care_instructions" id="input-care_instructions" value="{{ old('care_instructions', $product->care_instructions) }}">
 							</div>
 							<div>
 								<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Ingredients</label>
-								<textarea name="ingredients" rows="2" placeholder="List of ingredients"
-								 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('ingredients', $product->ingredients) }}</textarea>
+								<div id="quill-ingredients" class="quill-editor-container" style="min-height: 120px;"></div>
+								<input type="hidden" name="ingredients" id="input-ingredients" value="{{ old('ingredients', $product->ingredients) }}">
 							</div>
 						</div>
 						<div>
 							<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Safety Warning</label>
-							<textarea name="safety_warning" rows="2" placeholder="Not suitable for children under 3 years"
-							 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('safety_warning', $product->safety_warning) }}</textarea>
+							<div id="quill-safety_warning" class="quill-editor-container" style="min-height: 120px;"></div>
+							<input type="hidden" name="safety_warning" id="input-safety_warning" value="{{ old('safety_warning', $product->safety_warning) }}">
 						</div>
 					</div>
 				</div>
@@ -211,17 +212,22 @@
 									<div
 										class="relative w-30 h-30 rounded-lg overflow-hidden border-2 transition-all duration-200 {{ $isPrimary ? 'border-blue-500' : 'border-gray-200 dark:border-gray-700' }}"
 										data-existing="{{ $image }}">
+										<input type="hidden" name="existing_images[]" value="{{ $image }}">
 										<img src="{{ Storage::url($image) }}" alt="Product image" class="w-full h-full object-cover">
 										@if ($isPrimary)
 											<div class="absolute bottom-1 left-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded">Primary</div>
 										@endif
-										<label class="absolute bottom-1 right-1 cursor-pointer bg-white/90 dark:bg-gray-800 rounded px-1">
+										<label class="absolute bottom-1 right-1 cursor-pointer bg-white/90 dark:bg-gray-800 rounded px-1"
+											style="min-height: 20px; height: 20px">
 											<input type="radio" name="primary_image" value="{{ $image }}" {{ $isPrimary ? 'checked' : '' }}
+												style="min-height: 20px"
 												class="w-3 h-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500/10 dark:border-gray-600">
 										</label>
 										<button type="button"
-											class="delete-image absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-700"
-											data-image="{{ $image }}" title="Delete">×</button>
+											class="w-3 h-3 p-0 bg-red-500 dark:hover:bg-gray-700 rounded-lg absolute top-1 right-1 delete-image"
+											style="min-width: 22px; min-height: 22px; padding: 1px" data-image="{{ $image }}" title="Delete">
+											<x-icons.delete class="w-3 h-3 text-red-600 dark:text-red-400" />
+										</button>
 									</div>
 								@endforeach
 							@endif
@@ -260,7 +266,8 @@
 					</div>
 					<div class="p-6">
 						<div id="non-variant-attributes-container">
-							<p class="text-sm text-gray-500 dark:text-gray-400">Click "Load Details" to update product details like Material, Age Range, Gender, etc.</p>
+							<p class="text-sm text-gray-500 dark:text-gray-400">Click "Load Details" to update product details like Material,
+								Age Range, Gender, etc.</p>
 							<div id="non-variant-attribute-fields" class="mt-4"></div>
 						</div>
 						<input type="hidden" id="non_variant_attributes" name="non_variant_attributes">
@@ -365,14 +372,28 @@
 					</div>
 				</div>
 
-				<div>
-					<label for="meta_description" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Meta
-						Description</label>
-<textarea id="meta_description" name="meta_description" maxlength="500" rows="2"
-										 class="no-tinymce w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('meta_description', $product->meta_description) }}</textarea>
-					@error('meta_description')
-						<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-					@enderror
+				<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+					<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+						<h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">SEO</h2>
+					</div>
+					<div class="p-6 space-y-4">
+						<div>
+							<label for="meta_title" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Meta Title</label>
+							<input type="text" id="meta_title" name="meta_title" value="{{ old('meta_title', $product->meta_title) }}" maxlength="255"
+								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus-border-blue-800">
+							@error('meta_title')
+								<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+							@enderror
+						</div>
+						<div>
+							<label for="meta_description" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Meta Description</label>
+							<textarea id="meta_description" name="meta_description" maxlength="500" rows="2"
+							 class="no-tinymce w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('meta_description', $product->meta_description) }}</textarea>
+							@error('meta_description')
+								<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+							@enderror
+						</div>
+					</div>
 				</div>
 			</div>
 
@@ -601,20 +622,18 @@
 						<div>
 							<label for="return_policy" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Return
 								Policy</label>
-							<textarea id="return_policy" name="return_policy" rows="2"
-							 class="simple-editor w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">{{ old('return_policy', $product->return_policy) }}</textarea>
+							<div id="quill-return_policy" class="quill-editor-container" style="min-height: 120px;"></div>
+							<input type="hidden" name="return_policy" id="input-return_policy" value="{{ old('return_policy', $product->return_policy) }}">
 						</div>
 						<div>
-							<label for="warranty" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Warranty</label>
-							<input type="text" id="warranty" name="warranty" value="{{ old('warranty', $product->warranty) }}"
-								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">
+							<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Warranty</label>
+							<div id="quill-warranty" class="quill-editor-container" style="min-height: 80px;"></div>
+							<input type="hidden" name="warranty" id="input-warranty" value="{{ old('warranty', $product->warranty) }}">
 						</div>
 						<div>
-							<label for="manufacturer"
-								class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Manufacturer</label>
-							<input type="text" id="manufacturer" name="manufacturer"
-								value="{{ old('manufacturer', $product->manufacturer) }}"
-								class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800">
+							<label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Manufacturer</label>
+							<div id="quill-manufacturer" class="quill-editor-container" style="min-height: 80px;"></div>
+							<input type="hidden" name="manufacturer" id="input-manufacturer" value="{{ old('manufacturer', $product->manufacturer) }}">
 						</div>
 						<div class="flex flex-col gap-3">
 							<label class="flex items-center gap-3 cursor-pointer">
@@ -652,7 +671,9 @@
 			</div>
 	</form>
 
-	@push('scripts')
+@endsection
+
+@push('scripts')
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
 				// Make selects searchable
@@ -661,41 +682,47 @@
 					select.style.opacity = '0';
 					select.style.position = 'absolute';
 					select.style.zIndex = '-1';
-					
+
 					// Create custom container
 					var container = document.createElement('div');
 					container.className = 'custom-select relative';
 					container.style.height = '44px';
 					select.parentNode.insertBefore(container, select);
 					container.appendChild(select);
-					
+
 					// Create custom display
 					var display = document.createElement('div');
-					display.className = 'custom-select-display w-full h-11 px-4 flex items-center justify-between rounded-xl border border-gray-300 bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white cursor-pointer';
-					display.innerHTML = '<span class="selected-text">' + (select.options[select.selectedIndex]?.text || 'Select an option') + '</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
+					display.className =
+						'custom-select-display w-full h-11 px-4 flex items-center justify-between rounded-xl border border-gray-300 bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white cursor-pointer';
+					display.innerHTML = '<span class="selected-text">' + (select.options[select.selectedIndex]
+							?.text || 'Select an option') +
+						'</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
 					container.appendChild(display);
-					
+
 					// Create dropdown
 					var dropdown = document.createElement('div');
-					dropdown.className = 'custom-select-dropdown absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-lg hidden z-50 max-h-60 overflow-auto';
+					dropdown.className =
+						'custom-select-dropdown absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-lg hidden z-50 max-h-60 overflow-auto';
 					container.appendChild(dropdown);
-					
+
 					// Create search input
 					var search = document.createElement('input');
 					search.type = 'text';
-					search.className = 'w-full px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-transparent dark:text-white focus:outline-none';
+					search.className =
+						'w-full px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-transparent dark:text-white focus:outline-none';
 					search.placeholder = 'Search...';
 					dropdown.appendChild(search);
-					
+
 					// Add options
 					Array.from(select.options).forEach(function(option) {
 						var item = document.createElement('div');
-						item.className = 'px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white';
+						item.className =
+							'px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white';
 						item.textContent = option.text;
 						item.dataset.value = option.value;
 						dropdown.appendChild(item);
 					});
-					
+
 					// Toggle dropdown
 					display.addEventListener('click', function(e) {
 						e.stopPropagation();
@@ -704,29 +731,31 @@
 							search.focus();
 						}
 					});
-					
+
 					// Select option
 					dropdown.querySelectorAll(':not(input)').forEach(function(item) {
 						item.addEventListener('click', function(e) {
 							if (this.tagName === 'DIV' && !this.querySelector('input')) {
 								select.value = this.dataset.value;
-								display.querySelector('.selected-text').textContent = this.textContent;
+								display.querySelector('.selected-text').textContent = this
+									.textContent;
 								dropdown.classList.add('hidden');
 								select.dispatchEvent(new Event('change'));
 							}
 						});
 					});
-					
+
 					// Search
 					search.addEventListener('input', function() {
 						var term = this.value.toLowerCase();
 						Array.from(dropdown.children).forEach(function(item) {
 							if (item.tagName === 'DIV' && !item.querySelector('input')) {
-								item.style.display = item.textContent.toLowerCase().includes(term) ? 'block' : 'none';
+								item.style.display = item.textContent.toLowerCase().includes(
+									term) ? 'block' : 'none';
 							}
 						});
 					});
-					
+
 					// Close on outside click
 					document.addEventListener('click', function() {
 						dropdown.classList.add('hidden');
@@ -905,19 +934,29 @@
 						html += `<div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
 							<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">${attr.name}</label>`;
 
-						if (attr.type === 'select' || attr.type === 'multiselect') {
+						if (attr.type === 'select') {
 							html += `<select class="non-variant-attr non-variant-select w-full h-10 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}">
 								<option value="">Select ${attr.name}</option>`;
 							(attr.values || []).forEach(val => {
 								html += `<option value="${val.id}">${val.value}</option>`;
 							});
 							html += `</select>`;
+						} else if (attr.type === 'multiselect') {
+							html += `<select multiple class="non-variant-attr non-variant-select w-full h-32 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}">
+								<option value="">Select ${attr.name} (Hold Ctrl/Cmd to select multiple)</option>`;
+							(attr.values || []).forEach(val => {
+								html += `<option value="${val.id}">${val.value}</option>`;
+							});
+							html += `</select>`;
 						} else if (attr.type === 'text') {
-							html += `<input type="text" class="non-variant-attr w-full h-10 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}" placeholder="Enter ${attr.name}">`;
+							html +=
+								`<input type="text" class="non-variant-attr w-full h-10 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}" placeholder="Enter ${attr.name}">`;
 						} else if (attr.type === 'number') {
-							html += `<input type="number" class="non-variant-attr w-full h-10 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}" placeholder="Enter ${attr.name}">`;
+							html +=
+								`<input type="number" class="non-variant-attr w-full h-10 rounded-lg border border-gray-300 bg-transparent py-2.5 px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" data-attr-id="${attr.id}" data-attr-name="${attr.name}" placeholder="Enter ${attr.name}">`;
 						} else if (attr.type === 'boolean') {
-							html += `<input type="checkbox" class="non-variant-attr w-4 h-4 rounded border-gray-300 text-blue-600" data-attr-id="${attr.id}" data-attr-name="${attr.name}">`;
+							html +=
+								`<input type="checkbox" class="non-variant-attr w-4 h-4 rounded border-gray-300 text-blue-600" data-attr-id="${attr.id}" data-attr-name="${attr.name}">`;
 						}
 						html += `</div>`;
 					});
@@ -935,13 +974,33 @@
 					document.querySelectorAll('.non-variant-attr').forEach(field => {
 						const attrId = field.dataset.attrId;
 						const attrName = field.dataset.attrName;
-						const value = field.type === 'checkbox' ? field.checked : field.value;
 
-						if (value) {
-							attributes.push({
-								attribute_id: attrId,
-								value: value
-							});
+						if (field.type === 'checkbox') {
+							const value = field.checked;
+							if (value) {
+								attributes.push({
+									attribute_id: attrId,
+									value: value
+								});
+							}
+						} else if (field.multiple) {
+							// Handle multiselect
+							const selectedValues = Array.from(field.selectedOptions).map(opt => opt.value)
+								.filter(v => v);
+							if (selectedValues.length > 0) {
+								attributes.push({
+									attribute_id: attrId,
+									value: selectedValues.join(',')
+								});
+							}
+						} else {
+							const value = field.value;
+							if (value) {
+								attributes.push({
+									attribute_id: attrId,
+									value: value
+								});
+							}
 						}
 					});
 					return attributes;
@@ -1081,7 +1140,113 @@
 					}
 				};
 
+});
+	</script>
+
+	<!-- Quill Rich Text Editor -->
+	<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			var quillFields = ['description', 'features', 'care_instructions', 'ingredients', 'safety_warning', 'return_policy', 'warranty', 'manufacturer'];
+			var toolbarOptions = [
+				['bold', 'italic', 'underline', 'strike'],
+				[{'list': 'ordered'}, {'list': 'bullet'}],
+				[{'indent': '-1'}, {'indent': '+1'}],
+				['link', 'clean']
+			];
+			quillFields.forEach(function(field) {
+				var container = document.getElementById('quill-' + field);
+				if (!container) return;
+				var q = new Quill(container, {
+					theme: 'snow',
+					modules: { toolbar: toolbarOptions }
+				});
+				var hidden = document.getElementById('input-' + field);
+				if (hidden && hidden.value) q.root.innerHTML = hidden.value;
+				q.on('text-change', function() { if (hidden) hidden.value = q.root.innerHTML; });
 			});
-		</script>
-	@endpush
-	@endsection
+			// Also sync on form submit
+			var form = document.querySelector('form');
+			if (form) {
+				form.addEventListener('submit', function() {
+					quillFields.forEach(function(field) {
+						var el = document.getElementById('quill-' + field);
+						var hidden = document.getElementById('input-' + field);
+						if (el && hidden) {
+							var q = Quill.find(el);
+							if (q) hidden.value = q.root.innerHTML;
+						}
+					});
+				});
+			}
+		});
+	</script>
+@endpush
+
+@push('styles')
+	<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+	<style>
+		/* Quill Editor Styles */
+		.quill-editor-container {
+			overflow: visible;
+			position: relative;
+		}
+		/* ── Light mode ── */
+		.quill-editor-container .ql-toolbar.ql-snow {
+			border-radius: 0.5rem 0.5rem 0 0 !important;
+			border: 1px solid #d1d5db !important;
+			border-bottom: none !important;
+			background-color: #f9fafb !important;
+		}
+		.quill-editor-container .ql-container.ql-snow {
+			border-radius: 0 0 0.5rem 0.5rem !important;
+			border: 1px solid #d1d5db !important;
+			border-top: none !important;
+			font-size: 0.875rem;
+		}
+		.quill-editor-container .ql-editor {
+			min-height: 100px;
+			color: #1f2937;
+		}
+		.quill-editor-container .ql-toolbar.ql-snow .ql-picker-options {
+			z-index: 100;
+			border-radius: 0.375rem;
+		}
+		/* ── Dark mode ── */
+		.dark .quill-editor-container .ql-toolbar.ql-snow {
+			background-color: #1f2937 !important;
+			border: 1px solid #374151 !important;
+			border-bottom: none !important;
+		}
+		.dark .quill-editor-container .ql-container.ql-snow {
+			background-color: #111827 !important;
+			border: 1px solid #374151 !important;
+			border-top: none !important;
+		}
+		.dark .quill-editor-container .ql-editor {
+			color: #e5e7eb;
+		}
+		.dark .quill-editor-container .ql-editor.ql-blank::before {
+			color: rgba(255,255,255,0.3);
+			font-style: italic;
+		}
+		.dark .quill-editor-container .ql-editor p,
+		.dark .quill-editor-container .ql-editor li,
+		.dark .quill-editor-container .ql-editor h1,
+		.dark .quill-editor-container .ql-editor h2,
+		.dark .quill-editor-container .ql-editor h3 {
+			color: #e5e7eb;
+		}
+		.dark .quill-editor-container .ql-toolbar .ql-stroke { stroke: #9ca3af; }
+		.dark .quill-editor-container .ql-toolbar .ql-fill  { fill:   #9ca3af; }
+		.dark .quill-editor-container .ql-toolbar button:hover .ql-stroke,
+		.dark .quill-editor-container .ql-toolbar button.ql-active .ql-stroke { stroke: #60a5fa; }
+		.dark .quill-editor-container .ql-toolbar .ql-picker-label { color: #9ca3af; }
+		.dark .quill-editor-container .ql-toolbar .ql-picker-label::before { color: #9ca3af; }
+		.dark .quill-editor-container .ql-toolbar .ql-picker-options {
+			background-color: #1f2937;
+			border: 1px solid #374151;
+		}
+		.dark .quill-editor-container .ql-toolbar .ql-picker-item { color: #d1d5db; }
+	</style>
+@endpush

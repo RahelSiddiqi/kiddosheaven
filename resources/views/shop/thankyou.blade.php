@@ -32,7 +32,7 @@
 						</div>
 						<div class="flex justify-between">
 							<span class="text-gray-500">Total</span>
-							<span class="text-lg font-bold text-primary-dark">${{ number_format(($order->total ?? 0) / 100, 2) }}</span>
+								<span class="text-lg font-bold text-primary-dark">৳{{ number_format($order->total_amount ?? $order->total ?? 0, 0) }}</span>
 						</div>
 					</div>
 				@else

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Partner;
 use App\Models\Expense;
 use App\Models\InventoryMovement;
+use App\Models\Investor;
 use App\Services\FinancialCalculationService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -188,8 +189,13 @@ class ReportController extends Controller
 
         // Get categories for filter
         $categories = \App\Models\ExpenseCategory::all();
+        $statuses = [
+            \App\Models\Expense::STATUS_PENDING => 'Pending',
+            \App\Models\Expense::STATUS_APPROVED => 'Approved',
+            \App\Models\Expense::STATUS_REJECTED => 'Rejected',
+        ];
 
-        return view('admin.reports.expenses', compact('expenses', 'totalAmount', 'pendingAmount', 'categories'));
+        return view('admin.reports.expenses', compact('expenses', 'totalAmount', 'pendingAmount', 'categories', 'statuses'));
     }
 
     public function inventory(Request $request)
@@ -404,5 +410,431 @@ class ReportController extends Controller
         $products = Product::orderBy('name')->get(['id', 'name']);
 
         return view('admin.reports.cost-history', compact('movements', 'products', 'startDate', 'endDate'));
+    }
+
+    /**
+     * Batch stock report: View stock levels by purchase batch with FIFO costing
+     */
+    public function batchStock(Request $request)
+    {
+        $products = Product::orderBy('name')->get(['id', 'name']);
+        $report = null;
+
+        if ($request->filled('product_id')) {
+            $product = Product::find($request->product_id);
+
+            if ($product) {
+                $batches = \App\Models\PurchaseBatch::where('product_id', $product->id)
+                    ->orderBy('purchase_date')
+                    ->get();
+
+                $totalQuantity = $batches->sum('quantity');
+                $remainingQuantity = $batches->sum('remaining_quantity');
+                $totalValue = $batches->sum(fn($b) => $b->remaining_quantity * $b->unit_cost);
+
+                $report = [
+                    'product' => $product,
+                    'batches' => $batches,
+                    'total_quantity' => $totalQuantity,
+                    'remaining_quantity' => $remainingQuantity,
+                    'total_value' => $totalValue,
+                ];
+            }
+        }
+
+        return view('admin.reports.batch-stock', compact('products', 'report'));
+    }
+
+    /**
+     * Export batch stock report to CSV
+     */
+    public function exportBatchStock(Request $request)
+    {
+        $productId = $request->get('product_id');
+
+        if (!$productId) {
+            return redirect()->route('admin.reports.batch-stock')->with('error', 'Please select a product first.');
+        }
+
+        $product = Product::find($productId);
+        $batches = \App\Models\PurchaseBatch::where('product_id', $productId)
+            ->orderBy('purchase_date')
+            ->get();
+
+        return response()->streamDownload(function () use ($batches, $product) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Batch Number', 'Purchase Date', 'Unit Cost', 'Received', 'Remaining', 'Sold', 'Batch Value', 'Expiry Date']);
+
+            foreach ($batches as $batch) {
+                $sold = $batch->quantity - $batch->remaining_quantity;
+                $batchValue = $batch->remaining_quantity * $batch->unit_cost;
+
+                fputcsv($file, [
+                    $batch->batch_number,
+                    $batch->purchase_date ? Carbon::parse($batch->purchase_date)->format('Y-m-d') : '',
+                    number_format($batch->unit_cost, 2),
+                    $batch->quantity,
+                    $batch->remaining_quantity,
+                    $sold,
+                    number_format($batchValue, 2),
+                    $batch->expiry_date ? Carbon::parse($batch->expiry_date)->format('Y-m-d') : '',
+                ]);
+            }
+
+            fclose($file);
+        }, 'batch-stock-' . ($product ? $product->slug : 'all') . '-' . now()->format('Y-m-d') . '.csv');
+    }
+
+    /**
+     * Expiring items report
+     */
+    public function expiringItems(Request $request)
+    {
+        $days = $request->filled('days') ? (int) $request->days : 30;
+        $expiryDate = now()->addDays($days);
+
+        $batches = \App\Models\PurchaseBatch::with('product')
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '<=', $expiryDate)
+            ->where('expiry_date', '>=', now())
+            ->where('remaining_quantity', '>', 0)
+            ->orderBy('expiry_date')
+            ->get();
+
+        return view('admin.reports.expiring', compact('batches', 'days'));
+    }
+
+    /**
+     * Partner contribution report
+     */
+    public function partnerContribution(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        $partners = Partner::all();
+        $selectedPartner = $request->filled('partner_id') ? Partner::find($request->partner_id) : null;
+        $report = null;
+
+        if ($selectedPartner) {
+            // Calculate partner's contribution and commission
+            $orders = Order::whereBetween('created_at', [$startDate, $endDate])
+                ->where('status', 'delivered')
+                ->with('items')
+                ->get();
+
+            $totalRevenue = $orders->sum('total_amount');
+            $totalCost = $orders->sum(function ($order) {
+                return $order->items->sum(function ($item) {
+                    return ($item->cost_price ?? 0) * $item->quantity;
+                });
+            });
+
+            $grossProfit = $totalRevenue - $totalCost;
+            $commissionRate = $selectedPartner->commission_rate ?? 10; // Default 10% if not set
+            $partnerCommission = ($grossProfit * $commissionRate) / 100;
+
+            $report = [
+                'total_revenue' => $totalRevenue,
+                'total_cost' => $totalCost,
+                'gross_profit' => $grossProfit,
+                'commission_rate' => $commissionRate,
+                'partner_commission' => $partnerCommission,
+                'total_orders' => $orders->count(),
+            ];
+        }
+
+        return view('admin.reports.partner-contribution', compact('partners', 'selectedPartner', 'report', 'startDate', 'endDate'));
+    }
+
+    /**
+     * Investor ROI report
+     */
+    public function investorROI(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfYear();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        // Get all investors for dropdown
+        $investors = Investor::orderBy('name')->get();
+        $selectedInvestor = $request->filled('investor_id') ? Investor::find($request->investor_id) : null;
+        $report = null;
+
+        if ($selectedInvestor) {
+            // Get investor's investments in the date range
+            $investments = \App\Models\Investment::where('investor_id', $selectedInvestor->id)
+                ->whereBetween('investment_date', [$startDate, $endDate])
+                ->get();
+
+            // Calculate totals (using current_value as returns since actual_return column doesn't exist)
+            $totalInvestment = $investments->sum('amount');
+            $totalReturns = $investments->sum('current_value') ?? $totalInvestment;
+            $netProfit = $totalReturns - $totalInvestment;
+            $roiPercentage = $totalInvestment > 0 ? ($netProfit / $totalInvestment) * 100 : 0;
+
+            // Get revenue and costs for the period
+            $orders = Order::whereBetween('created_at', [$startDate, $endDate])
+                ->where('status', 'delivered')
+                ->with('items')
+                ->get();
+
+            $totalRevenue = $orders->sum('total_amount');
+            $totalCosts = $orders->sum(function ($order) {
+                return $order->items->sum(function ($item) {
+                    return ($item->cost_price ?? 0) * $item->quantity;
+                });
+            });
+            $grossProfit = $totalRevenue - $totalCosts;
+
+            // Ownership percentage (assuming it's stored on investor or calculate based on total capital)
+            $ownershipPercentage = $selectedInvestor->ownership_percentage ?? 0;
+
+            $report = [
+                'total_investment' => $totalInvestment,
+                'total_returns' => $totalReturns,
+                'net_profit' => $netProfit,
+                'roi_percentage' => $roiPercentage,
+                'ownership_percentage' => $ownershipPercentage,
+                'opening_balance' => $investments->where('type', 'inventory')->sum('amount'),
+                'additional_investment' => $investments->where('type', 'expansion')->sum('amount'),
+                'withdrawals' => 0, // No withdrawal tracking in current schema
+                'closing_balance' => $totalInvestment,
+                'total_revenue' => $totalRevenue,
+                'total_costs' => $totalCosts,
+                'gross_profit' => $grossProfit,
+            ];
+        }
+
+        return view('admin.reports.investor-roi', compact(
+            'investors', 'selectedInvestor', 'report', 'startDate', 'endDate'
+        ));
+    }
+
+    /**
+     * Investments report
+     */
+    public function investments(Request $request)
+    {
+        $query = \App\Models\Investment::with(['investor', 'purchaseBatches']);
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $investments = $query->latest()->paginate(20);
+
+        // Calculate totals with new tracking
+        $totalInvested = \App\Models\Investment::sum('amount');
+        $totalSpent = \App\Models\Investment::sum('spent_amount');
+        $totalAvailable = $totalInvested - $totalSpent;
+        $totalCurrentValue = \App\Models\Investment::sum('current_value');
+
+        // Calculate inventory value from linked batches
+        $totalInventoryValue = \App\Models\PurchaseBatch::whereNotNull('investment_id')
+            ->get()
+            ->sum(function ($batch) {
+                return $batch->remaining_quantity * $batch->unit_cost;
+            });
+
+        // Use current_value as both expected and actual return
+        $totalExpectedReturn = $totalCurrentValue;
+        $totalActualReturn = $totalCurrentValue;
+
+        // Calculate ROI based on current value vs invested amount
+        $roi = $totalInvested > 0 ? (($totalCurrentValue - $totalInvested) / $totalInvested) * 100 : 0;
+
+        return view('admin.reports.investments', compact(
+            'investments', 'totalInvested', 'totalSpent', 'totalAvailable',
+            'totalExpectedReturn', 'totalActualReturn', 'totalInventoryValue', 'roi'
+        ));
+    }
+
+    /**
+     * Profit & Loss report
+     */
+    public function profitLoss(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        // Revenue from delivered orders
+        $totalRevenue = Order::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'delivered')
+            ->sum('total_amount');
+
+        // Cost of goods sold
+        $cogs = Order::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'delivered')
+            ->with('items')
+            ->get()
+            ->sum(function ($order) {
+                return $order->items->sum(function ($item) {
+                    return ($item->cost_price ?? 0) * $item->quantity;
+                });
+            });
+
+        // Operating expenses
+        $expenses = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->where('status', 'approved')
+            ->sum('amount');
+
+        // Partner payments
+        $partnerPayments = \App\Models\PartnerPayment::whereBetween('payment_date', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        // Investments
+        $totalInvestments = \App\Models\Investment::whereBetween('investment_date', [$startDate, $endDate])
+            ->sum('amount');
+
+        // Total expenses (COGS + Operating Expenses)
+        $totalExpenses = $cogs + $expenses;
+
+        // Expense breakdown by category
+        $expenseBreakdown = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->where('status', 'approved')
+            ->with('category')
+            ->get()
+            ->groupBy('category.name')
+            ->map(function ($items, $categoryName) {
+                return [
+                    'name' => $categoryName ?? 'Uncategorized',
+                    'amount' => $items->sum('amount'),
+                    'color' => $this->getCategoryColor($categoryName),
+                ];
+            })
+            ->values();
+
+        // Calculations
+        $grossProfit = $totalRevenue - $totalExpenses - $partnerPayments;
+        $grossMargin = $totalRevenue > 0 ? ($grossProfit / $totalRevenue) * 100 : 0;
+        $netProfit = $grossProfit - $totalInvestments;
+        $netMargin = $totalRevenue > 0 ? ($netProfit / $totalRevenue) * 100 : 0;
+
+        // Format dates for form inputs
+        $fromDate = $startDate->format('Y-m-d');
+        $toDate = $endDate->format('Y-m-d');
+
+        return view('admin.reports.profit-loss', compact(
+            'startDate', 'endDate', 'fromDate', 'toDate',
+            'totalRevenue', 'totalExpenses', 'partnerPayments', 'totalInvestments',
+            'grossProfit', 'grossMargin', 'netProfit', 'netMargin',
+            'expenseBreakdown'
+        ));
+    }
+
+    /**
+     * Get color for expense category
+     */
+    private function getCategoryColor($categoryName)
+    {
+        $colors = [
+            'Salary' => '#10b981',
+            'Rent' => '#3b82f6',
+            'Utilities' => '#f59e0b',
+            'Marketing' => '#ec4899',
+            'Supplies' => '#8b5cf6',
+            'Transportation' => '#14b8a6',
+            'Maintenance' => '#f97316',
+            'Insurance' => '#6366f1',
+        ];
+
+        return $colors[$categoryName] ?? '#6b7280';
+    }
+
+    /**
+     * Financial summary report
+     */
+    public function financialSummary(Request $request)
+    {
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now()->endOfMonth();
+
+        // Revenue calculation
+        $grossSales = Order::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'delivered')
+            ->sum('total_amount');
+
+        $returns = Order::whereBetween('created_at', [$startDate, $endDate])
+            ->whereIn('status', ['returned', 'refunded'])
+            ->sum('total_amount');
+
+        $netRevenue = $grossSales - $returns;
+
+        // COGS (Cost of Goods Sold)
+        $cogs = Order::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'delivered')
+            ->with('items')
+            ->get()
+            ->sum(function ($order) {
+                return $order->items->sum(function ($item) {
+                    return ($item->cost_price ?? 0) * $item->quantity;
+                });
+            });
+
+        // Operating expenses
+        $operatingExpenses = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->where('status', 'approved')
+            ->sum('amount');
+
+        // Total costs
+        $totalCosts = $cogs + $operatingExpenses;
+
+        // Profitability
+        $grossProfit = $netRevenue - $cogs;
+        $netProfitValue = $netRevenue - $totalCosts;
+        $profitMargin = $netRevenue > 0 ? ($netProfitValue / $netRevenue) * 100 : 0;
+
+        // Build netProfit array for detailed breakdown
+        $netProfit = [
+            'gross_sales' => $grossSales,
+            'returns' => $returns,
+            'net_revenue' => $netRevenue,
+            'cogs' => $cogs,
+            'operating_expenses' => $operatingExpenses,
+            'total_costs' => $totalCosts,
+            'gross_profit' => $grossProfit,
+            'net_profit' => $netProfitValue,
+            'profit_margin' => $profitMargin,
+        ];
+
+        // Stock valuation (current inventory value)
+        $stockValuation = \App\Models\Product::with('purchaseBatches')
+            ->get()
+            ->sum(function ($product) {
+                return $product->purchaseBatches->sum(function ($batch) {
+                    return $batch->remaining_quantity * $batch->unit_cost;
+                });
+            });
+
+        // Partner payables
+        $partnerPayables = \App\Models\Partner::where('status', 'active')
+            ->withSum(['payments as total_paid' => function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('payment_date', [$startDate, $endDate])
+                    ->where('status', 'completed');
+            }], 'amount')
+            ->get()
+            ->map(function ($partner) {
+                $partner->total_payable = ($partner->total_invested ?? 0) - ($partner->total_paid ?? 0);
+                return $partner;
+            });
+
+        // Category breakdown
+        $expensesByCategory = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->where('status', 'approved')
+            ->with('category')
+            ->get()
+            ->groupBy('category.name')
+            ->map(fn($items) => $items->sum('amount'));
+
+        return view('admin.reports.financial-summary', compact(
+            'startDate', 'endDate',
+            'netProfit', 'stockValuation', 'partnerPayables',
+            'expensesByCategory'
+        ));
     }
 }

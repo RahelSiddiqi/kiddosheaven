@@ -57,14 +57,14 @@
 				<!-- Date Filter -->
 				<form action="{{ route('admin.reports.index') }}" method="GET"
 					class="p-5 border-b border-gray-100 dark:border-gray-800">
-					<div class="flex flex-wrap gap-4 items-end">
-						<div>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:flex xl:flex-nowrap gap-4 items-end">
+					<div class="flex-1 min-w-[160px]">
 							<label for="start_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Start
 								Date</label>
 							<input type="date" name="start_date" id="start_date" value="{{ request('start_date', $startDate) }}"
 								class="h-11 rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">
 						</div>
-						<div>
+					<div class="flex-1 min-w-[160px]">
 							<label for="end_date" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">End Date</label>
 							<input type="date" name="end_date" id="end_date" value="{{ request('end_date', $endDate) }}"
 								class="h-11 rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-blue-800">

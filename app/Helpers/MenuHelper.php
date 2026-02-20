@@ -11,110 +11,160 @@ class MenuHelper
                 'icon' => 'dashboard',
                 'name' => 'Dashboard',
                 'path' => '/admin',
+                'permission' => 'view-dashboard',
             ],
             [
                 'icon' => 'box',
                 'name' => 'Products',
+                'permission' => 'view-products',
                 'subItems' => [
-                    ['name' => 'All Products', 'path' => '/admin/products'],
-                    ['name' => 'Categories', 'path' => '/admin/categories'],
-                    ['name' => 'Attributes', 'path' => '/admin/attributes'],
-                    ['name' => 'Pricing Templates', 'path' => '/admin/pricing-templates'],
-                    ['name' => 'Brands', 'path' => '/admin/brands'],
+                    ['name' => 'All Products', 'path' => '/admin/products', 'permission' => 'view-products'],
+                    ['name' => 'Categories', 'path' => '/admin/categories', 'permission' => 'view-categories'],
+                    ['name' => 'Attributes', 'path' => '/admin/attributes', 'permission' => 'view-categories'],
+                    ['name' => 'Pricing Templates', 'path' => '/admin/pricing-templates', 'permission' => 'view-categories'],
+                    ['name' => 'Brands', 'path' => '/admin/brands', 'permission' => 'view-brands'],
                 ],
             ],
             [
                 'icon' => 'shopping-cart',
                 'name' => 'Sales',
+                'permission' => 'view-orders',
                 'subItems' => [
-                    ['name' => 'Orders', 'path' => '/admin/orders'],
+                    ['name' => 'Orders', 'path' => '/admin/orders', 'permission' => 'view-orders'],
                 ],
             ],
             [
                 'icon' => 'users',
                 'name' => 'Customers',
+                'permission' => 'view-customers',
                 'subItems' => [
-                    ['name' => 'All Customers', 'path' => '/admin/customers'],
-                    ['name' => 'Loyalty Program', 'path' => '/admin/loyalty'],
-                    ['name' => 'Reviews', 'path' => '/admin/reviews'],
+                    ['name' => 'All Customers', 'path' => '/admin/customers', 'permission' => 'view-customers'],
+                    ['name' => 'Loyalty Program', 'path' => '/admin/loyalty', 'permission' => 'view-marketing'],
+                    ['name' => 'Reviews', 'path' => '/admin/reviews', 'permission' => 'view-reviews'],
                 ],
             ],
             [
                 'icon' => 'inventory',
                 'name' => 'Inventory',
+                'permission' => 'view-inventory',
                 'subItems' => [
-                    ['name' => 'Stock Overview', 'path' => '/admin/inventory'],
-                    ['name' => 'Purchase Batches', 'path' => '/admin/purchase-batches'],
-                    ['name' => 'Stock Movements', 'path' => '/admin/inventory/movements'],
-                    ['name' => 'Low Stock Alerts', 'path' => '/admin/inventory/alerts'],
+                    ['name' => 'Stock Overview', 'path' => '/admin/inventory', 'permission' => 'view-inventory'],
+                    ['name' => 'Purchase Batches', 'path' => '/admin/purchase-batches', 'permission' => 'view-inventory'],
+                    ['name' => 'Stock Movements', 'path' => '/admin/inventory/movements', 'permission' => 'view-inventory'],
+                    ['name' => 'Low Stock Alerts', 'path' => '/admin/inventory/alerts', 'permission' => 'view-inventory'],
                 ],
             ],
             [
                 'icon' => 'ecommerce',
                 'name' => 'Marketing',
+                'permission' => 'view-marketing',
                 'subItems' => [
-                    ['name' => 'Coupons', 'path' => '/admin/marketing/coupons'],
-                    ['name' => 'Flash Sales', 'path' => '/admin/marketing/flash-sales'],
+                    ['name' => 'Coupons', 'path' => '/admin/marketing/coupons', 'permission' => 'view-marketing'],
+                    ['name' => 'Flash Sales', 'path' => '/admin/marketing/flash-sales', 'permission' => 'view-marketing'],
                 ],
             ],
             [
                 'icon' => 'chart',
                 'name' => 'Reports',
+                'permission' => 'view-reports',
                 'subItems' => [
-                    ['name' => 'Reports Overview', 'path' => '/admin/reports'],
-                    ['name' => 'Sales Report', 'path' => '/admin/reports/sales'],
-                    ['name' => 'Products Report', 'path' => '/admin/reports/products'],
-                    ['name' => 'Inventory Report', 'path' => '/admin/reports/inventory'],
-                    ['name' => 'Batch Stock Report', 'path' => '/admin/reports/batch-stock'],
-                    ['name' => 'Expiring Items', 'path' => '/admin/reports/expiring'],
-                    ['name' => 'Product Profit', 'path' => '/admin/reports/product-profit'],
-                    ['name' => 'Category Profit', 'path' => '/admin/reports/category-profit'],
-                    ['name' => 'Partner Report', 'path' => '/admin/reports/partners'],
-                    ['name' => 'Partner Contribution', 'path' => '/admin/reports/partner-contribution'],
-                    ['name' => 'Investor ROI', 'path' => '/admin/reports/investor-roi'],
-                    ['name' => 'Expense Report', 'path' => '/admin/reports/expenses'],
-                    ['name' => 'Investment Report', 'path' => '/admin/reports/investments'],
-                    ['name' => 'Profit & Loss', 'path' => '/admin/reports/profit-loss'],
-                    ['name' => 'Financial Summary', 'path' => '/admin/reports/financial-summary'],
-                    ['name' => 'Cost History', 'path' => '/admin/reports/cost-history'],
+                    ['name' => 'Reports Overview', 'path' => '/admin/reports', 'permission' => 'view-reports'],
+                    ['name' => 'Sales Report', 'path' => '/admin/reports/sales', 'permission' => 'view-reports'],
+                    ['name' => 'Products Report', 'path' => '/admin/reports/products', 'permission' => 'view-reports'],
+                    ['name' => 'Inventory Report', 'path' => '/admin/reports/inventory', 'permission' => 'view-reports'],
+                    ['name' => 'Batch Stock Report', 'path' => '/admin/reports/batch-stock', 'permission' => 'view-reports'],
+                    ['name' => 'Expiring Items', 'path' => '/admin/reports/expiring', 'permission' => 'view-reports'],
+                    ['name' => 'Product Profit', 'path' => '/admin/reports/product-profit', 'permission' => 'view-reports'],
+                    ['name' => 'Category Profit', 'path' => '/admin/reports/category-profit', 'permission' => 'view-reports'],
+                    ['name' => 'Partner Report', 'path' => '/admin/reports/partners', 'permission' => 'view-reports'],
+                    ['name' => 'Partner Contribution', 'path' => '/admin/reports/partner-contribution', 'permission' => 'view-reports'],
+                    ['name' => 'Investor ROI', 'path' => '/admin/reports/investor-roi', 'permission' => 'view-reports'],
+                    ['name' => 'Expense Report', 'path' => '/admin/reports/expenses', 'permission' => 'view-reports'],
+                    ['name' => 'Investment Report', 'path' => '/admin/reports/investments', 'permission' => 'view-reports'],
+                    ['name' => 'Profit & Loss', 'path' => '/admin/reports/profit-loss', 'permission' => 'view-reports'],
+                    ['name' => 'Financial Summary', 'path' => '/admin/reports/financial-summary', 'permission' => 'view-reports'],
+                    ['name' => 'Cost History', 'path' => '/admin/reports/cost-history', 'permission' => 'view-reports'],
                 ],
             ],
             [
                 'icon' => 'wallet',
                 'name' => 'Finance',
+                'permission' => 'view-finance',
                 'subItems' => [
-                    ['name' => 'Expenses', 'path' => '/admin/expenses'],
-                    ['name' => 'Partners', 'path' => '/admin/partners'],
-                    ['name' => 'Investments', 'path' => '/admin/investments'],
-                    ['name' => 'Capital Accounts', 'path' => '/admin/capital-accounts'],
-                    ['name' => 'Transactions', 'path' => '/admin/financial-transactions'],
+                    ['name' => 'Expenses', 'path' => '/admin/expenses', 'permission' => 'view-finance'],
+                    ['name' => 'Partners', 'path' => '/admin/partners', 'permission' => 'view-finance'],
+                    ['name' => 'Investments', 'path' => '/admin/investments', 'permission' => 'view-finance'],
+                    ['name' => 'Capital Accounts', 'path' => '/admin/capital-accounts', 'permission' => 'view-finance'],
+                    ['name' => 'Transactions', 'path' => '/admin/financial-transactions', 'permission' => 'view-finance'],
                 ],
             ],
             [
                 'icon' => 'document',
                 'name' => 'Content',
+                'permission' => 'view-cms',
                 'subItems' => [
-                    ['name' => 'CMS Pages', 'path' => '/admin/cms/pages'],
+                    ['name' => 'CMS Pages', 'path' => '/admin/cms/pages', 'permission' => 'view-cms'],
                 ],
             ],
             [
                 'icon' => 'settings',
                 'name' => 'Settings',
+                'permission' => 'view-settings',
                 'subItems' => [
-                    ['name' => 'Roles', 'path' => '/admin/roles'],
-                    ['name' => 'Permissions', 'path' => '/admin/permissions'],
-                    ['name' => 'General Settings', 'path' => '/admin/settings'],
+                    ['name' => 'Users', 'path' => '/admin/users', 'permission' => 'view-users'],
+                    ['name' => 'Roles', 'path' => '/admin/roles', 'permission' => 'view-roles'],
+                    ['name' => 'Permissions', 'path' => '/admin/permissions', 'permission' => 'view-roles'],
+                    ['name' => 'General Settings', 'path' => '/admin/settings', 'permission' => 'manage-settings'],
                 ],
             ],
         ];
     }
 
+    /**
+     * Filter menu items based on the current user's permissions.
+     * Super-admins (no role or role with super-admin bypass) see everything.
+     */
+    private static function filterItemsByPermission(array $items): array
+    {
+        $user = auth()->user();
+
+        return array_values(array_filter(array_map(function ($item) use ($user) {
+            // Check if this item requires a permission
+            $permission = $item['permission'] ?? null;
+
+            // If item has a permission requirement, check it
+            if ($permission && !$user->hasPermission($permission)) {
+                return null;
+            }
+
+            // Filter subItems if present
+            if (isset($item['subItems'])) {
+                $item['subItems'] = array_values(array_filter(array_map(function ($sub) use ($user) {
+                    $subPerm = $sub['permission'] ?? null;
+                    if ($subPerm && !$user->hasPermission($subPerm)) {
+                        return null;
+                    }
+                    return $sub;
+                }, $item['subItems'])));
+
+                // Hide the parent entirely if all subItems were filtered out
+                if (empty($item['subItems'])) {
+                    return null;
+                }
+            }
+
+            return $item;
+        }, $items)));
+    }
+
     public static function getMenuGroups()
     {
+        $items = self::filterItemsByPermission(self::getMainNavItems());
+
         return [
             [
                 'title' => 'Main',
-                'items' => self::getMainNavItems()
+                'items' => $items,
             ],
         ];
     }

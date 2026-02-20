@@ -14,10 +14,9 @@ class Investment extends Model
         'title',
         'description',
         'amount',
+        'spent_amount',
         'type',
         'investment_date',
-        'expected_return',
-        'actual_return',
         'current_value',
         'status',
         'notes',
@@ -25,9 +24,8 @@ class Investment extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'spent_amount' => 'decimal:2',
         'investment_date' => 'date',
-        'expected_return' => 'decimal:2',
-        'actual_return' => 'decimal:2',
         'current_value' => 'decimal:2',
     ];
 
@@ -54,6 +52,55 @@ class Investment extends Model
     }
 
     /**
+     * Get the purchase batches funded by this investment.
+     */
+    public function purchaseBatches()
+    {
+        return $this->hasMany(PurchaseBatch::class);
+    }
+
+    /**
+     * Get available balance (amount - spent_amount).
+     */
+    public function getAvailableBalanceAttribute(): float
+    {
+        return $this->amount - ($this->spent_amount ?? 0);
+    }
+
+    /**
+     * Get total value of inventory purchased with this investment.
+     */
+    public function getInventoryValueAttribute(): float
+    {
+        return $this->purchaseBatches->sum(function ($batch) {
+            return $batch->remaining_quantity * $batch->unit_cost;
+        });
+    }
+
+    /**
+     * Auto-calculate current value based on:
+     * - Remaining inventory value from batches
+     * - Revenue generated from sold inventory
+     * This gives a more accurate picture of investment performance
+     */
+    public function calculateCurrentValue(): float
+    {
+        // Value still in inventory
+        $inventoryValue = $this->purchaseBatches->sum(function ($batch) {
+            return $batch->remaining_quantity * $batch->unit_cost;
+        });
+
+        // Value already sold (converted to revenue)
+        // This is simplified - in a full implementation, you'd track actual revenue per batch
+        $soldValue = $this->purchaseBatches->sum(function ($batch) {
+            $soldQty = $batch->quantity_received - $batch->remaining_quantity;
+            return $soldQty * $batch->unit_cost * 1.3; // Assuming 30% markup as approximation
+        });
+
+        return $inventoryValue + $soldValue;
+    }
+
+    /**
      * Calculate ROI percentage.
      */
     public function getRoiPercentageAttribute(): float
@@ -67,13 +114,14 @@ class Investment extends Model
 
     /**
      * Calculate expected ROI percentage.
+     * Uses current_value as the expected return.
      */
     public function getExpectedRoiPercentageAttribute(): float
     {
         if ($this->amount <= 0) {
             return 0;
         }
-        $expected = $this->expected_return ?? 0;
+        $expected = $this->current_value ?? $this->amount;
         return (($expected - $this->amount) / $this->amount) * 100;
     }
 

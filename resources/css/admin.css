@@ -22,23 +22,7 @@ layer(base);
     min-width: 600px;
 }
 
-/* Better touch targets for mobile - Mobile First */
-.btn,
-button,
-a.btn,
-.pagination a,
-.pagination span {
-    min-height: 48px;
-    min-width: 48px;
-    touch-action: manipulation;
-}
 
-input,
-select,
-textarea {
-    min-height: 48px;
-    font-size: 16px; /* Prevents iOS zoom */
-}
 
 /* Form improvements for mobile */
 .form-control {
@@ -450,13 +434,16 @@ textarea {
     background-color: #344054;
 }
 @layer utilities {
-    /* For Remove Date Icon */
-    input[type="date"]::-webkit-inner-spin-button,
-    input[type="time"]::-webkit-inner-spin-button,
+    /* Date/Time inputs - keep native calendar picker visible */
     input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="time"]::-webkit-calendar-picker-indicator {
-        display: none;
-        -webkit-appearance: none;
+        cursor: pointer;
+    }
+
+    /* Dark mode - invert calendar icon to white */
+    .dark input[type="date"]::-webkit-calendar-picker-indicator,
+    .dark input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
     }
 }
 
@@ -847,10 +834,10 @@ span.flatpickr-weekday,
     @apply text-sm font-medium text-gray-500 dark:text-gray-400;
 }
 
-.input-date-icon::-webkit-inner-spin-button,
+/* Optional: Hidden calendar icon for specific inputs with this class */
 .input-date-icon::-webkit-calendar-picker-indicator {
     opacity: 0;
-    -webkit-appearance: none;
+    cursor: default;
 }
 
 .swiper-button-prev svg,
@@ -1306,4 +1293,146 @@ textarea.simple-editor:focus {
 .dark textarea.simple-editor:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* ═══════════════════════════════════════════════
+   Quill Rich Text Editor — Border & Radius Fixes
+   Loaded via Vite AFTER quill.snow.css CDN link,
+   so these rules win the cascade.
+   ═══════════════════════════════════════════════ */
+
+/* Light mode */
+.quill-editor-container .ql-toolbar.ql-snow {
+    border: 1px solid #d1d5db !important;
+    border-bottom: none !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    background-color: #f9fafb !important;
+}
+
+.quill-editor-container .ql-container.ql-snow {
+    border: 1px solid #d1d5db !important;
+    border-top: none !important;
+    border-radius: 0 0 0.5rem 0.5rem !important;
+    font-size: 0.875rem;
+}
+
+.quill-editor-container .ql-editor {
+    min-height: 100px;
+    color: #1f2937;
+}
+
+.quill-editor-container {
+    overflow: visible;
+    position: relative;
+}
+
+/* Dark mode */
+.dark .quill-editor-container .ql-toolbar.ql-snow {
+    border: 1px solid #374151 !important;
+    border-bottom: none !important;
+    background-color: #1f2937 !important;
+}
+
+.dark .quill-editor-container .ql-container.ql-snow {
+    border: 1px solid #374151 !important;
+    border-top: none !important;
+    background-color: #111827 !important;
+}
+
+.dark .quill-editor-container .ql-editor {
+    color: #e5e7eb;
+}
+
+.dark .quill-editor-container .ql-editor.ql-blank::before {
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+.dark .quill-editor-container .ql-toolbar .ql-stroke { stroke: #9ca3af; }
+.dark .quill-editor-container .ql-toolbar .ql-fill  { fill: #9ca3af; }
+
+.dark .quill-editor-container .ql-toolbar button:hover .ql-stroke,
+.dark .quill-editor-container .ql-toolbar button.ql-active .ql-stroke {
+    stroke: #60a5fa;
+}
+
+.dark .quill-editor-container .ql-toolbar .ql-picker-label { color: #9ca3af; }
+
+.dark .quill-editor-container .ql-toolbar .ql-picker-options {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.375rem;
+}
+
+.dark .quill-editor-container .ql-toolbar .ql-picker-item { color: #d1d5db; }
+
+/* ═══════════════════════════════════════════════
+   Toggle Switches & Checkboxes — Global Styles
+   ═══════════════════════════════════════════════ */
+
+/* Toggle track: turns brand-blue when checked */
+input.peer:checked + div {
+    background-color: var(--color-brand-500) !important;
+}
+
+
+/* Smooth knob transition */
+.dot {
+    transition: transform 0.2s ease;
+}
+
+/* ── Checkboxes: base style ── */
+input[type="checkbox"]:not(.sr-only) {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 1.5px solid #d1d5db;
+    border-radius: 0.3rem;
+    background-color: transparent;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+input[type="checkbox"]:not(.sr-only):hover {
+    border-color: var(--color-brand-400);
+}
+
+input[type="checkbox"]:not(.sr-only):checked {
+    background-color: var(--color-brand-500);
+    border-color: var(--color-brand-500);
+}
+
+/* Checkmark via pseudo-element */
+input[type="checkbox"]:not(.sr-only):checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+}
+
+/* Focus ring */
+input[type="checkbox"]:not(.sr-only):focus-visible {
+    outline: 2px solid var(--color-brand-400);
+    outline-offset: 2px;
+}
+
+/* Dark mode border */
+.dark input[type="checkbox"]:not(.sr-only) {
+    border-color: #4b5563;
+    background-color: transparent;
+}
+
+.dark input[type="checkbox"]:not(.sr-only):checked {
+    background-color: var(--color-brand-500);
+    border-color: var(--color-brand-500);
 }

@@ -69,9 +69,9 @@
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 		<x-admin.ui.stat-card title="Initial Quantity" :value="$purchaseBatch->quantity_received" subtitle="units purchased" icon="box"
 			color="blue" />
-		<x-admin.ui.stat-card title="Remaining Stock" :value="$purchaseBatch->remaining_quantity" :subtitle="'৳' . number_format($remainingValue, 2) . ' value'" icon="stock" :color="$purchaseBatch->remaining_quantity > 0 ? 'green' : 'gray'" />
-		<x-admin.ui.stat-card title="Units Sold" :value="$quantitySold" :subtitle="'৳' . number_format($soldValue, 2) . ' COGS'" icon="cart" :color="$quantitySold > 0 ? 'purple' : 'gray'" />
-		<x-admin.ui.stat-card title="Unit Cost" :value="'৳' . number_format($purchaseBatch->unit_cost, 2)" subtitle="per unit" icon="currency" color="blue" />
+		<x-admin.ui.stat-card title="Remaining Stock" :value="$purchaseBatch->remaining_quantity" :subtitle="'৳' . number_format($remainingValue, 0) . ' value'" icon="stock" :color="$purchaseBatch->remaining_quantity > 0 ? 'green' : 'gray'" />
+		<x-admin.ui.stat-card title="Units Sold" :value="$quantitySold" :subtitle="'৳' . number_format($soldValue, 0) . ' COGS'" icon="cart" :color="$quantitySold > 0 ? 'purple' : 'gray'" />
+		<x-admin.ui.stat-card title="Unit Cost" :value="'৳' . number_format($purchaseBatch->unit_cost, 0)" subtitle="per unit" icon="currency" color="blue" />
 	</div>
 
 	{{-- Timeline --}}
@@ -84,22 +84,22 @@
 			        'date' => $purchaseBatch->purchase_date->format('M d, Y'),
 			        'status' => 'completed',
 			        'description' =>
-			            $purchaseBatch->quantity_received . ' units @ ৳' . number_format($purchaseBatch->unit_cost, 2),
-			        'badge' => 'Total: ৳' . number_format($purchaseBatch->quantity_received * $purchaseBatch->unit_cost, 2),
+			            $purchaseBatch->quantity_received . ' units @ ৳' . number_format($purchaseBatch->unit_cost, 0),
+			        'badge' => 'Total: ৳' . number_format($purchaseBatch->quantity_received * $purchaseBatch->unit_cost, 0),
 			        'badgeColor' => 'blue',
 			    ],
 			    [
 			        'label' => 'In Stock',
 			        'status' => $purchaseBatch->remaining_quantity > 0 ? 'current' : 'completed',
 			        'description' => $purchaseBatch->remaining_quantity . ' units remaining',
-			        'badge' => 'Value: ৳' . number_format($remainingValue, 2),
+			        'badge' => 'Value: ৳' . number_format($remainingValue, 0),
 			        'badgeColor' => 'green',
 			    ],
 			    [
 			        'label' => 'Sold',
 			        'status' => $quantitySold > 0 ? 'completed' : 'upcoming',
 			        'description' => $quantitySold . ' units sold via FIFO',
-			        'badge' => 'COGS: ৳' . number_format($soldValue, 2),
+			        'badge' => 'COGS: ৳' . number_format($soldValue, 0),
 			        'badgeColor' => 'purple',
 			    ],
 			    [
@@ -210,17 +210,17 @@
 
 			{{-- Cost Summary --}}
 			<x-admin.ui.info-card title="Cost Summary" :items="[
-			    ['label' => 'Unit Cost', 'value' => '৳' . number_format($purchaseBatch->unit_cost, 2), 'mono' => true],
+			    ['label' => 'Unit Cost', 'value' => '৳' . number_format($purchaseBatch->unit_cost, 0), 'mono' => true],
 			    [
 			        'label' => 'Total Purchase',
-			        'value' => '৳' . number_format($purchaseBatch->quantity_received * $purchaseBatch->unit_cost, 2),
+			        'value' => '৳' . number_format($purchaseBatch->quantity_received * $purchaseBatch->unit_cost, 0),
 			        'mono' => true,
 			        'badge' => 'blue',
 			    ],
-			    ['label' => 'COGS (Sold)', 'value' => '৳' . number_format($soldValue, 2), 'mono' => true, 'badge' => 'purple'],
+			    ['label' => 'COGS (Sold)', 'value' => '৳' . number_format($soldValue, 0), 'mono' => true, 'badge' => 'purple'],
 			    [
 			        'label' => 'Remaining Value',
-			        'value' => '৳' . number_format($remainingValue, 2),
+			        'value' => '৳' . number_format($remainingValue, 0),
 			        'mono' => true,
 			        'badge' => $purchaseBatch->remaining_quantity > 0 ? 'green' : 'gray',
 			    ],

@@ -144,11 +144,11 @@
 					<!-- ===== Common Grid Shape Start ===== -->
 					<x-admin.common.common-grid-shape />
 					<div class="flex max-w-xs flex-col items-center">
-						<a href="/" class="mb-4 block">
-							<img src="{{ asset('images/logo/auth-logo.svg') }}" alt="Logo" />
+						<a href="/admin" class="mb-4 block">
+							<img src="{{ asset('storage/logo/logo.png') }}" alt="Kiddo's Heaven" class="h-24 w-auto" />
 						</a>
 						<p class="text-center text-gray-400 dark:text-white/60">
-							Free and Open-Source Tailwind CSS Admin Dashboard Template
+							Kiddo's Heaven — Admin Panel
 						</p>
 					</div>
 				</div>

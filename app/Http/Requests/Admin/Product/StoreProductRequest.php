@@ -12,7 +12,7 @@ class StoreProductRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::user()->is_admin;
+        return Auth::check() && (Auth::user()->is_admin || Auth::user()->hasPermission('manage-products'));
     }
 
     /**
@@ -61,7 +61,7 @@ class StoreProductRequest extends FormRequest
 
             // Media
             'images' => ['nullable', 'array'],
-            'images.*' => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:20480'],
             'primary_image' => ['nullable', 'string', 'max:500'],
             'video_url' => ['nullable', 'url', 'max:500'],
 
@@ -144,7 +144,7 @@ class StoreProductRequest extends FormRequest
             'category_id.exists' => 'Selected category does not exist',
             'images.*.image' => 'Each file must be an image',
             'images.*.mimes' => 'Images must be in JPEG, PNG, JPG, GIF, or WEBP format',
-            'images.*.max' => 'Each image must not exceed 2MB',
+            'images.*.max' => 'Each image must not exceed 20MB',
         ];
     }
 
@@ -153,15 +153,22 @@ class StoreProductRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Convert checkbox values to boolean
+        // Derive is_active from status dropdown (status field is used in the form, not a checkbox)
+        $isActive = $this->has('is_active')
+            ? $this->boolean('is_active')
+            : ($this->input('status') === 'active');
+
         $this->merge([
-            'is_active' => $this->boolean('is_active'),
+            'is_active' => $isActive,
             'is_featured' => $this->boolean('is_featured'),
             'halal_certified' => $this->boolean('halal_certified'),
             'organic_certified' => $this->boolean('organic_certified'),
         ]);
 
-        // Set defaults
+        if (!$this->filled('vat_rate')) {
+            $this->merge(['vat_rate' => 0]);
+        }
+
         if (!$this->filled('product_type')) {
             $this->merge(['product_type' => 'simple']);
         }

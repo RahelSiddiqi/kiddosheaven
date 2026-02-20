@@ -28,7 +28,7 @@
 
 				<!-- Stats Cards -->
 				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-					<x-admin.ui.stat-card title="Total Investments" :value="'৳ ' . number_format($investments->sum('amount'), 2)" icon="currency" color="blue" />
+					<x-admin.ui.stat-card title="Total Investments" :value="'৳ ' . number_format($investments->sum("amount"), 0)" icon="currency" color="blue" />
 					<x-admin.ui.stat-card title="Active Investments" :value="$investments->where('status', 'active')->count()" icon="cart" color="green" />
 					<x-admin.ui.stat-card title="Total Count" :value="number_format($investments->count(), 0)" icon="profit" color="purple" />
 				</div>
@@ -159,7 +159,7 @@
 										</td>
 										<td class="px-5 py-4 text-right">
 											<p class="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-												{{ number_format($investment->amount, 2) }}</p>
+												{{ number_format($investment->amount, 0) }}</p>
 										</td>
 										<td class="px-5 py-4 text-center">
 											<span

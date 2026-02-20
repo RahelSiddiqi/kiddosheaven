@@ -3,30 +3,34 @@
 namespace App\Services\Product;
 
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Services\ImageService;
 use App\Services\VariantGeneratorService;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProductService
 {
     protected ProductRepositoryInterface $productRepository;
+
     protected VariantGeneratorService $variantService;
+
+    protected ImageService $imageService;
 
     public function __construct(
         ProductRepositoryInterface $productRepository,
-        VariantGeneratorService $variantService
+        VariantGeneratorService $variantService,
+        ImageService $imageService
     ) {
         $this->productRepository = $productRepository;
-        $this->variantService = $variantService;
+        $this->variantService    = $variantService;
+        $this->imageService      = $imageService;
     }
 
     /**
      * Get all products with relations
-     *
-     * @return Collection
      */
     public function getAllWithRelations(): Collection
     {
@@ -35,9 +39,6 @@ class ProductService
 
     /**
      * Get paginated products
-     *
-     * @param int $perPage
-     * @return LengthAwarePaginator
      */
     public function getPaginated(int $perPage = 20): LengthAwarePaginator
     {
@@ -46,9 +47,6 @@ class ProductService
 
     /**
      * Find product by ID
-     *
-     * @param int $id
-     * @return \App\Models\Product|null
      */
     public function findById(int $id): ?\App\Models\Product
     {
@@ -57,9 +55,6 @@ class ProductService
 
     /**
      * Find product by slug
-     *
-     * @param string $slug
-     * @return \App\Models\Product|null
      */
     public function findBySlug(string $slug): ?\App\Models\Product
     {
@@ -68,9 +63,6 @@ class ProductService
 
     /**
      * Create a new product
-     *
-     * @param array $data
-     * @return \App\Models\Product
      */
     public function create(array $data): \App\Models\Product
     {
@@ -79,7 +71,7 @@ class ProductService
             $data['slug'] = $this->generateUniqueSlug($data['name']);
 
             // Handle product_type - default to simple if not set
-            if (!isset($data['product_type'])) {
+            if (! isset($data['product_type'])) {
                 $data['product_type'] = 'simple';
             }
 
@@ -94,6 +86,10 @@ class ProductService
             // Handle image uploads
             if (isset($data['images']) && is_array($data['images'])) {
                 $data['images'] = $this->handleImageUploads($data['images']);
+                // Auto-set primary image if not specified
+                if (empty($data['primary_image']) && ! empty($data['images'])) {
+                    $data['primary_image'] = $data['images'][0];
+                }
             }
 
             // Handle tags
@@ -105,23 +101,73 @@ class ProductService
             $variantsData = $data['variants'] ?? [];
             unset($data['variants']);
 
-            // Extract non-variant attributes if present
+            // Extract attribute configurations if present (NEW SYSTEM)
+            $attributeConfigs = [];
+            if (isset($data['attribute_configs'])) {
+                $attributeConfigs = json_decode($data['attribute_configs'], true) ?? [];
+                unset($data['attribute_configs']);
+            }
+
+            // Extract non-variant attributes if present (OLD SYSTEM - backward compatibility)
             $nonVariantAttrs = [];
             if (isset($data['non_variant_attributes'])) {
                 $nonVariantAttrs = json_decode($data['non_variant_attributes'], true) ?? [];
                 unset($data['non_variant_attributes']);
             }
 
+            // Extract stock quantity and cost price for batch creation
+            $initialStockQty = isset($data['stock_quantity']) ? (int) $data['stock_quantity'] : 0;
+            $costPrice = isset($data['cost_price']) ? (float) $data['cost_price'] : 0;
+
             // Create the product
             $product = $this->productRepository->create($data);
 
-            // Attach non-variant attributes
-            if (!empty($nonVariantAttrs)) {
+            // ── Create initial purchase batch if stock is provided ──
+            // This ensures the product can be used in orders immediately via FIFO system
+            if ($initialStockQty > 0) {
+                \App\Models\PurchaseBatch::create([
+                    'batch_number'       => 'INIT-' . $product->id . '-' . strtoupper(bin2hex(random_bytes(3))),
+                    'product_id'         => $product->id,
+                    'quantity_received'  => $initialStockQty,
+                    'remaining_quantity' => $initialStockQty,
+                    'quantity_reserved'  => 0,
+                    'unit_cost'          => $costPrice,
+                    'status'             => \App\Models\PurchaseBatch::STATUS_ACTIVE,
+                    'purchase_date'      => now()->toDateString(),
+                    'notes'              => 'Initial batch created with product',
+                ]);
+            }
+
+            // ── Handle attribute configurations (NEW SYSTEM) ──
+            if (!empty($attributeConfigs)) {
+                foreach ($attributeConfigs as $config) {
+                    \App\Models\ProductAttributeConfig::create([
+                        'product_id' => $product->id,
+                        'product_attribute_id' => $config['attribute_id'],
+                        'usage_type' => $config['usage_type'], // 'variant' or 'specification'
+                        'is_visible' => true,
+                    ]);
+
+                    // If it's a specification (non-variant), also attach values
+                    if ($config['usage_type'] === 'specification' && !empty($config['values'])) {
+                        foreach ($config['values'] as $valueId) {
+                            // Store the selected value
+                            $product->attributeValues()->create([
+                                'product_attribute_id' => $config['attribute_id'],
+                                'product_attribute_value_id' => $valueId,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // Attach non-variant attributes (OLD SYSTEM - backward compatibility)
+            if (! empty($nonVariantAttrs)) {
                 $this->attachNonVariantAttributes($product, $nonVariantAttrs);
             }
 
             // Handle variants for variable products
-            if ($product->product_type === 'variable' && !empty($variantsData)) {
+            if ($product->product_type === 'variable' && ! empty($variantsData)) {
                 $this->createVariants($product, $variantsData);
             }
 
@@ -131,10 +177,6 @@ class ProductService
 
     /**
      * Update product
-     *
-     * @param int $id
-     * @param array $data
-     * @return \App\Models\Product
      */
     public function update(int $id, array $data): \App\Models\Product
     {
@@ -158,43 +200,58 @@ class ProductService
             $newFileUploads = [];
             if (isset($data['images']) && is_array($data['images'])) {
                 foreach ($data['images'] as $img) {
-                    if (is_object($img) && method_exists($img, 'store')) {
+                    if ($img instanceof \Illuminate\Http\UploadedFile) {
                         $newFileUploads[] = $img;
                     }
                 }
             }
 
-            // 2. Start with existing images
-            $finalImages = $product->images ?? [];
+            // 2. Start with existing images from form or database
+            $existingFromForm = $data['existing_images'] ?? [];
+            if (! empty($existingFromForm)) {
+                // Use existing images from form (submitted as hidden inputs)
+                $finalImages = array_values(array_filter($existingFromForm, function ($img) {
+                    return $img !== null && $img !== false && $img !== '' && ! empty($img);
+                }));
+            } else {
+                // Use existing images from database and clean up any corrupted data
+                $existingImages = $product->images ?? [];
+                $finalImages = array_values(array_filter($existingImages, function ($img) {
+                    return $img !== null && $img !== false && $img !== '' && ! empty($img);
+                }));
+            }
 
             // 3. Handle deletions
             if (isset($data['delete_image']) && is_array($data['delete_image'])) {
                 foreach ($data['delete_image'] as $imageToDelete) {
-                    Storage::disk('public')->delete($imageToDelete);
-                    $finalImages = array_values(array_filter($finalImages, fn($img) => $img !== $imageToDelete));
+                    if (! empty($imageToDelete) && Storage::disk('public')->exists($imageToDelete)) {
+                        Storage::disk('public')->delete($imageToDelete);
+                    }
+                    $finalImages = array_values(array_filter($finalImages, fn ($img) => $img !== $imageToDelete));
                 }
                 // Reset primary image if it was deleted
-                if (in_array($product->primary_image, $data['delete_image'])) {
-                    $data['primary_image'] = !empty($finalImages) ? $finalImages[0] : null;
+                if (! empty($product->primary_image) && in_array($product->primary_image, $data['delete_image'])) {
+                    $data['primary_image'] = ! empty($finalImages) ? $finalImages[0] : null;
                 }
             }
             unset($data['delete_image']);
 
             // 4. Handle new uploads (append to remaining images)
-            if (!empty($newFileUploads)) {
+            if (! empty($newFileUploads)) {
                 $newPaths = $this->handleImageUploads($newFileUploads);
                 $finalImages = array_merge($finalImages, $newPaths);
             }
 
-            // 5. Only update images if we had deletions or new uploads
-            if (isset($data['delete_image']) || !empty($newFileUploads) || isset($data['images'])) {
-                $data['images'] = $finalImages;
+            // 5. Always set the cleaned images array so corrupted data gets fixed
+            $data['images'] = array_values($finalImages);
+
+            // Handle primary_image - auto-set if not specified but images exist
+            if (empty($data['primary_image']) && ! empty($finalImages)) {
+                $data['primary_image'] = $finalImages[0];
             }
 
-            // Handle primary_image
-            if (isset($data['primary_image'])) {
-                // Keep it as-is (it's a path string from the form)
-            }
+            // Clean up non-column keys
+            unset($data['existing_images']);
 
             // Handle tags
             if (isset($data['tags']) && is_array($data['tags'])) {
@@ -216,12 +273,12 @@ class ProductService
             $updatedProduct = $this->productRepository->update($id, $data);
 
             // Sync non-variant attributes
-            if (!empty($nonVariantAttrs)) {
+            if (! empty($nonVariantAttrs)) {
                 // Delete existing non-variant attributes
                 $variantAttrIds = $updatedProduct->variants()
                     ->with('variantAttributes')
                     ->get()
-                    ->flatMap(fn($v) => $v->variantAttributes->pluck('product_attribute_id'))
+                    ->flatMap(fn ($v) => $v->variantAttributes->pluck('product_attribute_id'))
                     ->unique()
                     ->toArray();
 
@@ -234,7 +291,7 @@ class ProductService
             }
 
             // Handle variants for variable products
-            if ($updatedProduct->product_type === 'variable' && !empty($variantsData)) {
+            if ($updatedProduct->product_type === 'variable' && ! empty($variantsData)) {
                 $this->syncVariants($updatedProduct, $variantsData);
             }
 
@@ -244,9 +301,6 @@ class ProductService
 
     /**
      * Delete product
-     *
-     * @param int $id
-     * @return bool
      */
     public function delete(int $id): bool
     {
@@ -264,9 +318,6 @@ class ProductService
 
     /**
      * Get featured products
-     *
-     * @param int $limit
-     * @return Collection
      */
     public function getFeatured(int $limit = 10): Collection
     {
@@ -284,10 +335,6 @@ class ProductService
 
     /**
      * Search products
-     *
-     * @param string $query
-     * @param int $perPage
-     * @return LengthAwarePaginator
      */
     public function search(string $query, int $perPage = 20): LengthAwarePaginator
     {
@@ -296,10 +343,6 @@ class ProductService
 
     /**
      * Get products with filters
-     *
-     * @param array $filters
-     * @param int $perPage
-     * @return LengthAwarePaginator
      */
     public function getFiltered(array $filters, int $perPage = 20): LengthAwarePaginator
     {
@@ -308,11 +351,6 @@ class ProductService
 
     /**
      * Update stock
-     *
-     * @param int $productId
-     * @param int $quantity
-     * @param string $operation
-     * @return bool
      */
     public function updateStock(int $productId, int $quantity, string $operation = 'set'): bool
     {
@@ -321,8 +359,6 @@ class ProductService
 
     /**
      * Get low stock products
-     *
-     * @return Collection
      */
     public function getLowStock(): Collection
     {
@@ -331,10 +367,6 @@ class ProductService
 
     /**
      * Generate unique slug
-     *
-     * @param string $name
-     * @param int|null $ignoreId
-     * @return string
      */
     protected function generateUniqueSlug(string $name, ?int $ignoreId = null): string
     {
@@ -343,7 +375,7 @@ class ProductService
         $counter = 1;
 
         while ($this->slugExists($slug, $ignoreId)) {
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
 
@@ -352,10 +384,6 @@ class ProductService
 
     /**
      * Check if slug exists
-     *
-     * @param string $slug
-     * @param int|null $ignoreId
-     * @return bool
      */
     protected function slugExists(string $slug, ?int $ignoreId = null): bool
     {
@@ -370,10 +398,6 @@ class ProductService
 
     /**
      * Calculate profit margin
-     *
-     * @param float $price
-     * @param float $costPrice
-     * @return float
      */
     protected function calculateProfitMargin(float $price, float $costPrice): float
     {
@@ -386,18 +410,33 @@ class ProductService
 
     /**
      * Handle image uploads
-     *
-     * @param array $images
-     * @return array
      */
     protected function handleImageUploads(array $images): array
     {
         $uploadedPaths = [];
 
         foreach ($images as $image) {
-            if ($image && is_object($image) && method_exists($image, 'store')) {
-                $path = $image->store('products', 'public');
+            // Skip empty values
+            if (empty($image)) {
+                continue;
+            }
+
+            // Handle uploaded file objects (from request->file())
+            if ($image instanceof \Illuminate\Http\UploadedFile) {
+                $path = $this->imageService->store($image, 'products');
                 $uploadedPaths[] = $path;
+
+                continue;
+            }
+
+            // Handle string paths
+            if (is_string($image) && ! empty($image)) {
+                // Skip if it's a data URL
+                if (str_starts_with($image, 'data:')) {
+                    continue;
+                }
+                // Use as path
+                $uploadedPaths[] = $image;
             }
         }
 
@@ -406,10 +445,6 @@ class ProductService
 
     /**
      * Create variants for a product
-     *
-     * @param \App\Models\Product $product
-     * @param array $variantsData
-     * @return void
      */
     protected function createVariants(\App\Models\Product $product, array $variantsData): void
     {
@@ -422,12 +457,12 @@ class ProductService
                 'stock_quantity' => $variantData['stock_quantity'] ?? 0,
                 'barcode' => $variantData['barcode'] ?? null,
                 'weight' => $variantData['weight'] ?? null,
-                'is_default' => !empty($variantData['is_default']),
+                'is_default' => ! empty($variantData['is_default']),
                 'is_active' => isset($variantData['is_active']) ? (bool) $variantData['is_active'] : true,
             ]);
 
             // Attach attribute values to the variant
-            if (!empty($variantData['attributes'])) {
+            if (! empty($variantData['attributes'])) {
                 foreach ($variantData['attributes'] as $attributeId => $valueId) {
                     $variant->variantAttributes()->create([
                         'product_attribute_id' => $attributeId,
@@ -440,10 +475,6 @@ class ProductService
 
     /**
      * Sync variants for an existing product (update/create/delete)
-     *
-     * @param \App\Models\Product $product
-     * @param array $variantsData
-     * @return void
      */
     protected function syncVariants(\App\Models\Product $product, array $variantsData): void
     {
@@ -451,7 +482,7 @@ class ProductService
         $updatedIds = [];
 
         foreach ($variantsData as $variantData) {
-            if (!empty($variantData['id']) && in_array($variantData['id'], $existingIds)) {
+            if (! empty($variantData['id']) && in_array($variantData['id'], $existingIds)) {
                 // Update existing variant
                 $variant = $product->variants()->find($variantData['id']);
                 $variant->update([
@@ -460,12 +491,12 @@ class ProductService
                     'cost_price' => $variantData['cost_price'] ?? $variant->cost_price,
                     'stock_quantity' => $variantData['stock_quantity'] ?? $variant->stock_quantity,
                     'barcode' => $variantData['barcode'] ?? $variant->barcode,
-                    'is_default' => !empty($variantData['is_default']),
+                    'is_default' => ! empty($variantData['is_default']),
                     'is_active' => isset($variantData['is_active']) ? (bool) $variantData['is_active'] : true,
                 ]);
 
                 // Sync attributes
-                if (!empty($variantData['attributes'])) {
+                if (! empty($variantData['attributes'])) {
                     $variant->variantAttributes()->delete();
                     foreach ($variantData['attributes'] as $attributeId => $valueId) {
                         $variant->variantAttributes()->create([
@@ -484,11 +515,11 @@ class ProductService
                     'cost_price' => $variantData['cost_price'] ?? $product->cost_price,
                     'stock_quantity' => $variantData['stock_quantity'] ?? 0,
                     'barcode' => $variantData['barcode'] ?? null,
-                    'is_default' => !empty($variantData['is_default']),
+                    'is_default' => ! empty($variantData['is_default']),
                     'is_active' => isset($variantData['is_active']) ? (bool) $variantData['is_active'] : true,
                 ]);
 
-                if (!empty($variantData['attributes'])) {
+                if (! empty($variantData['attributes'])) {
                     foreach ($variantData['attributes'] as $attributeId => $valueId) {
                         $variant->variantAttributes()->create([
                             'product_attribute_id' => $attributeId,
@@ -503,7 +534,7 @@ class ProductService
 
         // Delete variants that were removed
         $toDelete = array_diff($existingIds, $updatedIds);
-        if (!empty($toDelete)) {
+        if (! empty($toDelete)) {
             $product->variants()->whereIn('id', $toDelete)->each(function ($variant) {
                 $variant->variantAttributes()->delete();
                 $variant->delete();
@@ -513,15 +544,11 @@ class ProductService
 
     /**
      * Attach non-variant attributes to a product
-     *
-     * @param \App\Models\Product $product
-     * @param array $attributes
-     * @return void
      */
     protected function attachNonVariantAttributes(\App\Models\Product $product, array $attributes): void
     {
         foreach ($attributes as $attr) {
-            if (!empty($attr['attribute_id']) && !empty($attr['value'])) {
+            if (! empty($attr['attribute_id']) && ! empty($attr['value'])) {
                 $product->attributeValues()->create([
                     'product_attribute_id' => $attr['attribute_id'],
                     'value' => $attr['value'],
