@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Storefront;
 
+use App\Domains\Marketing\Models\Coupon;
 use App\Services\Cart\CartService;
 use App\Services\Order\OrderService;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +40,13 @@ class Checkout extends Component
     public string $payment_method = 'cod';
 
     public string $notes = '';
+
+    // ── Coupon ────────────────────────────────────────────────────
+    public string $coupon_code    = '';
+    public float  $couponDiscount = 0;
+    public ?int   $applied_coupon_id = null;
+    public string $couponMessage  = '';
+    public bool   $couponApplied  = false;
 
     // ── View-safe cart summary (plain scalars / arrays, no Eloquent models) ──
     public array $cart = ['items' => []];
@@ -84,6 +92,89 @@ class Checkout extends Component
         }
     }
 
+
+    /**
+     * Apply a coupon code.
+     * Validates: exists, belongs to current site, active, not expired,
+     * usage limit not exceeded, meets minimum order amount.
+     */
+    public function applyCoupon(): void
+    {
+        $code = strtoupper(trim($this->coupon_code));
+
+        if (empty($code)) {
+            $this->couponMessage = 'Please enter a coupon code.';
+            return;
+        }
+
+        $siteId = optional(app('currentSite'))->id ?? null;
+
+        $coupon = Coupon::where('code', $code)
+            ->where(function ($q) use ($siteId) {
+                if ($siteId) {
+                    $q->where('site_id', $siteId);
+                }
+            })
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('valid_until')->orWhere('valid_until', '>=', now());
+            })
+            ->first();
+
+        if (!$coupon) {
+            $this->couponMessage = 'Invalid or expired coupon code.';
+            $this->couponApplied  = false;
+            return;
+        }
+
+        if ($coupon->usage_limit && $coupon->times_used >= $coupon->usage_limit) {
+            $this->couponMessage = 'This coupon has reached its usage limit.';
+            $this->couponApplied  = false;
+            return;
+        }
+
+        if ($coupon->min_order_amount && $this->subtotal < $coupon->min_order_amount) {
+            $this->couponMessage = 'Minimum order amount of ৳' . number_format($coupon->min_order_amount, 0) . ' required.';
+            $this->couponApplied  = false;
+            return;
+        }
+
+        // Calculate discount
+        $discount = match ($coupon->type) {
+            'percentage' => round($this->subtotal * ($coupon->value / 100), 2),
+            'fixed'      => min((float) $coupon->value, $this->subtotal),
+            'shipping'   => $this->shipping,
+            default      => 0,
+        };
+
+        if ($coupon->max_discount && $discount > $coupon->max_discount) {
+            $discount = (float) $coupon->max_discount;
+        }
+
+        $this->couponDiscount   = $discount;
+        $this->applied_coupon_id = $coupon->id;
+        $this->couponApplied    = true;
+        $this->couponMessage    = 'Coupon applied! You saved ৳' . number_format($discount, 2);
+
+        $this->calculateTotals();
+    }
+
+    /**
+     * Remove the currently applied coupon.
+     */
+    public function removeCoupon(): void
+    {
+        $this->couponDiscount    = 0;
+        $this->applied_coupon_id = null;
+        $this->couponApplied     = false;
+        $this->couponMessage     = '';
+        $this->coupon_code       = '';
+        $this->calculateTotals();
+    }
+
     /**
      * Recalculate display totals.
      * Tax rate is loaded from TaxService (reads from settings table).
@@ -99,9 +190,12 @@ class Checkout extends Component
 
         $taxService     = app(\App\Services\TaxService::class);
         $this->taxRate  = $taxService->ratePercent();
-        $this->tax      = $taxService->calculate($this->subtotal);
         $this->shipping = $this->subtotal >= 1000 ? 0 : 100;
-        $this->total    = $this->subtotal + $this->tax + $this->shipping;
+
+        // Apply coupon discount to subtotal (shipping coupon reduces shipping cost)
+        $discountedSubtotal = max(0, $this->subtotal - $this->couponDiscount);
+        $this->tax          = $taxService->calculate($discountedSubtotal);
+        $this->total        = $discountedSubtotal + $this->tax + $this->shipping;
     }
 
     /**
@@ -146,8 +240,12 @@ class Checkout extends Component
                 'items'            => $cartData['items'],
                 'subtotal'         => $this->subtotal,
                 'tax_amount'       => $this->tax,
+                'discount_amount'  => $this->couponDiscount,
                 'shipping_amount'  => $this->shipping,
                 'total_amount'     => $this->total,
+                // Coupon
+                'coupon_id'        => $this->applied_coupon_id,
+                'coupon_code'      => $this->applied_coupon_id ? strtoupper(trim($this->coupon_code)) : null,
             ]);
 
             // Clear via CartService so the correct session key is purged

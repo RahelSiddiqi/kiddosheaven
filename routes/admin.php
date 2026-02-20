@@ -361,4 +361,32 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/', \App\Livewire\Admin\Loyalty\LoyaltyManagement::class)->name('index');
         // LoyaltyManagement handles saveSettings() and adjustPoints() directly via Eloquent
     });
+
+    // ============================================
+    // SHIPPING
+    // ============================================
+    Route::prefix('shipping')->name('shipping.')->middleware('permission:view-orders')->group(function () {
+        Route::prefix('zones')->name('zones.')->group(function () {
+            Route::get('/', \App\Livewire\Admin\Shipping\ShippingZoneIndex::class)->name('index');
+        });
+        Route::prefix('shipments')->name('shipments.')->group(function () {
+            Route::get('/', \App\Livewire\Admin\Shipping\ShipmentIndex::class)->name('index');
+        });
+    });
+
+    // ============================================
+    // RETURNS & REFUNDS
+    // ============================================
+    Route::prefix('returns')->name('returns.')->middleware('permission:view-orders')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Returns\ReturnIndex::class)->name('index');
+    });
+
+    // ============================================
+    // COLLECTIONS
+    // ============================================
+    Route::prefix('collections')->name('collections.')->middleware('permission:view-catalog')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Catalog\CollectionIndex::class)->name('index');
+        Route::get('/create', \App\Livewire\Admin\Catalog\CollectionForm::class)->name('create');
+        Route::get('/{id}/edit', \App\Livewire\Admin\Catalog\CollectionForm::class)->name('edit');
+    });
 });
