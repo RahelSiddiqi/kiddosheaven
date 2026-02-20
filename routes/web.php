@@ -17,6 +17,9 @@ use App\Livewire\Storefront\WishlistPage;
 use App\Livewire\Storefront\OrderTracking;
 use App\Livewire\Storefront\CmsPageShow;
 use App\Livewire\Storefront\AddressBook;
+use App\Livewire\Storefront\CollectionDetail;
+use App\Livewire\Storefront\CollectionPage;
+use App\Livewire\Storefront\CreateReturnRequest;
 use Illuminate\Support\Facades\Route;
 
 // ─────────────────────────────────────────────────────────────────
@@ -44,6 +47,10 @@ Route::get('/contact', ContactPage::class)->name('contact');
 
 // Order tracking
 Route::get('/track-order', OrderTracking::class)->name('track.order');
+
+// Collections
+Route::get('/collections', CollectionPage::class)->name('collections.index');
+Route::get('/collections/{slug}', CollectionDetail::class)->name('collections.show');
 
 // ─────────────────────────────────────────────────────────────────
 //  Authentication — Livewire components + OTP AJAX endpoints
@@ -78,6 +85,9 @@ Route::middleware('auth')->group(function () {
 
     // Wishlist (Livewire page)
     Route::get('/wishlist', WishlistPage::class)->name('wishlist');
+
+    // Returns
+    Route::get('/orders/{orderId}/return', CreateReturnRequest::class)->name('customer.orders.return');
 
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 });

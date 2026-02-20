@@ -42,7 +42,7 @@
                     </td>
                     <td class="px-4 py-3 flex gap-2">
                         <a href="{{ route('admin.collections.edit', $collection->id) }}" class="text-blue-600 hover:underline text-xs">Edit</a>
-                        @if($collection->is_automatic())
+                        @if($collection->isAutomatic())
                             <button wire:click="syncAutomatic({{ $collection->id }})" class="text-purple-600 hover:underline text-xs">Sync</button>
                         @endif
                         <button wire:click="delete({{ $collection->id }})" wire:confirm="Delete this collection?" class="text-red-500 hover:underline text-xs">Delete</button>

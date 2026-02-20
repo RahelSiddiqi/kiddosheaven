@@ -130,7 +130,7 @@ class Checkout extends Component
             return;
         }
 
-        if ($coupon->usage_limit && $coupon->times_used >= $coupon->usage_limit) {
+        if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
             $this->couponMessage = 'This coupon has reached its usage limit.';
             $this->couponApplied  = false;
             return;
