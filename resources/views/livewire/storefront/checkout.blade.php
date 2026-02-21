@@ -92,6 +92,23 @@
                             @error('shipping_zip') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
+
+                    <div>
+                        <label for="shipping_country" class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                        <select id="shipping_country" wire:model.live="shipping_country"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+                            <option value="BD">Bangladesh 🇧🇩</option>
+                            <option value="US">United States 🇺🇸</option>
+                            <option value="GB">United Kingdom 🇬🇧</option>
+                            <option value="CA">Canada 🇨🇦</option>
+                            <option value="AU">Australia 🇦🇺</option>
+                            <option value="IN">India 🇮🇳</option>
+                            <option value="SG">Singapore 🇸🇬</option>
+                            <option value="MY">Malaysia 🇲🇾</option>
+                            <option value="AE">UAE 🇦🇪</option>
+                            <option value="SA">Saudi Arabia 🇸🇦</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -122,8 +139,90 @@
                             <div class="text-sm text-gray-600">Pay securely with your card</div>
                         </div>
                     </label>
+
+                    <label class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition {{ $payment_method === 'nagad' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300' }}">
+                        <input type="radio" wire:model.live="payment_method" value="nagad" class="w-5 h-5 text-primary">
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900">Nagad</div>
+                            <div class="text-sm text-gray-600">Pay with Nagad mobile banking</div>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition {{ $payment_method === 'bank' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300' }}">
+                        <input type="radio" wire:model.live="payment_method" value="bank" class="w-5 h-5 text-primary">
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900">Bank Transfer</div>
+                            <div class="text-sm text-gray-600">Pay via direct bank transfer</div>
+                        </div>
+                    </label>
                 </div>
                 @error('payment_method') <p class="text-red-600 text-sm mt-2">{{ $message }}</p> @enderror
+            </div>
+
+            {{-- Discounts & Promotions --}}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Discounts & Promotions</h2>
+                <div class="space-y-4">
+
+                    {{-- Coupon Code --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Coupon Code</label>
+                        @if ($couponApplied)
+                            <div class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <div class="flex items-center gap-2 text-green-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <span class="font-medium text-sm">{{ strtoupper($coupon_code) }} applied — -@price($couponDiscount)</span>
+                                </div>
+                                <button type="button" wire:click="removeCoupon" class="text-green-600 hover:text-red-600 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        @else
+                            <div class="flex gap-2">
+                                <input type="text" wire:model="coupon_code"
+                                    class="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                    placeholder="Enter coupon code">
+                                <button type="button" wire:click="applyCoupon"
+                                    wire:loading.attr="disabled" wire:target="applyCoupon"
+                                    class="px-5 py-3 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition disabled:opacity-50">
+                                    <span wire:loading.remove wire:target="applyCoupon">Apply</span>
+                                    <span wire:loading wire:target="applyCoupon">...</span>
+                                </button>
+                            </div>
+                            @error('coupon_code') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                        @endif
+                    </div>
+
+                    {{-- Gift Card --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gift Card</label>
+                        @if ($giftCardApplied)
+                            <div class="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                                <div class="flex items-center gap-2 text-purple-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
+                                    <span class="font-medium text-sm">Gift card applied — -@price($giftCardDiscount)</span>
+                                </div>
+                                <button type="button" wire:click="removeGiftCard" class="text-purple-600 hover:text-red-600 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        @else
+                            <div class="flex gap-2">
+                                <input type="text" wire:model="gift_card_code"
+                                    class="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                    placeholder="Enter gift card code">
+                                <button type="button" wire:click="applyGiftCard"
+                                    wire:loading.attr="disabled" wire:target="applyGiftCard"
+                                    class="px-5 py-3 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition disabled:opacity-50">
+                                    <span wire:loading.remove wire:target="applyGiftCard">Apply</span>
+                                    <span wire:loading wire:target="applyGiftCard">...</span>
+                                </button>
+                            </div>
+                            @error('gift_card_code') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                        @endif
+                    </div>
+
+                </div>
             </div>
 
             {{-- Order Notes --}}
@@ -190,6 +289,26 @@
                     @if ($subtotal < 1000 && $shipping > 0)
                         <p class="text-xs text-gray-500">Add @price(1000 - $subtotal) more for free shipping</p>
                     @endif
+
+                    @if (($couponDiscount ?? 0) > 0)
+                        <div class="flex justify-between text-green-600">
+                            <span class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                                Coupon ({{ strtoupper($coupon_code) }})
+                            </span>
+                            <span class="font-semibold">-@price($couponDiscount)</span>
+                        </div>
+                    @endif
+
+                    @if ($giftCardDiscount > 0)
+                        <div class="flex justify-between text-purple-600">
+                            <span class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
+                                Gift Card
+                            </span>
+                            <span class="font-semibold">-@price($giftCardDiscount)</span>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="border-t border-gray-200 pt-4 mb-6">
@@ -197,6 +316,9 @@
                         <span class="text-lg font-bold text-gray-900">Total</span>
                         <span class="text-2xl font-bold text-primary-dark">@price($total)</span>
                     </div>
+                    @if ($shipping_country !== 'BD')
+                        <p class="text-xs text-gray-500 mt-1">Shipping to {{ $shipping_country }} · VAT {{ $taxRate }}%</p>
+                    @endif
                 </div>
 
                 {{-- Place Order Button --}}

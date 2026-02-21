@@ -44,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Event::listen(
+            \App\Events\OrderStatusChanged::class,
+            \App\Listeners\DispatchOrderStatusChangedWebhook::class,
+        );
+
+        Event::listen(
             \App\Events\OrderPlaced::class,
             \App\Listeners\SendOrderConfirmationEmail::class,
         );

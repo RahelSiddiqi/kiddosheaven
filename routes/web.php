@@ -1,6 +1,8 @@
 <?php
 
 use App\Livewire\Storefront\CartRecovery;
+use App\Livewire\Storefront\GiftCardBalance;
+use App\Livewire\Storefront\SubscriptionPortal;
 use App\Livewire\Storefront\AboutPage;
 use App\Livewire\Storefront\AccountPage;
 use App\Livewire\Storefront\CartPage;
@@ -90,6 +92,9 @@ Route::middleware('auth')->group(function () {
     // Returns
     Route::get('/orders/{orderId}/return', CreateReturnRequest::class)->name('customer.orders.return');
 
+    // Subscription customer portal
+    Route::get('/account/subscription', SubscriptionPortal::class)->name('account.subscription');
+
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 });
 
@@ -110,6 +115,12 @@ Route::prefix('merchant')->name('merchant.')->group(function () {
 // ─────────────────────────────────────────────────────────────────
 
 Route::get('/cart/recover/{token}', CartRecovery::class)->name('cart.recover');
+
+// ─────────────────────────────────────────────────────────────────
+//  Gift Cards — public balance check
+// ─────────────────────────────────────────────────────────────────
+
+Route::get('/gift-cards/balance', GiftCardBalance::class)->name('gift-cards.balance');
 
 // ─────────────────────────────────────────────────────────────────
 //  Admin (Blade — unchanged)

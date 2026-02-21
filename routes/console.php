@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Abandoned cart recovery emails — runs every 15 minutes
 Schedule::command('carts:send-reminders')->everyFifteenMinutes()->withoutOverlapping();
+
+// Refresh exchange rates every 6 hours
+Schedule::command('currency:refresh')->everySixHours()->withoutOverlapping();
