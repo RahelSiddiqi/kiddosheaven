@@ -18,11 +18,12 @@ class MenuHelper
                 'name' => 'Products',
                 'permission' => 'view-products',
                 'subItems' => [
-                    ['name' => 'All Products', 'path' => '/admin/products', 'permission' => 'view-products'],
-                    ['name' => 'Categories', 'path' => '/admin/categories', 'permission' => 'view-categories'],
-                    ['name' => 'Attributes', 'path' => '/admin/attributes', 'permission' => 'view-categories'],
+                    ['name' => 'All Products',     'path' => '/admin/products',          'permission' => 'view-products'],
+                    ['name' => 'Collections',       'path' => '/admin/collections',       'permission' => 'view-catalog'],
+                    ['name' => 'Categories',        'path' => '/admin/categories',        'permission' => 'view-categories'],
+                    ['name' => 'Attributes',        'path' => '/admin/attributes',        'permission' => 'view-categories'],
                     ['name' => 'Pricing Templates', 'path' => '/admin/pricing-templates', 'permission' => 'view-categories'],
-                    ['name' => 'Brands', 'path' => '/admin/brands', 'permission' => 'view-brands'],
+                    ['name' => 'Brands',            'path' => '/admin/brands',            'permission' => 'view-brands'],
                 ],
             ],
             [
@@ -30,7 +31,8 @@ class MenuHelper
                 'name' => 'Sales',
                 'permission' => 'view-orders',
                 'subItems' => [
-                    ['name' => 'Orders', 'path' => '/admin/orders', 'permission' => 'view-orders'],
+                    ['name' => 'Orders',       'path' => '/admin/orders',       'permission' => 'view-orders'],
+                    ['name' => 'Draft Orders', 'path' => '/admin/draft-orders', 'permission' => 'view-orders'],
                 ],
             ],
             [
@@ -38,9 +40,10 @@ class MenuHelper
                 'name' => 'Customers',
                 'permission' => 'view-customers',
                 'subItems' => [
-                    ['name' => 'All Customers', 'path' => '/admin/customers', 'permission' => 'view-customers'],
-                    ['name' => 'Loyalty Program', 'path' => '/admin/loyalty', 'permission' => 'view-marketing'],
-                    ['name' => 'Reviews', 'path' => '/admin/reviews', 'permission' => 'view-reviews'],
+                    ['name' => 'All Customers',  'path' => '/admin/customers',     'permission' => 'view-customers'],
+                    ['name' => 'B2B Price Lists', 'path' => '/admin/b2b/price-lists', 'permission' => 'view-customers'],
+                    ['name' => 'Loyalty Program', 'path' => '/admin/loyalty',      'permission' => 'view-marketing'],
+                    ['name' => 'Reviews',         'path' => '/admin/reviews',       'permission' => 'view-reviews'],
                 ],
             ],
             [
@@ -59,8 +62,9 @@ class MenuHelper
                 'name' => 'Marketing',
                 'permission' => 'view-marketing',
                 'subItems' => [
-                    ['name' => 'Coupons', 'path' => '/admin/marketing/coupons', 'permission' => 'view-marketing'],
-                    ['name' => 'Flash Sales', 'path' => '/admin/marketing/flash-sales', 'permission' => 'view-marketing'],
+                    ['name' => 'Coupons',         'path' => '/admin/marketing/coupons',     'permission' => 'view-marketing'],
+                    ['name' => 'Flash Sales',     'path' => '/admin/marketing/flash-sales', 'permission' => 'view-marketing'],
+                    ['name' => 'Abandoned Carts', 'path' => '/admin/abandoned-carts',       'permission' => 'view-marketing'],
                 ],
             ],
             [
@@ -103,7 +107,9 @@ class MenuHelper
                 'name' => 'Content',
                 'permission' => 'view-cms',
                 'subItems' => [
-                    ['name' => 'CMS Pages', 'path' => '/admin/cms/pages', 'permission' => 'view-cms'],
+                    ['name' => 'CMS Pages',  'path' => '/admin/cms/pages', 'permission' => 'view-cms'],
+                    ['name' => 'Tags',        'path' => '/admin/tags',      'permission' => 'view-catalog'],
+                    ['name' => 'Redirects',   'path' => '/admin/redirects', 'permission' => 'view-settings'],
                 ],
             ],
             [
@@ -111,10 +117,12 @@ class MenuHelper
                 'name' => 'Settings',
                 'permission' => 'view-settings',
                 'subItems' => [
-                    ['name' => 'Users', 'path' => '/admin/users', 'permission' => 'view-users'],
-                    ['name' => 'Roles', 'path' => '/admin/roles', 'permission' => 'view-roles'],
-                    ['name' => 'Permissions', 'path' => '/admin/permissions', 'permission' => 'view-roles'],
-                    ['name' => 'General Settings', 'path' => '/admin/settings', 'permission' => 'manage-settings'],
+                    ['name' => 'Users',             'path' => '/admin/users',            'permission' => 'view-users'],
+                    ['name' => 'Roles',             'path' => '/admin/roles',            'permission' => 'view-roles'],
+                    ['name' => 'Permissions',       'path' => '/admin/permissions',      'permission' => 'view-roles'],
+                    ['name' => 'Payment Gateways',  'path' => '/admin/payment-gateways', 'permission' => 'view-settings'],
+                    ['name' => 'Tax Zones',         'path' => '/admin/tax-zones',        'permission' => 'view-settings'],
+                    ['name' => 'General Settings',  'path' => '/admin/settings',         'permission' => 'manage-settings'],
                 ],
             ],
         ];

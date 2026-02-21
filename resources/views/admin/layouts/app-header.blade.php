@@ -111,8 +111,8 @@
                     </svg>
                 </button>
 
-                <!-- Notification Dropdown -->
-                <x-admin.header.notification-dropdown />
+                <!-- Notification Bell (Livewire — real DB notifications) -->
+                <livewire:admin.shared.notification-bell />
             </div>
 
             <!-- User Dropdown -->
