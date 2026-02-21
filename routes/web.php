@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Storefront\CartRecovery;
 use App\Livewire\Storefront\AboutPage;
 use App\Livewire\Storefront\AccountPage;
 use App\Livewire\Storefront\CartPage;
@@ -103,6 +104,12 @@ Route::prefix('merchant')->name('merchant.')->group(function () {
         return view('merchant.upgrade');
     })->middleware('auth')->name('upgrade');
 });
+
+// ─────────────────────────────────────────────────────────────────
+//  Abandoned cart recovery (public — no auth needed)
+// ─────────────────────────────────────────────────────────────────
+
+Route::get('/cart/recover/{token}', CartRecovery::class)->name('cart.recover');
 
 // ─────────────────────────────────────────────────────────────────
 //  Admin (Blade — unchanged)

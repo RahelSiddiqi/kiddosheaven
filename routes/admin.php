@@ -390,4 +390,53 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/create', \App\Livewire\Admin\Catalog\CollectionForm::class)->name('create');
         Route::get('/{id}/edit', \App\Livewire\Admin\Catalog\CollectionForm::class)->name('edit');
     });
+
+    // ============================================
+    // PAYMENT GATEWAYS
+    // ============================================
+    Route::prefix('payment-gateways')->name('payment-gateways.')->middleware('permission:view-settings')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Payment\PaymentGatewayIndex::class)->name('index');
+    });
+
+    // ============================================
+    // TAX ZONES
+    // ============================================
+    Route::prefix('tax-zones')->name('tax-zones.')->middleware('permission:view-settings')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Settings\TaxZoneIndex::class)->name('index');
+    });
+
+    // ============================================
+    // URL REDIRECTS
+    // ============================================
+    Route::prefix('redirects')->name('redirects.')->middleware('permission:view-settings')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Settings\RedirectIndex::class)->name('index');
+    });
+
+    // ============================================
+    // TAGS
+    // ============================================
+    Route::prefix('tags')->name('tags.')->middleware('permission:view-catalog')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Catalog\TagIndex::class)->name('index');
+    });
+
+    // ============================================
+    // B2B PRICE LISTS
+    // ============================================
+    Route::prefix('b2b')->name('b2b.')->middleware('permission:view-customers')->group(function () {
+        Route::get('/price-lists', \App\Livewire\Admin\Customer\B2BPriceListManager::class)->name('price-lists');
+    });
+
+    // ============================================
+    // ABANDONED CARTS
+    // ============================================
+    Route::prefix('abandoned-carts')->name('abandoned-carts.')->middleware('permission:view-marketing')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Marketing\AbandonedCartIndex::class)->name('index');
+    });
+
+    // ============================================
+    // DRAFT ORDERS
+    // ============================================
+    Route::prefix('draft-orders')->name('draft-orders.')->middleware('permission:view-orders')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Order\DraftOrderIndex::class)->name('index');
+    });
 });
