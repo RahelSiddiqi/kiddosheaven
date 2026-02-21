@@ -65,6 +65,7 @@ class MenuHelper
                     ['name' => 'Coupons',         'path' => '/admin/marketing/coupons',     'permission' => 'view-marketing'],
                     ['name' => 'Flash Sales',     'path' => '/admin/marketing/flash-sales', 'permission' => 'view-marketing'],
                     ['name' => 'Abandoned Carts', 'path' => '/admin/abandoned-carts',       'permission' => 'view-marketing'],
+                    ['name' => 'Gift Cards',      'path' => '/admin/gift-cards',             'permission' => 'view-marketing'],
                 ],
             ],
             [
@@ -122,6 +123,7 @@ class MenuHelper
                     ['name' => 'Permissions',       'path' => '/admin/permissions',      'permission' => 'view-roles'],
                     ['name' => 'Payment Gateways',  'path' => '/admin/payment-gateways', 'permission' => 'view-settings'],
                     ['name' => 'Tax Zones',         'path' => '/admin/tax-zones',        'permission' => 'view-settings'],
+                    ['name' => 'Subscriptions',     'path' => '/admin/subscriptions',    'permission' => 'view-settings'],
                     ['name' => 'General Settings',  'path' => '/admin/settings',         'permission' => 'manage-settings'],
                 ],
             ],

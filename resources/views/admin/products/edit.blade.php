@@ -671,6 +671,11 @@
 			</div>
 	</form>
 
+	{{-- Metafields — Livewire sub-component, outside the product form --}}
+	<div class="mt-6">
+		<livewire:admin.product.metafield-editor ownerType="product" :ownerId="$product->id" />
+	</div>
+
 @endsection
 
 @push('scripts')

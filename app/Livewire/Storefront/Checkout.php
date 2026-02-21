@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Storefront;
 
+use App\Domains\GiftCard\Models\GiftCard;
+use App\Domains\GiftCard\Services\GiftCardService;
 use App\Domains\Marketing\Models\Coupon;
+use App\Domains\Tax\Services\ZoneTaxService;
 use App\Services\Cart\CartService;
 use App\Services\Order\OrderService;
 use Illuminate\Support\Facades\Log;
@@ -35,18 +38,28 @@ class Checkout extends Component
     #[Validate('required|string|max:20')]
     public string $shipping_zip = '';
 
+    // ── Shipping Country (for zone-based tax) ────────────────────
+    public string $shipping_country = 'BD';   // default: Bangladesh
+
     // ── Payment ───────────────────────────────────────────────────
-    #[Validate('required|in:cod,card,bkash')]
+    #[Validate('required|in:cod,card,bkash,nagad,bank')]
     public string $payment_method = 'cod';
 
     public string $notes = '';
 
     // ── Coupon ────────────────────────────────────────────────────
-    public string $coupon_code    = '';
-    public float  $couponDiscount = 0;
+    public string $coupon_code       = '';
+    public float  $couponDiscount    = 0;
     public ?int   $applied_coupon_id = null;
-    public string $couponMessage  = '';
-    public bool   $couponApplied  = false;
+    public string $couponMessage     = '';
+    public bool   $couponApplied     = false;
+
+    // ── Gift Card ─────────────────────────────────────────────────
+    public string $gift_card_code      = '';
+    public float  $giftCardDiscount    = 0;
+    public ?int   $applied_gift_card_id = null;
+    public string $giftCardMessage     = '';
+    public bool   $giftCardApplied     = false;
 
     // ── View-safe cart summary (plain scalars / arrays, no Eloquent models) ──
     public array $cart = ['items' => []];
@@ -175,12 +188,52 @@ class Checkout extends Component
         $this->calculateTotals();
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Gift Card
+    // ─────────────────────────────────────────────────────────────
+
+    public function applyGiftCard(GiftCardService $service): void
+    {
+        $code = strtoupper(trim($this->gift_card_code));
+
+        if (empty($code)) {
+            $this->giftCardMessage = 'Please enter a gift card code.';
+            return;
+        }
+
+        $card = $service->findUsable($code);
+
+        if (!$card) {
+            $this->giftCardMessage  = 'Invalid or depleted gift card.';
+            $this->giftCardApplied  = false;
+            return;
+        }
+
+        $this->applied_gift_card_id = $card->id;
+        $this->giftCardDiscount     = min($card->balance, $this->total);
+        $this->giftCardApplied      = true;
+        $this->giftCardMessage      = 'Gift card applied! ৳' . number_format($this->giftCardDiscount, 0) . ' credit.';
+
+        $this->calculateTotals();
+    }
+
+    public function removeGiftCard(): void
+    {
+        $this->giftCardDiscount     = 0;
+        $this->applied_gift_card_id = null;
+        $this->giftCardApplied      = false;
+        $this->giftCardMessage      = '';
+        $this->gift_card_code       = '';
+        $this->calculateTotals();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+
     /**
      * Recalculate display totals.
-     * Tax rate is loaded from TaxService (reads from settings table).
-     * Shipping is ৳100 (free over ৳1000).
-     * The actual order record uses OrderService::getTaxRate() (from Settings),
-     * which may differ; the CartService tier handles the stored totals.
+     * Uses ZoneTaxService for zone-aware, compound-capable tax.
+     * Falls back to flat TaxService if no zone found for the country.
+     * Shipping: free over ৳1000.
      */
     public function calculateTotals(): void
     {
@@ -188,14 +241,23 @@ class Checkout extends Component
             array_map(fn($i) => $i['price'] * $i['quantity'], $this->cart['items'])
         );
 
-        $taxService     = app(\App\Services\TaxService::class);
-        $this->taxRate  = $taxService->ratePercent();
+        /** @var ZoneTaxService $taxService */
+        $taxService     = app(ZoneTaxService::class);
+        $this->taxRate  = $taxService->effectiveRate($this->shipping_country);
         $this->shipping = $this->subtotal >= 1000 ? 0 : 100;
 
-        // Apply coupon discount to subtotal (shipping coupon reduces shipping cost)
+        // Coupon discount is applied to subtotal; gift card off the final total
         $discountedSubtotal = max(0, $this->subtotal - $this->couponDiscount);
-        $this->tax          = $taxService->calculate($discountedSubtotal);
-        $this->total        = $discountedSubtotal + $this->tax + $this->shipping;
+        $this->tax          = $taxService->calculate($discountedSubtotal, $this->shipping_country);
+        $preGiftTotal       = $discountedSubtotal + $this->tax + $this->shipping;
+
+        // Recalculate gift card discount cap against current total
+        if ($this->giftCardApplied && $this->applied_gift_card_id) {
+            $card = GiftCard::find($this->applied_gift_card_id);
+            $this->giftCardDiscount = $card ? min($card->balance, $preGiftTotal) : 0;
+        }
+
+        $this->total = max(0, $preGiftTotal - $this->giftCardDiscount);
     }
 
     /**
@@ -240,13 +302,21 @@ class Checkout extends Component
                 'items'            => $cartData['items'],
                 'subtotal'         => $this->subtotal,
                 'tax_amount'       => $this->tax,
-                'discount_amount'  => $this->couponDiscount,
+                'discount_amount'  => $this->couponDiscount + $this->giftCardDiscount,
                 'shipping_amount'  => $this->shipping,
                 'total_amount'     => $this->total,
                 // Coupon
                 'coupon_id'        => $this->applied_coupon_id,
                 'coupon_code'      => $this->applied_coupon_id ? strtoupper(trim($this->coupon_code)) : null,
             ]);
+
+            // Deduct gift card balance (now that we have the order id)
+            if ($this->giftCardApplied && $this->applied_gift_card_id && $this->giftCardDiscount > 0) {
+                $card = GiftCard::find($this->applied_gift_card_id);
+                if ($card?->isUsable()) {
+                    $card->deduct($this->giftCardDiscount, $order->id, auth()->id());
+                }
+            }
 
             // Clear via CartService so the correct session key is purged
             $cartService->clear();

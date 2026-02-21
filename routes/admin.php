@@ -439,4 +439,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::prefix('draft-orders')->name('draft-orders.')->middleware('permission:view-orders')->group(function () {
         Route::get('/', \App\Livewire\Admin\Order\DraftOrderIndex::class)->name('index');
     });
+
+    // ============================================
+    // GIFT CARDS
+    // ============================================
+    Route::prefix('gift-cards')->name('gift-cards.')->middleware('permission:view-marketing')->group(function () {
+        Route::get('/', \App\Livewire\Admin\GiftCard\GiftCardIndex::class)->name('index');
+    });
+
+    // ============================================
+    // SUBSCRIPTIONS (merchant billing)
+    // ============================================
+    Route::prefix('subscriptions')->name('subscriptions.')->middleware('permission:view-settings')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Subscription\SubscriptionIndex::class)->name('index');
+    });
 });
